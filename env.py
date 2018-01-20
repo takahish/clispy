@@ -19,7 +19,7 @@ def standard_env():
     """An environment with some Scheme standard procedures.
     """
     env = Env()
-    #env.update(vars(math))
+    env.update(vars(math))
     env.update({
         '+': op.add,
         '-': op.sub,
