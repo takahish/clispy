@@ -1,5 +1,5 @@
 from unittest import TestCase
-from lispy.type import Symbol
+from lispy.symbol import Symbol
 from lispy.parser import tokenize, atom, read_from_tokens
 
 class UnitTestCase(TestCase):

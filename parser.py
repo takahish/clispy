@@ -1,4 +1,4 @@
-from lispy.type import Symbol
+from lispy.symbol import Symbol
 
 def parse(program):
     """Read a Scheme expression from a tring.

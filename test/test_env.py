@@ -1,13 +1,13 @@
 from unittest import TestCase
-from lispy.env import Env, standard_env
+from lispy.env import Env, _global_env
 import operator as op
 
 class UnitTestCase(TestCase):
     def test_standard_env(self):
-        self.assertIsInstance(standard_env(), Env)
+        self.assertIsInstance(_global_env, Env)
 
     def test_standard_procedures(self):
-        env = standard_env()
+        env = _global_env
 
         # +, -, *, /
         self.assertEqual(env.find('+')['+'](2, 3, 4), 9)

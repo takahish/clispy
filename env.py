@@ -2,7 +2,7 @@ import math
 import operator as op
 from functools import reduce
 
-from lispy.type import Symbol, List, Number
+from lispy.symbol import Symbol
 
 class Env(dict):
     """An environment: a dict of {'var': val} pairs, with an outer Env.
@@ -42,13 +42,13 @@ def standard_env():
         'equal?': op.eq,
         'length': len,
         'list': lambda *args: list(args),
-        'list?': lambda lst: isinstance(lst, List),
+        'list?': lambda lst: isinstance(lst, list),
         'map': lambda func, args: list(map(func, args)),
         'max': lambda *args: reduce(max, args),
         'min': lambda *args: reduce(min, args),
         'not': op.not_,
         'null?': lambda lst: lst == [],
-        'number?': lambda x: isinstance(x, Number),
+        'number?': lambda x: isinstance(x, (int, float)),
         'procedure?': callable,
         'round': round,
         'symbol?': lambda x: isinstance(x, Symbol)
@@ -72,3 +72,5 @@ def _comp(op, *args):
             return _comp(op, *args[1:])
         else:
             return False
+
+_global_env = standard_env()
