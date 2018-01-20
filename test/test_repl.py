@@ -16,7 +16,7 @@ class UnitTestCase(TestCase):
 
     def test_eval(self):
         # Symbol
-        self.assertEqual(eval('+'), op.add)
+        self.assertEqual(eval('round'), round)
         # Atom
         self.assertEqual(eval(5), 5)
         # standard procedure call
