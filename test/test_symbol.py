@@ -1,6 +1,6 @@
 from unittest import TestCase
-from lispy.symbol import Symbol
+from lispy.symbol import _Symbol
 
 class UnitTestCase(TestCase):
     def testSymbol(self):
-        self.assertEqual(str, Symbol)
+        self.assertEqual(str, _Symbol)

@@ -1,1 +1,1 @@
-Symbol = str          # A Lisp Symbol is implemented as Python str
+_Symbol = str # A Lisp Symbol is implemented as Python str

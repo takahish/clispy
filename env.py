@@ -2,9 +2,9 @@ import math
 import operator as op
 from functools import reduce
 
-from lispy.symbol import Symbol
+from lispy.symbol import _Symbol
 
-class Env(dict):
+class _Env(dict):
     """An environment: a dict of {'var': val} pairs, with an outer Env.
     """
     def __init__(self, params=(), args=(), outer=None):
@@ -16,10 +16,10 @@ class Env(dict):
         """
         return self if (var in self) else self.outer.find(var)
 
-def standard_env():
+def _standard_env():
     """An environment with some Scheme standard procedures.
     """
-    env = Env()
+    env = _Env()
     env.update(vars(math))
     env.update({
         '+': lambda *args: reduce(op.add, args),
@@ -51,7 +51,7 @@ def standard_env():
         'number?': lambda x: isinstance(x, (int, float)),
         'procedure?': callable,
         'round': round,
-        'symbol?': lambda x: isinstance(x, Symbol)
+        'symbol?': lambda x: isinstance(x, _Symbol)
     })
     return env
 
@@ -73,4 +73,4 @@ def _comp(op, *args):
         else:
             return False
 
-_global_env = standard_env()
+_global_env = _standard_env()

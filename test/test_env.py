@@ -1,10 +1,10 @@
 from unittest import TestCase
-from lispy.env import Env, _global_env
+from lispy.env import _Env, _global_env
 import operator as op
 
 class UnitTestCase(TestCase):
     def test_standard_env(self):
-        self.assertIsInstance(_global_env, Env)
+        self.assertIsInstance(_global_env, _Env)
 
     def test_standard_procedures(self):
         env = _global_env

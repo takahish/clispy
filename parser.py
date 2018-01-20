@@ -1,16 +1,16 @@
-from lispy.symbol import Symbol
+from lispy.symbol import _Symbol
 
-def parse(program):
+def _parse(program):
     """Read a Scheme expression from a tring.
     """
-    return read_from_tokens(tokenize(program))
+    return _read_from_tokens(_tokenize(program))
 
-def tokenize(s):
+def _tokenize(s):
     """Convert a string into a list of tokens.
     """
     return s.replace('(', ' ( ').replace(')', ' ) ').split()
 
-def read_from_tokens(tokens):
+def _read_from_tokens(tokens):
     """Read an expression from a sequence of tokens."
     """
     if len(tokens) == 0:
@@ -19,20 +19,20 @@ def read_from_tokens(tokens):
     if '(' == token:
         L = []
         while tokens[0] != ')':
-            L.append(read_from_tokens(tokens))
+            L.append(_read_from_tokens(tokens))
         tokens.pop(0) # pop off ')'
         return L
     elif ')' == token:
         raise SyntaxError('unexpected )')
     else:
-        return atom(token)
+        return _atom(token)
 
-def atom(token):
+def _atom(token):
     """Numbers become numbers; every other token is a Symbol.
     """
     try: return int(token)
     except ValueError:
         try: return float(token)
         except ValueError:
-            return Symbol(token)
+            return _Symbol(token)
     
