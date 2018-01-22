@@ -1,5 +1,5 @@
-# LisPy
-Lisp interpreter written in python originally by [Peter Norvig](http://norvig.com/). This interpreter will be custermized to aim conforming R7RS-small (along with learning behavior of interpreter).
+# CLisPy
+Lisp interpreter written in python originally by [Peter Norvig](http://norvig.com/) (CLisPy means Comfortable Lisp interpreter written in Python). This interpreter will be custermized to aim cherry picking R7RS-small and ANSI Common Lisp Macro System or CLOS (along with learning behavior of interpreter).
 
 ## Examples
 ```
@@ -45,3 +45,4 @@ $ python -m unittest
 - [lispy](http://norvig.com/lispy.html)
 - [lispy.py](http://norvig.com/lispy2.html)
 - [R7RS](https://bitbucket.org/cowan/r7rs-wg1-infra/src/default/R7RSHomePage.md?fileviewer=file-view-default)
+- [Common Lisp HyperSpec](http://www.lispworks.com/documentation/HyperSpec/Front/index.htm)
