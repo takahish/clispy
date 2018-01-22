@@ -36,7 +36,7 @@ lispy> (count (quote the) (quote (the more the merrier the bigger the better)))
 ## Unit tests
 ```
 $ ls -F
-... lispy/ ...
+... clispy/ ...
 
 $ python -m unittest
 ```
