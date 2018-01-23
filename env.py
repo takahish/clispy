@@ -1,8 +1,5 @@
-import math
-import operator as op
-from functools import reduce
-
-from lispy.symbol import _Symbol
+from clispy.symbol import _Symbol, _symbol_table
+from clispy.parser import _eof_object, _to_string
 
 class _Env(dict):
     """An environment: a dict of {'var': val} pairs, with an outer Env.
@@ -11,17 +8,36 @@ class _Env(dict):
         self.update(zip(params, args))
         self.outer = outer
 
+        # Bind param list to corresponding args, or single param to list of args
+        if isinstance(params, _Symbol):
+            self.update({params: list(args)})
+        else:
+            if len(args) != len(params):
+                raise TypeError('expected %s, given %s, '
+                                % (_to_string(params), _to_string(args)))
+            self.update(zip(params, args))
+
     def find(self, var):
         """Find the innermost Env where var appears.
         """
-        return self if (var in self) else self.outer.find(var)
+        if var in self:
+            return self
+        elif self.outer is None:
+            raise LookupError(var)
+        else:
+            return self.outer.find(var)
 
-def _standard_env():
-    """An environment with some Scheme standard procedures.
+def _add_globals(self):
+    """Add some scheme standard procedures
     """
-    env = _Env()
-    env.update(vars(math))
-    env.update({
+    import math
+    import cmath
+    import operator as op
+    from functools import reduce
+
+    self.update(vars(math))
+    self.update(vars(cmath))
+    self.update({
         '+': lambda *args: reduce(op.add, args),
         '-': lambda *args: reduce(op.sub, args),
         '*': lambda *args: reduce(op.mul, args),
@@ -53,7 +69,7 @@ def _standard_env():
         'round': round,
         'symbol?': lambda x: isinstance(x, _Symbol)
     })
-    return env
+    return self
 
 def _comp(op, *args):
     """comparison operator for variable arguments
@@ -73,4 +89,4 @@ def _comp(op, *args):
         else:
             return False
 
-_global_env = _standard_env()
+_global_env = _add_globals(_Env())

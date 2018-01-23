@@ -1,8 +1,38 @@
 from unittest import TestCase
-from lispy.env import _Env, _global_env
+from clispy.symbol import _Symbol, _quote
+from clispy.env import _Env, _global_env
 import operator as op
 
 class UnitTestCase(TestCase):
+    def testEnv(self):
+        param = _Symbol('a')
+        args = [2, 3, 4]
+        env = _Env(param, args)
+        self.assertEqual(env[param], args)
+
+        param = ['x', 'y', 'z']
+        args = [2, 3, 4]
+        env = _Env(param, args)
+        self.assertEqual(env['x'], 2)
+        self.assertEqual(env['y'], 3)
+        self.assertEqual(env['z'], 4)
+
+        param = ['x', 'y']
+        args = [2]
+        self.assertRaisesRegex(TypeError, "expected .*, given .*", _Env, param, args)
+
+        param = ['x', 'y', 'z']
+        args = [2, 3, 4]
+        env = _Env(param, args)
+        self.assertEqual(env.find('x'), env)
+        self.assertRaisesRegex(LookupError, "a", env.find, 'a')
+
+        param = ['a']
+        args = [1]
+        sub_env = _Env(param, args, outer=env)
+        self.assertEqual(sub_env.find('a'), sub_env)
+        self.assertEqual(sub_env.find('x'), env)
+
     def test_standard_env(self):
         self.assertIsInstance(_global_env, _Env)
 
@@ -70,4 +100,4 @@ class UnitTestCase(TestCase):
         # number?, procedure?, symbol?
         self.assertTrue(env.find('number?')['number?'](3))
         self.assertTrue(env.find('procedure?')['procedure?'](op.add))
-        self.assertTrue(env.find('symbol?')['symbol?']('+'))
+        self.assertTrue(env.find('symbol?')['symbol?'](_quote))
