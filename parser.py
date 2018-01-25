@@ -1,6 +1,9 @@
 import re
 import io
-from clispy.symbol import _Symbol, _symbol_table, _quotes
+from clispy.symbol import _Symbol, _symbol_table
+from clispy.symbol import _quote, _if, _set, _define, _lambda, _begin, _define_macro
+from clispy.symbol import _quasiquote, _unquote, _unquote_splicing
+from clispy.symbol import _quotes
 
 # Note uninterned; can't be read
 _eof_object = _Symbol('#<eof-object>')
@@ -80,7 +83,7 @@ def _parse(inport):
     """
     if isinstance(inport, str):
         inport = _InPort(io.StringIO(inport))
-    return _read(inport)
+    return _expand(_read(inport), top_level=True)
 
 def _readchar(inport):
     """Read the next character from an input port.
@@ -108,3 +111,54 @@ def _to_string(x):
         return str(x).replace('j', 'i')
     else:
         return str(x)
+
+def _require(x, predicate, msg="wrong length"):
+    """Signal a syntax error if predicate is false.
+    """
+    if not predicate:
+        raise SyntaxError(_to_string(x) + ': ' + msg)
+
+def _expand(x, top_level=False):
+    """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
+    """
+    _require(x, x!=[])                   # () => Error
+    if not isinstance(x, list):          # constant => unchanged
+        return x
+    elif x[0] is _quote:                 # (quote exp)
+        _require(x, len(x)==2)
+        return x
+    elif x[0] is _if:
+        if len(x) == 3:
+            x = x + [None]               # (if t c) => (if t c None)
+        _require(x, len(x)==4)
+        return [_expand(xi, top_level) for xi in x]
+    elif x[0] is _set:
+        _require (x, len(x)==3)
+        var = x[1]
+        require(x, isinstance(var, _Symbol), msg="can set! only a symbol")
+        return [_set, var, expand(x[2])]
+    elif x[0] is _define:
+        _require(x, len(x)>=3)
+        _def, v, body = x[0], x[1], x[2:]
+        if isinstance(v, list) and v:    # (define (f args) body)
+            f, args = v[0], v[1:]        #  => (define f (lambda (args) body))
+            return _expand([_def, f, [_lambda, args]+body])
+        else:
+            _require(x, len(x)==3)
+            _require(x, isinstance(v, _Symbol), "can define only a symbol")
+            exp = _expand(x[2])
+            return [_define, v, exp]
+    elif x[0] is _begin:
+        if len(x) == 1:
+            return None                  # (begin) => None
+        else:
+            return [_expand(xi, top_level) for xi in x]
+    elif x[0] is _lambda:                # (lambda (x) e1 e2)
+        _require(x, len(x)>=3)           #  => (lambda (x) (begin e1 e2))
+        vars, body = x[1], x[2:]
+        _require(x, (isinstance(vars, list) and all(isinstance(v, _Symbol) for v in vars))
+                 or isinstans(vars, _Symbol), "illegal lambda argument list")
+        exp = body[0] if len(body) == 1 else [_begin] + body
+        return [_lambda, vars, _expand(exp)]
+    else:
+        return [_expand(xi, top_level) for xi in x]

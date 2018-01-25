@@ -2,7 +2,6 @@ from unittest import TestCase
 from clispy.symbol import _Symbol, _symbol_table
 from clispy.symbol import _quote, _if, _set, _define, _lambda, _begin, _define_macro
 from clispy.symbol import _quasiquote, _unquote, _unquote_splicing
-from clispy.symbol import _append, _cons, _let
 from clispy.symbol import _quotes
 
 class UnitTestCase(TestCase):
@@ -19,10 +18,6 @@ class UnitTestCase(TestCase):
         self.assertIsInstance(_symbol_table['unquote'], _Symbol)
         self.assertIsInstance(_symbol_table['unquote-splicing'], _Symbol)
 
-        self.assertIsInstance(_symbol_table['append'], _Symbol)
-        self.assertIsInstance(_symbol_table['cons'], _Symbol)
-        self.assertIsInstance(_symbol_table['let'], _Symbol)
-
     def testVariables(self):
         self.assertIsInstance(_quote, _Symbol)
         self.assertIsInstance(_if, _Symbol)
@@ -35,10 +30,6 @@ class UnitTestCase(TestCase):
         self.assertIsInstance(_quasiquote, _Symbol)
         self.assertIsInstance(_unquote, _Symbol)
         self.assertIsInstance(_unquote_splicing, _Symbol)
-
-        self.assertIsInstance(_append, _Symbol)
-        self.assertIsInstance(_cons, _Symbol)
-        self.assertIsInstance(_let, _Symbol)
 
     def testSyntacticSuger(self):
         self.assertEqual(_quotes["'"], _quote)

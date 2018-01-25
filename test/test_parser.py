@@ -1,7 +1,9 @@
 from unittest import TestCase
 import io
-from clispy.symbol import _Symbol, _quote
-from clispy.parser import _eof_object, _InPort, _atom, _read_ahead, _read, _parse, _readchar, _to_string
+from clispy.symbol import _Symbol
+from clispy.symbol import _quote, _if, _set, _define, _lambda, _begin, _define_macro
+from clispy.parser import _eof_object, _InPort, _atom, _read_ahead, _read, _parse
+from clispy.parser import _readchar, _to_string, _require, _expand
 
 class UnitTestCase(TestCase):
     def test_eof_object(self):
@@ -90,3 +92,35 @@ class UnitTestCase(TestCase):
         self.assertEqual(_to_string([1, 2, 3]), '(1 2 3)')
         self.assertEqual(_to_string(2+3j), '(2+3i)')
         self.assertEqual(_to_string(1), '1')
+
+    def test_require(self):
+        x = []
+        self.assertRaisesRegex(SyntaxError, "() wrong length", _require, x, x!=[])
+
+    def test_expand(self):
+        # constant => unchanged
+        self.assertEqual(_expand(3), 3)
+
+        # (quote exp)
+        self.assertEqual(_expand([_quote, [1, 2]]), [_quote, [1, 2]])
+
+        # (if t c) => (if t c None)
+        self.assertEqual(_expand([_if, True, 2]), [_if, True, 2, None])
+
+        # (define (f args) body) => (define f (lambda (args) body))
+        self.assertEqual(_expand([_define, [_Symbol('func'), _Symbol('x')],
+                                  [_Symbol('*'), _Symbol('x'), _Symbol('x')]]),
+                         [_define, _Symbol('func'), [_lambda, [_Symbol('x')],
+                                                     [_Symbol('*'), _Symbol('x'), _Symbol('x')]]])
+
+        # (begin) => None
+        self.assertEqual(_expand([_begin]), None)
+
+        # (lambda (x) e1 e2) => (lambda (x) (begin e1 e2))
+        self.assertEqual(_expand([_lambda, [_Symbol('x')],
+                                  [_Symbol('*'), _Symbol('x'), _Symbol('x')],
+                                  [_Symbol('+'), _Symbol('x'), _Symbol('x')]]),
+                         [_lambda, [_Symbol('x')],
+                          [_begin,
+                           [_Symbol('*'), _Symbol('x'), _Symbol('x')],
+                           [_Symbol('+'), _Symbol('x'), _Symbol('x')]]])

@@ -25,10 +25,6 @@ _quasiquote       = _symbol_table['quasiquote']
 _unquote          = _symbol_table['unquote']
 _unquote_splicing = _symbol_table['unquote-splicing']
 
-_append = _symbol_table['append']
-_cons   = _symbol_table['cons']
-_let    = _symbol_table['let']
-
 # Syntactic sugar
 _quotes = {
     "'": _quote,
