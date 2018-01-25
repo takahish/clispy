@@ -7,10 +7,6 @@ Lisp interpreter written in python originally by [Peter Norvig](http://norvig.co
 >>> sys.version_info
 sys.version_info(major=3, minor=6, micro=2, releaselevel='final', serial=0)
 
->>> import sys
->>> sys.version_info
-sys.version_info(major=3, minor=6, micro=2, releaselevel='final', serial=0)
-
 >>> from clispy.repl import repl
 >>> repl()
 CLisPy Version 0.1
