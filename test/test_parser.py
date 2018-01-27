@@ -2,13 +2,13 @@ from unittest import TestCase
 import io
 from clispy.symbol import _Symbol
 from clispy.symbol import _quote, _if, _set, _define, _lambda, _begin, _define_macro
+from clispy.symbol import _quasiquote, _unquote, _unquote_splicing
 from clispy.parser import _eof_object, _InPort, _atom, _read_ahead, _read, _parse
-from clispy.parser import _readchar, _to_string, _require, _expand
+from clispy.parser import _readchar, _to_string, _require, _is_pair, _append, _cons
+from clispy.parser import _expand_quasiquote, _expand
+from clispy.macro import _macro_table
 
 class UnitTestCase(TestCase):
-    def test_eof_object(self):
-        self.assertIsInstance(_eof_object, _Symbol)
-
     def testInPort(self):
         inport = _InPort(io.StringIO('(list 2 3 "string")'))
 
@@ -97,6 +97,22 @@ class UnitTestCase(TestCase):
         x = []
         self.assertRaisesRegex(SyntaxError, "() wrong length", _require, x, x!=[])
 
+    def test_is_pair(self):
+        self.assertTrue(_is_pair([1]))
+        self.assertFalse(_is_pair([]))
+
+    def test_append(self):
+        self.assertEqual(_append([2, 3], [4], [5, 6]), [2, 3, 4, 5, 6])
+
+    def test_cons(self):
+        self.assertEqual(_cons(1, [2, 3]), [1, 2, 3])
+
+    def test_expand_quasiquote(self):
+        self.assertEqual(_expand_quasiquote(_Symbol('symbol')), [_quote, _Symbol('symbol')])
+        self.assertEqual(_expand_quasiquote([_unquote, [_Symbol('+'), 1, 2]]), [_Symbol('+'), 1, 2])
+        self.assertEqual(_expand_quasiquote([[_unquote_splicing, [1, 2]], 3]),
+                         [_append, [1, 2], [_cons, [_quote, 3], [_quote, []]]])
+
     def test_expand(self):
         # constant => unchanged
         self.assertEqual(_expand(3), 3)
@@ -113,6 +129,10 @@ class UnitTestCase(TestCase):
                          [_define, _Symbol('func'), [_lambda, [_Symbol('x')],
                                                      [_Symbol('*'), _Symbol('x'), _Symbol('x')]]])
 
+        # (define-macro v proc) => None; add {v: proc} to macro_table
+        _expand([_define_macro, _Symbol('add'), _Symbol('+')], top_level=True)
+        self.assertTrue(callable(_macro_table[_Symbol('add')]))
+
         # (begin) => None
         self.assertEqual(_expand([_begin]), None)
 
@@ -124,3 +144,9 @@ class UnitTestCase(TestCase):
                           [_begin,
                            [_Symbol('*'), _Symbol('x'), _Symbol('x')],
                            [_Symbol('+'), _Symbol('x'), _Symbol('x')]]])
+
+        # `x => expand_quasiquote(x)
+        self.assertEqual(_expand([_quasiquote, 3]), [_quote, 3])
+
+        # (m arg...) => macroexpand if m isinstance macro
+        self.assertEqual(_expand([_Symbol('add'), 1, 2]), 3)

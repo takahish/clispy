@@ -1,12 +1,14 @@
 import re
 import io
+import operator as op
+from functools import reduce
 from clispy.symbol import _Symbol, _symbol_table
 from clispy.symbol import _quote, _if, _set, _define, _lambda, _begin, _define_macro
 from clispy.symbol import _quasiquote, _unquote, _unquote_splicing
 from clispy.symbol import _quotes
-
-# Note uninterned; can't be read
-_eof_object = _Symbol('#<eof-object>')
+from clispy.symbol import _eof_object
+from clispy.eval import _eval
+from clispy.macro import _macro_table
 
 class _InPort(object):
     """An input port. Retains a line of chars.
@@ -118,6 +120,30 @@ def _require(x, predicate, msg="wrong length"):
     if not predicate:
         raise SyntaxError(_to_string(x) + ': ' + msg)
 
+def _is_pair(x):
+    return x != [] and isinstance(x, list)
+
+def _append(*args):
+    return reduce(op.add, args)
+
+def _cons(x, y):
+    return [x] + y
+
+def _expand_quasiquote(x):
+    """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).
+    """
+    if not _is_pair(x):
+        return [_quote, x]
+    _require(x, x[0] is not _unquote_splicing, "can't splice here")
+    if x[0] is _unquote:
+        _require(x, len(x)==2)
+        return x[1]
+    elif _is_pair(x[0]) and x[0][0] is _unquote_splicing:
+        _require(x[0], len(x[0])==2)
+        return [_append, x[0][1], _expand_quasiquote(x[1:])]
+    else:
+        return [_cons, _expand_quasiquote(x[0]), _expand_quasiquote(x[1:])]
+
 def _expand(x, top_level=False):
     """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
     """
@@ -137,16 +163,22 @@ def _expand(x, top_level=False):
         var = x[1]
         require(x, isinstance(var, _Symbol), msg="can set! only a symbol")
         return [_set, var, expand(x[2])]
-    elif x[0] is _define:
+    elif x[0] is _define or x[0] is _define_macro:
         _require(x, len(x)>=3)
         _def, v, body = x[0], x[1], x[2:]
         if isinstance(v, list) and v:    # (define (f args) body)
             f, args = v[0], v[1:]        #  => (define f (lambda (args) body))
             return _expand([_def, f, [_lambda, args]+body])
         else:
-            _require(x, len(x)==3)
+            _require(x, len(x)==3)       # (define non-var/list exp) => Error
             _require(x, isinstance(v, _Symbol), "can define only a symbol")
             exp = _expand(x[2])
+            if _def is _define_macro:
+                _require(x, top_level, "define-macro only allowed at top level")
+                proc = _eval(exp)
+                _require(x, callable(proc), "macro must be a purocedure")
+                _macro_table[v] = proc   # (define-macro v exp)
+                return None              #  => None; add {v: exp} to macro_table
             return [_define, v, exp]
     elif x[0] is _begin:
         if len(x) == 1:
@@ -157,8 +189,13 @@ def _expand(x, top_level=False):
         _require(x, len(x)>=3)           #  => (lambda (x) (begin e1 e2))
         vars, body = x[1], x[2:]
         _require(x, (isinstance(vars, list) and all(isinstance(v, _Symbol) for v in vars))
-                 or isinstans(vars, _Symbol), "illegal lambda argument list")
+                 or isinstance(vars, _Symbol), "illegal lambda argument list")
         exp = body[0] if len(body) == 1 else [_begin] + body
         return [_lambda, vars, _expand(exp)]
+    elif x[0] is _quasiquote:            # `x => expand_quasiquote(x)
+        _require(x, len(x)==2)
+        return _expand_quasiquote(x[1])
+    elif isinstance(x[0], _Symbol) and x[0] in _macro_table.table:
+        return _expand(_macro_table[x[0]](*x[1:]), top_level) # (m arg...) => macroexpand if m isinstance macro
     else:
         return [_expand(xi, top_level) for xi in x]

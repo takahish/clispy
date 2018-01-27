@@ -3,6 +3,7 @@ from clispy.symbol import _Symbol, _symbol_table
 from clispy.symbol import _quote, _if, _set, _define, _lambda, _begin, _define_macro
 from clispy.symbol import _quasiquote, _unquote, _unquote_splicing
 from clispy.symbol import _quotes
+from clispy.symbol import _eof_object
 
 class UnitTestCase(TestCase):
     def testSymbolTable(self):
@@ -36,3 +37,6 @@ class UnitTestCase(TestCase):
         self.assertEqual(_quotes["`"], _quasiquote)
         self.assertEqual(_quotes[","], _unquote)
         self.assertEqual(_quotes[",@"], _unquote_splicing)
+
+    def test_eof_object(self):
+        self.assertIsInstance(_eof_object, _Symbol)

@@ -32,3 +32,6 @@ _quotes = {
     ",": _unquote,
     ",@": _unquote_splicing
 }
+
+# Note uninterned; can't be read
+_eof_object = _symbol_table['#<eof-object>']

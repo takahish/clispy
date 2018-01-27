@@ -1,5 +1,4 @@
-from clispy.symbol import _Symbol, _symbol_table
-from clispy.parser import _eof_object, _to_string
+from clispy.symbol import _Symbol, _symbol_table, _eof_object
 
 class _Env(dict):
     """An environment: a dict of {'var': val} pairs, with an outer Env.
@@ -13,8 +12,7 @@ class _Env(dict):
             self.update({params: list(args)})
         else:
             if len(args) != len(params):
-                raise TypeError('expected %s, given %s, '
-                                % (_to_string(params), _to_string(args)))
+                raise TypeError('expected %s, given %s, ' % (params, args))
             self.update(zip(params, args))
 
     def find(self, var):
