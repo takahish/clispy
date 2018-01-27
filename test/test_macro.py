@@ -1,10 +1,10 @@
-from unittest import TestCase
-from clispy.symbol import _Symbol, _symbol_table
-from clispy.macro import _MacroTable, _macro_table
+import unittest
+import symbol
+import macro
 
-class UnitTestCase(TestCase):
+class UnitTestCase(unittest.TestCase):
     def testMacroTable(self):
-        self.assertIsInstance(_macro_table, _MacroTable)
+        self.assertIsInstance(macro._macro_table, macro._MacroTable)
 
-        _macro_table['cube'] = 'proc' # setitem
-        self.assertEqual(_macro_table[_Symbol('cube')], 'proc') # getitem
+        macro._macro_table['cube'] = 'proc' # setitem
+        self.assertEqual(macro._macro_table[symbol._Symbol('cube')], 'proc') # getitem

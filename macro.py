@@ -1,9 +1,9 @@
-from clispy.symbol import _symbol_table
+import symbol
 
 class _MacroTable():
     """A macro table: a dict of {'name': proc} pairs.
     """
-    def __init__(self, symbol_table=_symbol_table):
+    def __init__(self, symbol_table=symbol._symbol_table):
         self.symbol_table = symbol_table
         self.table = {}
 

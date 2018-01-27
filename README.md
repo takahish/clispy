@@ -34,8 +34,8 @@ clispy> ^D
 
 ## Unit tests
 ```
-$ ls -F
-... clispy/ ...
+$ pwd
+... /clispy ...
 
 $ python -m unittest
 ```

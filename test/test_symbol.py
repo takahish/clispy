@@ -1,42 +1,38 @@
-from unittest import TestCase
-from clispy.symbol import _Symbol, _symbol_table
-from clispy.symbol import _quote, _if, _set, _define, _lambda, _begin, _define_macro
-from clispy.symbol import _quasiquote, _unquote, _unquote_splicing
-from clispy.symbol import _quotes
-from clispy.symbol import _eof_object
+import unittest
+import symbol
 
-class UnitTestCase(TestCase):
+class UnitTestCase(unittest.TestCase):
     def testSymbolTable(self):
-        self.assertIsInstance(_symbol_table['quote'], _Symbol)
-        self.assertIsInstance(_symbol_table['if'], _Symbol)
-        self.assertIsInstance(_symbol_table['set!'], _Symbol)
-        self.assertIsInstance(_symbol_table['define'], _Symbol)
-        self.assertIsInstance(_symbol_table['lambda'], _Symbol)
-        self.assertIsInstance(_symbol_table['begin'], _Symbol)
-        self.assertIsInstance(_symbol_table['define-macro'], _Symbol)
+        self.assertIsInstance(symbol._symbol_table['quote'], symbol._Symbol)
+        self.assertIsInstance(symbol._symbol_table['if'], symbol._Symbol)
+        self.assertIsInstance(symbol._symbol_table['set!'], symbol._Symbol)
+        self.assertIsInstance(symbol._symbol_table['define'], symbol._Symbol)
+        self.assertIsInstance(symbol._symbol_table['lambda'], symbol._Symbol)
+        self.assertIsInstance(symbol._symbol_table['begin'], symbol._Symbol)
+        self.assertIsInstance(symbol._symbol_table['define-macro'], symbol._Symbol)
 
-        self.assertIsInstance(_symbol_table['quasiquote'], _Symbol)
-        self.assertIsInstance(_symbol_table['unquote'], _Symbol)
-        self.assertIsInstance(_symbol_table['unquote-splicing'], _Symbol)
+        self.assertIsInstance(symbol._symbol_table['quasiquote'], symbol._Symbol)
+        self.assertIsInstance(symbol._symbol_table['unquote'], symbol._Symbol)
+        self.assertIsInstance(symbol._symbol_table['unquote-splicing'], symbol._Symbol)
 
     def testVariables(self):
-        self.assertIsInstance(_quote, _Symbol)
-        self.assertIsInstance(_if, _Symbol)
-        self.assertIsInstance(_set, _Symbol)
-        self.assertIsInstance(_define, _Symbol)
-        self.assertIsInstance(_lambda, _Symbol)
-        self.assertIsInstance(_begin, _Symbol)
-        self.assertIsInstance(_define_macro, _Symbol)
+        self.assertIsInstance(symbol._quote, symbol._Symbol)
+        self.assertIsInstance(symbol._if, symbol._Symbol)
+        self.assertIsInstance(symbol._set, symbol._Symbol)
+        self.assertIsInstance(symbol._define, symbol._Symbol)
+        self.assertIsInstance(symbol._lambda, symbol._Symbol)
+        self.assertIsInstance(symbol._begin, symbol._Symbol)
+        self.assertIsInstance(symbol._define_macro, symbol._Symbol)
 
-        self.assertIsInstance(_quasiquote, _Symbol)
-        self.assertIsInstance(_unquote, _Symbol)
-        self.assertIsInstance(_unquote_splicing, _Symbol)
+        self.assertIsInstance(symbol._quasiquote, symbol._Symbol)
+        self.assertIsInstance(symbol._unquote, symbol._Symbol)
+        self.assertIsInstance(symbol._unquote_splicing, symbol._Symbol)
 
     def testSyntacticSuger(self):
-        self.assertEqual(_quotes["'"], _quote)
-        self.assertEqual(_quotes["`"], _quasiquote)
-        self.assertEqual(_quotes[","], _unquote)
-        self.assertEqual(_quotes[",@"], _unquote_splicing)
+        self.assertEqual(symbol._quotes["'"], symbol._quote)
+        self.assertEqual(symbol._quotes["`"], symbol._quasiquote)
+        self.assertEqual(symbol._quotes[","], symbol._unquote)
+        self.assertEqual(symbol._quotes[",@"], symbol._unquote_splicing)
 
     def test_eof_object(self):
-        self.assertIsInstance(_eof_object, _Symbol)
+        self.assertIsInstance(symbol._eof_object, symbol._Symbol)

@@ -1,4 +1,4 @@
-from clispy.symbol import _Symbol, _symbol_table, _eof_object
+import symbol
 
 class _Env(dict):
     """An environment: a dict of {'var': val} pairs, with an outer Env.
@@ -8,7 +8,7 @@ class _Env(dict):
         self.outer = outer
 
         # Bind param list to corresponding args, or single param to list of args
-        if isinstance(params, _Symbol):
+        if isinstance(params, symbol._Symbol):
             self.update({params: list(args)})
         else:
             if len(args) != len(params):
@@ -65,7 +65,7 @@ def _add_globals(self):
         'number?': lambda x: isinstance(x, (int, float)),
         'procedure?': callable,
         'round': round,
-        'symbol?': lambda x: isinstance(x, _Symbol)
+        'symbol?': lambda x: isinstance(x, symbol._Symbol)
     })
     return self
 

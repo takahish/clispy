@@ -1,5 +1,5 @@
-from unittest import TestCase
-from clispy.repl import repl
+import unittest
+import repl
 
-class UnitTestCase(TestCase):
+class UnitTestCase(unittest.TestCase):
     pass
