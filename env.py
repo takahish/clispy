@@ -1,4 +1,5 @@
 import symbol
+import ops
 
 class _Env(dict):
     """An environment: a dict of {'var': val} pairs, with an outer Env.
@@ -25,66 +26,5 @@ class _Env(dict):
         else:
             return self.outer.find(var)
 
-def _add_globals(self):
-    """Add some scheme standard procedures
-    """
-    import math
-    import cmath
-    import operator as op
-    from functools import reduce
-
-    self.update(vars(math))
-    self.update(vars(cmath))
-    self.update({
-        '+': lambda *args: reduce(op.add, args),
-        '-': lambda *args: reduce(op.sub, args),
-        '*': lambda *args: reduce(op.mul, args),
-        '/': lambda *args: reduce(op.truediv, args),
-        '>': lambda *args: _comp(op.gt, *args),
-        '<': lambda *args: _comp(op.lt, *args),
-        '>=': lambda *args: _comp(op.ge, *args),
-        '<=': lambda *args: _comp(op.le, *args),
-        '=': lambda *args: _comp(op.eq, *args),
-        'abs': abs,
-        'append': lambda *args: reduce(op.add, args),
-        'apply': lambda func, args: func(*args),
-        'begin': lambda *args: args[-1],
-        'car': lambda lst: lst[0],
-        'cdr': lambda lst: lst[1:],
-        'cons': lambda x, lst: [x] + lst,
-        'eq?': op.is_,
-        'equal?': op.eq,
-        'length': len,
-        'list': lambda *args: list(args),
-        'list?': lambda lst: isinstance(lst, list),
-        'map': lambda func, args: list(map(func, args)),
-        'max': lambda *args: reduce(max, args),
-        'min': lambda *args: reduce(min, args),
-        'not': op.not_,
-        'null?': lambda lst: lst == [],
-        'number?': lambda x: isinstance(x, (int, float)),
-        'procedure?': callable,
-        'round': round,
-        'symbol?': lambda x: isinstance(x, symbol._Symbol)
-    })
-    return self
-
-def _comp(op, *args):
-    """comparison operator for variable arguments
-
-    Args:
-        op: comparison operator
-        *args: variable arguments
-
-    Return:
-        boolean
-    """
-    if len(args) < 2:
-        return True
-    else:
-        if op(args[0], args[1]):
-            return _comp(op, *args[1:])
-        else:
-            return False
-
-_global_env = _add_globals(_Env())
+_global_env = _Env()
+_global_env.update(ops._builtin_operator)

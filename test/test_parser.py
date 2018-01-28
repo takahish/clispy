@@ -3,6 +3,7 @@ import io
 import symbol
 import macro
 import parser
+import ops
 
 class UnitTestCase(unittest.TestCase):
     def testInPort(self):
@@ -93,20 +94,11 @@ class UnitTestCase(unittest.TestCase):
         x = []
         self.assertRaisesRegex(SyntaxError, "() wrong length", parser._require, x, x!=[])
 
-        self.assertTrue(parser._is_pair([1]))
-        self.assertFalse(parser._is_pair([]))
-
-    def test_append(self):
-        self.assertEqual(parser._append([2, 3], [4], [5, 6]), [2, 3, 4, 5, 6])
-
-    def test_cons(self):
-        self.assertEqual(parser._cons(1, [2, 3]), [1, 2, 3])
-
     def test_expand_quasiquote(self):
         self.assertEqual(parser._expand_quasiquote(symbol._Symbol('symbol')), [symbol._quote, symbol._Symbol('symbol')])
         self.assertEqual(parser._expand_quasiquote([symbol._unquote, [symbol._Symbol('+'), 1, 2]]), [symbol._Symbol('+'), 1, 2])
         self.assertEqual(parser._expand_quasiquote([[symbol._unquote_splicing, [1, 2]], 3]),
-                         [parser._append, [1, 2], [parser._cons, [symbol._quote, 3], [symbol._quote, []]]])
+                         [ops._append, [1, 2], [ops._cons, [symbol._quote, 3], [symbol._quote, []]]])
 
     def test_expand(self):
         # constant => unchanged

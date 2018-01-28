@@ -1,10 +1,9 @@
 import re
 import io
-import operator as op
 import symbol
 import eval
 import macro
-from functools import reduce
+import ops
 
 class _InPort(object):
     """An input port. Retains a line of chars.
@@ -116,29 +115,20 @@ def _require(x, predicate, msg="wrong length"):
     if not predicate:
         raise SyntaxError(_to_string(x) + ': ' + msg)
 
-def _is_pair(x):
-    return x != [] and isinstance(x, list)
-
-def _append(*args):
-    return reduce(op.add, args)
-
-def _cons(x, y):
-    return [x] + y
-
 def _expand_quasiquote(x):
     """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).
     """
-    if not _is_pair(x):
+    if not ops._is_pair(x):
         return [symbol._quote, x]
     _require(x, x[0] is not symbol._unquote_splicing, "can't splice here")
     if x[0] is symbol._unquote:
         _require(x, len(x)==2)
         return x[1]
-    elif _is_pair(x[0]) and x[0][0] is symbol._unquote_splicing:
+    elif ops._is_pair(x[0]) and x[0][0] is symbol._unquote_splicing:
         _require(x[0], len(x[0])==2)
-        return [_append, x[0][1], _expand_quasiquote(x[1:])]
+        return [ops._append, x[0][1], _expand_quasiquote(x[1:])]
     else:
-        return [_cons, _expand_quasiquote(x[0]), _expand_quasiquote(x[1:])]
+        return [ops._cons, _expand_quasiquote(x[0]), _expand_quasiquote(x[1:])]
 
 def _expand(x, top_level=False):
     """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
