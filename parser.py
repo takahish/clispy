@@ -143,15 +143,15 @@ def _expand_quasiquote(x):
 def _expand(x, top_level=False):
     """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
     """
-    _require(x, x!=[])                   # () => Error
-    if not isinstance(x, list):          # constant => unchanged
+    _require(x, x!=[])                         # () => Error
+    if not isinstance(x, list):                # constant => unchanged
         return x
-    elif x[0] is symbol._quote:                 # (quote exp)
+    elif x[0] is symbol._quote:                # (quote exp)
         _require(x, len(x)==2)
         return x
     elif x[0] is symbol._if:
         if len(x) == 3:
-            x = x + [None]               # (if t c) => (if t c None)
+            x = x + [None]                     # (if t c) => (if t c None)
         _require(x, len(x)==4)
         return [_expand(xi, top_level) for xi in x]
     elif x[0] is symbol._set:
@@ -162,11 +162,11 @@ def _expand(x, top_level=False):
     elif x[0] is symbol._define or x[0] is symbol._define_macro:
         _require(x, len(x)>=3)
         _def, v, body = x[0], x[1], x[2:]
-        if isinstance(v, list) and v:    # (define (f args) body)
-            f, args = v[0], v[1:]        #  => (define f (lambda (args) body))
+        if isinstance(v, list) and v:          # (define (f args) body)
+            f, args = v[0], v[1:]              #  => (define f (lambda (args) body))
             return _expand([_def, f, [symbol._lambda, args]+body])
         else:
-            _require(x, len(x)==3)       # (define non-var/list exp) => Error
+            _require(x, len(x)==3)             # (define non-var/list exp) => Error
             _require(x, isinstance(v, symbol._Symbol), "can define only a symbol")
             exp = _expand(x[2])
             if _def is symbol._define_macro:
@@ -174,24 +174,25 @@ def _expand(x, top_level=False):
                 proc = eval._eval(exp)
                 _require(x, callable(proc), "macro must be a purocedure")
                 macro._macro_table[v] = proc   # (define-macro v exp)
-                return None              #  => None; add {v: exp} to macro_table
+                return None                    #  => None; add {v: exp} to macro_table
             return [symbol._define, v, exp]
     elif x[0] is symbol._begin:
         if len(x) == 1:
-            return None                  # (begin) => None
+            return None                        # (begin) => None
         else:
             return [_expand(xi, top_level) for xi in x]
-    elif x[0] is symbol._lambda:                # (lambda (x) e1 e2)
-        _require(x, len(x)>=3)           #  => (lambda (x) (begin e1 e2))
+    elif x[0] is symbol._lambda:               # (lambda (x) e1 e2)
+        _require(x, len(x)>=3)                 #  => (lambda (x) (begin e1 e2))
         vars, body = x[1], x[2:]
         _require(x, (isinstance(vars, list) and all(isinstance(v, symbol._Symbol) for v in vars))
                  or isinstance(vars, symbol._Symbol), "illegal lambda argument list")
         exp = body[0] if len(body) == 1 else [symbol._begin] + body
         return [symbol._lambda, vars, _expand(exp)]
-    elif x[0] is symbol._quasiquote:            # `x => expand_quasiquote(x)
+    elif x[0] is symbol._quasiquote:           # `x => expand_quasiquote(x)
         _require(x, len(x)==2)
         return _expand_quasiquote(x[1])
     elif isinstance(x[0], symbol._Symbol) and x[0] in macro._macro_table.table:
-        return _expand(macro._macro_table[x[0]](*x[1:]), top_level) # (m arg...) => macroexpand if m isinstance macro
+        return _expand(macro._macro_table[x[0]](*x[1:]), top_level)
+                                               # (m arg...) => macroexpand if m isinstance macro
     else:
         return [_expand(xi, top_level) for xi in x]
