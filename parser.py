@@ -147,14 +147,14 @@ def _expand(x, top_level=False):
     elif x[0] is symbol._set:
         _require (x, len(x)==3)
         var = x[1]
-        require(x, isinstance(var, symbol._Symbol), msg="can set! only a symbol")
-        return [symbol._set, var, expand(x[2])]
+        _require(x, isinstance(var, symbol._Symbol), msg="can set! only a symbol")
+        return [symbol._set, var, _expand(x[2])]
     elif x[0] is symbol._define or x[0] is symbol._define_macro:
         _require(x, len(x)>=3)
         _def, v, body = x[0], x[1], x[2:]
         if isinstance(v, list) and v:          # (define (f args) body)
             f, args = v[0], v[1:]              #  => (define f (lambda (args) body))
-            return _expand([_def, f, [symbol._lambda, args]+body])
+            return _expand([_def, f, [symbol._lambda, args]+body], top_level)
         else:
             _require(x, len(x)==3)             # (define non-var/list exp) => Error
             _require(x, isinstance(v, symbol._Symbol), "can define only a symbol")

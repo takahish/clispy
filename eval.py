@@ -16,7 +16,7 @@ def _eval(x, e=env._global_env):
     while True:
         if isinstance(x, symbol._Symbol):    # variable reference
             return e.find(x)[x]
-        elif not isinstance(x, list): # constant literal
+        elif not isinstance(x, list):        # constant literal
             return x
         elif x[0] is symbol._quote:          # (quote exp)
             (_, exp) = x
@@ -25,7 +25,7 @@ def _eval(x, e=env._global_env):
             (_, test, conseq, alt) = x
             x = (conseq if _eval(test, e) else alt)
         elif x[0] is symbol._define:
-            (_, var, exp) = x         # (define var exp)
+            (_, var, exp) = x                # (define var exp)
             e[var] = _eval(exp, e)
             return None
         elif x[0] is symbol._set:            # (set! var exp)
