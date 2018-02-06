@@ -7,4 +7,4 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(macro._macro_table, macro._MacroTable)
 
         macro._macro_table['cube'] = 'proc' # setitem
-        self.assertEqual(macro._macro_table[symbol._Symbol('cube')], 'proc') # getitem
+        self.assertEqual(macro._macro_table[symbol._Symbol('CUBE')], 'proc') # getitem

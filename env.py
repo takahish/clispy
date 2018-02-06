@@ -1,7 +1,7 @@
 import symbol
-import ops
+import function
 
-class _Env(dict):
+class _Environment(dict):
     """An environment: a dict of {'var': val} pairs, with an outer Env.
     """
     def __init__(self, params=(), args=(), outer=None):
@@ -11,7 +11,7 @@ class _Env(dict):
             self.update({params: list(args)})
         else:
             # bind rest parameters for lambda
-            params, args = _Env._parse_rest_argument(params, args)
+            params, args = _Environment._parse_rest_argument(params, args)
             if len(args) != len(params):
                 raise TypeError('expected %s, given %s, ' % (params, args))
             self.update(zip(params, args))
@@ -30,14 +30,39 @@ class _Env(dict):
     def _parse_rest_argument(params, args):
         """Fine rest argument to parse params and args.
         """
-        if '.' in params:
+        if '&REST' in params or '&BODY' in params:
             params, args = list(params), list(args) # for slicing and appending
-            # params=['x', '.', 'y'], args=[1, 2, 3, 4, 5]
+            # params=['x', '&rest', 'y'], args=[1, 2, 3, 4, 5]
             #  => params=['x', 'y'], args=[1, [2, 3, 4, 5]]
-            rest_index = params.index('.')
+            try:
+                rest_index = params.index('&REST')
+            except ValueError:
+                rest_index = params.index('&BODY')
             params = params[:rest_index] + params[rest_index+1:]
             args = args[:rest_index] + [args[rest_index:]]
         return params, args
 
-_global_env = _Env()
-_global_env.update(ops._builtin_operator)
+class _VariableEnvironment(_Environment):
+    """Environment for variable.
+    """
+    pass
+
+class _FunctionEnvironment(_Environment):
+    """Environment for function.
+    """
+    pass
+
+class _MacroEnvironment(_Environment):
+    """Environment for Macro.
+    """
+    pass
+
+# variable space environment
+_var_env = _VariableEnvironment()
+
+# function space environment
+_func_env = _FunctionEnvironment()
+_func_env.update(function._BuiltInFunction())
+
+# macro space environment
+_macro_env = _MacroEnvironment()

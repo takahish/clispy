@@ -4,18 +4,27 @@ import env
 class _Procedure(object):
     """A user-defined scheme procedure.
     """
-    def __init__(self, params, exp, env):
-        self.params, self.exp, self.env = params, exp, env
+    def __init__(self, params, exps, var_env, func_env):
+        self.params = params
+        self.exps = exps
+
+        # Environment
+        self.var_env = var_env
+        self.func_env = func_env
 
     def __call__(self, *args):
-        return _eval(self.exp, env._Env(self.params, args, self.env))
+        return _eval(
+            self.exps,
+            env._VariableEnvironment(self.params, args, self.var_env),
+            env._FunctionEnvironment([], [], self.func_env)
+        )
 
-def _eval(x, e=env._global_env):
+def _eval(x, var_env=env._var_env, func_env=env._func_env):
     """Evaluate an expression in an environment.
     """
     while True:
         if isinstance(x, symbol._Symbol):    # variable reference
-            return e.find(x)[x]
+            return var_env.find(x)[x]
         elif not isinstance(x, list):        # constant literal
             return x
         elif x[0] is symbol._quote:          # (quote exp)
@@ -23,27 +32,45 @@ def _eval(x, e=env._global_env):
             return exp
         elif x[0] is symbol._if:             # if test conseq alt
             (_, test, conseq, alt) = x
-            x = (conseq if _eval(test, e) else alt)
-        elif x[0] is symbol._define:
-            (_, var, exp) = x                # (define var exp)
-            e[var] = _eval(exp, e)
-            return None
-        elif x[0] is symbol._set:            # (set! var exp)
+            x = (conseq if _eval(test, var_env, func_env) else alt)
+        elif x[0] is symbol._defun:
+            (_, func, exp) = x               # (defun f, var exp)
+            try:
+                func_env.find(func)[func] = _eval(exp, var_env, func_env)
+            except LookupError:
+                func_env[func] = _eval(exp, var_env, func_env)
+            return func_env[func]
+        elif x[0] is symbol._setq:           # (setq var exp)
             (_, var, exp) = x
-            e.find(var)[var] = _eval(exp, e)
-            return None
+            try:
+                var_env.find(var)[var] = _eval(exp, var_env, func_env)
+            except LookupError:
+                var_env[var] = _eval(exp, var_env, func_env)
+            return var_env[var]
         elif x[0] is symbol._lambda:         # (lambda (var...) body)
             (_, params, exp) = x
-            return _Procedure(params, exp, e)
-        elif x[0] is symbol._begin:          # (begin exp+)
+            return _Procedure(params, exp, var_env, func_env)
+        elif x[0] is symbol._progn:          # (progn exp+)
             for exp in x[1:-1]:
-                _eval(exp, e)
+                _eval(exp, var_env, func_env)
             x = x[-1]
+        elif x[0] is symbol._function:       # (function func)
+            (_, func) = x
+            return func_env.find(func)[func]
+        elif x[0] is symbol._funcall:        # (funcall func args)
+            (_, func, *exps) = x
+            proc = var_env.find(func)[func]
+            exps = [_eval(exp, var_env, func_env) for exp in exps]
+            return proc(*exps)
         else:
-            exps = [_eval(exp, e) for exp in x]
-            proc = exps.pop(0)
+            if isinstance(x[0], symbol._Symbol):
+                proc = func_env.find(x[0])[x[0]]
+            elif isinstance(x[0], list) and x[0][0] is symbol._lambda:
+                proc = _eval(x[0])
+            exps = [_eval(exp, var_env, func_env) for exp in x[1:]]
             if isinstance(proc, _Procedure):
-                x = proc.exp
-                e = env._Env(proc.params, exps, proc.env)
+                x = proc.exps
+                var_env = env._VariableEnvironment(proc.params, exps, proc.var_env)
+                func_env = env._FunctionEnvironment([], [], proc.func_env)
             else:
                 return proc(*exps)

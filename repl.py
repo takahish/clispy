@@ -6,7 +6,7 @@ import eval
 def repl(prompt='clispy> ', inport=parser._InPort(sys.stdin), out=sys.stdout):
     """A prompt-read-eval-print loop."
     """
-    sys.stderr.write("CLisPy Version 0.1\n")
+    sys.stderr.write("CLisPy Version 0.2\n")
     sys.stderr.flush() # flush buffer explicitly
     while True:
         try:
