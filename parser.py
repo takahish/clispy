@@ -141,7 +141,7 @@ def _expand(x):
         return x
     elif x[0] is symbol._if:
         if len(x) == 3:
-            x = x + [False]                     # (if t c) => (if t c nil)
+            x = x + [False]                    # (if t c) => (if t c nil)
         _require(x, len(x)==4)
         return [_expand(xi) for xi in x]
     elif x[0] is symbol._setq:
