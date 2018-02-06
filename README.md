@@ -1,5 +1,5 @@
 # CLisPy
-Lisp interpreter written in python inspired from [Peter Norvig](http://norvig.com/), [lispy](http://norvig.com/lispy.html) and [lispy.py](http://norvig.com/lispy2.html). CLisPy means Common Lisp interpreter written in Python. This interpreter will be implemented to aim cherry picking ANSI Common Lisp (Sytax, Macro System, CLOS etc) (along with learning behavior of interpreter).
+Lisp interpreter written in python inspired from [Peter Norvig](http://norvig.com/), [lispy](http://norvig.com/lispy.html) and [lispy.py](http://norvig.com/lispy2.html). CLisPy means Common Lisp interpreter written in Python. This interpreter will be implemented to aim cherry picking ANSI Common Lisp (Syntax, Macro System, CLOS etc) (along with learning behavior of interpreter).
 
 ## Examples
 ```
