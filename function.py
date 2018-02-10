@@ -1,5 +1,6 @@
 import operator as op
 from functools import reduce
+import cons
 
 class _BuiltInFunction(dict):
     """Built-In Function, sub-class of dictionary.
@@ -40,7 +41,7 @@ def _null(x):
 def _consp(x):
     """Test whether x is a cons sell or not.
     """
-    if isinstance(x, list) and len(x) > 0:
+    if isinstance(x, cons._Cons) and len(x) > 0:
         return True
     return False
 
@@ -59,11 +60,11 @@ def _atom(x):
 def _cons(x, lst):
     """cons
     """
-    if _null(lst):
-        lst = []
-    elif _atom(lst):
-        lst = [lst]
-    return [x] + lst
+    if not _null(lst) and _atom(lst):     # (cons 1 2) => (1 . 2)
+        return cons._DottedPair([x, lst])
+    elif _null(lst):                      # (cons 1 nil) => (1)
+        return [x]
+    return [x] + lst                      # (cons 1 '(2)) => (1 2)
 
 def _car(lst):
     """car
@@ -77,9 +78,13 @@ def _car(lst):
 def _cdr(lst):
     """cdr
     """
-    if _null(lst) or (_consp(lst) and len(lst) <= 1):
+    if _null(lst) or (_consp(lst) and len(lst) <= 1):         # (cdr nil) or (cdr '()) => NIL
         return False
-    elif _consp(lst) and len(lst) > 1:
+    elif isinstance(lst, cons._DottedPair) and len(lst) == 2: # (cdr '(1 . 2)) => 2
+        return lst[1]
+    elif isinstance(lst, cons._DottedPair) and len(lst) > 2:  # (cdr '(1 2 . 3)) => (2 . 3)
+        return cons._DottedPair(lst[1:])
+    elif _consp(lst) and len(lst) > 1:                        # (cdr '(1 2)) => (2)
         return lst[1:]
     raise TypeError("The value " + str(lst) + " is not LIST.")
 

@@ -12,7 +12,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(symbol._symbol_table['defmacro'], symbol._Symbol)
         self.assertIsInstance(symbol._symbol_table['funcall'], symbol._Symbol)
         self.assertIsInstance(symbol._symbol_table['function'], symbol._Symbol)
+
         self.assertIsInstance(symbol._symbol_table['cons'], symbol._Symbol)
+        self.assertIsInstance(symbol._symbol_table['.'], symbol._Symbol)
         self.assertIsInstance(symbol._symbol_table['append'], symbol._Symbol)
 
         self.assertIsInstance(symbol._symbol_table['quasiquote'], symbol._Symbol)
@@ -30,7 +32,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(symbol._defmacro, symbol._Symbol)
         self.assertIsInstance(symbol._funcall, symbol._Symbol)
         self.assertIsInstance(symbol._function, symbol._Symbol)
+
         self.assertIsInstance(symbol._cons, symbol._Symbol)
+        self.assertIsInstance(symbol._dot, symbol._Symbol)
         self.assertIsInstance(symbol._append, symbol._Symbol)
 
         self.assertIsInstance(symbol._quasiquote, symbol._Symbol)

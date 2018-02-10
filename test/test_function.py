@@ -1,6 +1,7 @@
 import unittest
-import operator as op
 import function
+import symbol
+import cons
 
 class UnitTestCase(unittest.TestCase):
     def setUp(self):
@@ -26,23 +27,27 @@ class UnitTestCase(unittest.TestCase):
         self.assertFalse(function._listp(1))     # (listp 1) = NIL
 
     def test_atom(self):
-        self.assertTrue(function._atom('a'))   # (atom 'a) => T
-        self.assertTrue(function._atom(False)) # (atom nil) => T
-        self.assertTrue(function._atom([]))    # (atom '()) => T
-        self.assertTrue(function._atom(3))     # (atom 3) => T
+        self.assertTrue(function._atom('a'))       # (atom 'a) => T
+        self.assertTrue(function._atom(False))     # (atom nil) => T
+        self.assertTrue(function._atom([])) # (atom '()) => T
+        self.assertTrue(function._atom(3))         # (atom 3) => T
         self.assertFalse(function._atom(function._cons(1, False))) # (atom (cons 1 nil)) => NIL
 
     def test_cons(self):
         self.assertEqual(function._cons(1, False), [1])        # (cons 1 nil) => (1)
         self.assertEqual(function._cons(1, []), [1])           # (cons 1 '()) => (1)
         self.assertEqual(function._cons(1, [2, 3]), [1, 2, 3]) # (cons 1 '(2 3)) => (1 2 3)
-        self.assertEqual(function._cons(1, 2), [1, 2])         # (cons 1 2) => (1 2) ; the result is equal to (1 . 2)
+
+        # dotted pair
+        self.assertIsInstance(function._cons(1, 2), cons._DottedPair)
+        self.assertEqual(function._cons(1, 2), cons._DottedPair([1, 2])) # (cons 1 2) => (1 . 2)
 
     def test_car(self):
         self.assertEqual(function._car(False), False) # (car nil) => NIL
         self.assertEqual(function._car([]), False)    # (car '()) => NIL
         self.assertEqual(function._car([1]), 1)       # (car '(1)) => 1
         self.assertEqual(function._car([1, 2, 3]), 1) # (car '(1 2 3)) => 1
+        self.assertEqual(function._car(cons._DottedPair([1, 2])), 1) # (car '(1 . 2)) => 1
         self.assertRaisesRegex(TypeError, "The value 1 is not LIST.", function._car, 1) # (car 1) => Error
 
     def test_cdr(self):
@@ -50,17 +55,25 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(function._cdr([]), False)    # (cdr '()) => NIL
         self.assertEqual(function._cdr([1]), False)   # (cdr '(1)) => NIL
         self.assertEqual(function._cdr([1, 2]), [2])  # (cdr '(1 2)) => (2)
+        self.assertEqual(function._cdr(cons._DottedPair([1, 2])), 2) # (cdr '(1 . 2)) => 2
+
+        # (cdr '(1 2 . 3)) => (2 . 3)
+        self.assertIsInstance(function._cdr(cons._DottedPair([1, 2, 3])), cons._DottedPair)
+        self.assertEqual(function._cdr(cons._DottedPair([1, 2, 3])), cons._DottedPair([2, 3]))
         self.assertRaisesRegex(TypeError, "The value 1 is not LIST.", function._cdr, 1) # (cdr 1) => Error
 
     def test_append(self):
         self.assertEqual(function._append(), False) # (append) => NIL
         self.assertEqual(function._append(1), 1)    # (append 1) => NIL
-        self.assertEqual(function._append([1], [2], [], [3]), [1, 2, 3])    # (append '(1) '(2) '() '(3)) => (1 2 3)
-        self.assertEqual(function._append([1], [2], False, [3]), [1, 2, 3]) # (append '(1) '(2) nil '(3)) => (1 2 3)
+
+        # (append '(1) '(2) '() '(3)) => (1 2 3)
+        self.assertEqual(function._append([1], [2], [], [3]), [1, 2, 3])
+        # (append '(1) '(2) nil '(3)) => (1 2 3)
+        self.assertEqual(function._append([1], [2], False, [3]), [1, 2, 3])
 
     def test_list(self):
-        self.assertEqual(function._list(), False)            # (list) => NIL
-        self.assertEqual(function._list(1), [1])             # (list 1) => (1)
+        self.assertEqual(function._list(), False) # (list) => NIL
+        self.assertEqual(function._list(1), [1])  # (list 1) => (1)
         self.assertEqual(function._list(1, 2, 3), [1, 2, 3]) # (list 1 2 3) => (1 2 3)
 
     def test_add(self):
@@ -89,18 +102,28 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(TypeError, "The value must be NUMBER.", function._div, "a")  # (/ "a") => Error
 
     def test_eq(self):
-        self.assertTrue(function._eq('a', 'a'))  # (eq 'a 'a) => T
-        self.assertFalse(function._eq('a', 'b')) # (eq 'a 'b) => NIL
-        self.assertTrue(function._eq(3, 3))      # (eq 3 3) => T
-        self.assertFalse(function._eq(3, 3.0))   # (eq 3 3.0) => NIL
-        self.assertFalse(function._eq(function._cons('a', False), function._cons('a', False))) # (eq (cons 'a nil) (cons 'a nil)) => NIL
+        _a = symbol._Symbol('a')
+        _b = symbol._Symbol('b')
+
+        self.assertTrue(function._eq(_a, _a))  # (eq 'a 'a) => T
+        self.assertFalse(function._eq(_a, _b)) # (eq 'a 'b) => NIL
+        self.assertTrue(function._eq(3, 3))    # (eq 3 3) => T
+        self.assertFalse(function._eq(3, 3.0)) # (eq 3 3.0) => NIL
+
+        # (eq (cons 'a nil) (cons 'a nil)) => NIL
+        self.assertFalse(function._eq(function._cons(_a, False), function._cons(_a, False)))
 
     def test_eql(self):
-        self.assertTrue(function._eql('a', 'a'))  # (eql 'a 'a) => T
-        self.assertFalse(function._eql('a', 'b')) # (eql 'a 'b) => NIL
-        self.assertTrue(function._eql(3, 3))      # (eql 3 3) => T
-        self.assertFalse(function._eql(3, 3.0))   # (eql 3 3.0) => NIL
-        self.assertTrue(function._eql(function._cons('a', False), function._cons('a', False))) # (eql (cons 'a nil) (cons 'a nil)) => T
+        _a = symbol._Symbol('a')
+        _b = symbol._Symbol('b')
+
+        self.assertTrue(function._eql(_a, _a))  # (eql 'a 'a) => T
+        self.assertFalse(function._eql(_a, _b)) # (eql 'a 'b) => NIL
+        self.assertTrue(function._eql(3, 3))    # (eql 3 3) => T
+        self.assertFalse(function._eql(3, 3.0)) # (eql 3 3.0) => NIL
+
+        # (eql (cons 'a nil) (cons 'a nil)) => T
+        self.assertTrue(function._eql(function._cons(_a, False), function._cons(_a, False)))
 
     def test_not(self):
         self.assertTrue(function._not(False)) # (not nil) => T

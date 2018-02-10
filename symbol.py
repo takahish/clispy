@@ -23,7 +23,9 @@ _progn    = _symbol_table['progn']
 _defmacro = _symbol_table['defmacro']
 _function = _symbol_table['function']
 _funcall  = _symbol_table['funcall']
+
 _cons     = _symbol_table['cons']
+_dot      = _symbol_table['.']
 _append   = _symbol_table['append']
 
 _quasiquote       = _symbol_table['quasiquote']

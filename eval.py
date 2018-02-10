@@ -1,5 +1,6 @@
 import symbol
 import env
+import cons
 
 class _Procedure(object):
     """A user-defined scheme procedure.
@@ -19,6 +20,18 @@ class _Procedure(object):
             env._FunctionEnvironment([], [], self.func_env)
         )
 
+def _cons(lst):
+    """Create cons sell (or dotted pair) object.
+    """
+    if len(lst) > 2 and lst[-2] == symbol._dot:
+        if lst[-1] is not False:
+            lst.remove(symbol._dot)
+            return cons._DottedPair(lst)
+        else:
+            return lst[:-2]
+    else:
+        return lst
+
 def _eval(x, var_env=env._var_env, func_env=env._func_env):
     """Evaluate an expression in an environment.
     """
@@ -29,23 +42,19 @@ def _eval(x, var_env=env._var_env, func_env=env._func_env):
             return x
         elif x[0] is symbol._quote:          # (quote exp)
             (_, exp) = x
+            if isinstance(exp, list):        # list literal
+                return _cons(exp)
             return exp
         elif x[0] is symbol._if:             # if test conseq alt
             (_, test, conseq, alt) = x
             x = (conseq if _eval(test, var_env, func_env) else alt)
         elif x[0] is symbol._defun:
             (_, func, exp) = x               # (defun f, var exp)
-            try:
-                func_env.find(func)[func] = _eval(exp, var_env, func_env)
-            except LookupError:
-                func_env[func] = _eval(exp, var_env, func_env)
+            func_env[func] = _eval(exp, var_env, func_env)
             return func_env[func]
         elif x[0] is symbol._setq:           # (setq var exp)
             (_, var, exp) = x
-            try:
-                var_env.find(var)[var] = _eval(exp, var_env, func_env)
-            except LookupError:
-                var_env[var] = _eval(exp, var_env, func_env)
+            var_env[var] = _eval(exp, var_env, func_env)
             return var_env[var]
         elif x[0] is symbol._lambda:         # (lambda (var...) body)
             (_, params, exp) = x

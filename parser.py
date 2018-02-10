@@ -4,6 +4,7 @@ import symbol
 import env
 import eval
 import function
+import cons
 
 class _InPort(object):
     """An input port. Retains a line of chars.
@@ -102,7 +103,10 @@ def _to_string(x):
         return x
     elif isinstance(x, str):
         return '"%s"' % x.encode('unicode_escape').decode('unicode_escape').replace('"', r'\"')
-    elif isinstance(x, list):
+    elif isinstance(x, cons._DottedPair):
+        x = x[:-1] + [symbol._dot] + [x[-1]]
+        return '(' + ' '.join(map(_to_string, x)) + ')'
+    elif isinstance(x, cons._Cons):
         return '(' + ' '.join(map(_to_string, x)) + ')'
     elif isinstance(x, complex):
         return str(x).replace('j', 'i')
