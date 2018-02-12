@@ -116,7 +116,6 @@ class UnitTestCase(unittest.TestCase):
         _defmacro   = symbol._defmacro
         _quasiquote = symbol._quasiquote
         _unquote    = symbol._unquote
-        _unquote_splicing = symbol._unquote_splicing
         _func  = symbol._Symbol('func')
         _x     = symbol._Symbol('x')
         _y     = symbol._Symbol('y')
