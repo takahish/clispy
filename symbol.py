@@ -33,6 +33,9 @@ _unquote          = _symbol_table['unquote']
 _unquote_splicing = _symbol_table['unquote-splicing']
 _sharpquote       = _symbol_table['function']
 
+_let = _symbol_table['let']
+_flet = _symbol_table['flet']
+
 # Syntactic sugar
 _quotes = {
     "'":  _quote,

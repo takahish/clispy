@@ -107,6 +107,13 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(parser._expand_quasiquote([[_unquote_splicing, [1, 2]], 3]),
                          [_append, [1, 2], [_cons, [_quote, 3], [_quote, []]]])
 
+    def test_replace_expression(self):
+        self.assertEqual(parser._replace_expression(['func', 1, 2], 'func', 'add'), ['add', 1, 2])
+        self.assertEqual(parser._replace_expression([['func', 1, 2], 3], 'func', 'add'),
+                         [['add', 1, 2], 3])
+        self.assertEqual(parser._replace_expression(['add', ['func', 1, 2], 3], 'func', 'sub'),
+                         ['add', ['sub', 1, 2], 3])
+
     def test_expand(self):
         _quote = symbol._quote
         _if    = symbol._if
@@ -116,6 +123,8 @@ class UnitTestCase(unittest.TestCase):
         _defmacro   = symbol._defmacro
         _quasiquote = symbol._quasiquote
         _unquote    = symbol._unquote
+        _let   = symbol._let
+        _flet  = symbol._flet
         _func  = symbol._Symbol('func')
         _x     = symbol._Symbol('x')
         _y     = symbol._Symbol('y')
@@ -141,8 +150,8 @@ class UnitTestCase(unittest.TestCase):
                         [_quasiquote, [_add, [_unquote, _x], [_unquote, _y]]]])
         self.assertTrue(callable(env._macro_env[_test]))
 
-        # (progn) => None
-        self.assertEqual(parser._expand([_progn]), None)
+        # (progn) => NIL
+        self.assertEqual(parser._expand([_progn]), False)
 
         # (lambda (x) e1 e2) => (lambda (x) (begin e1 e2))
         self.assertEqual(parser._expand([_lambda, [_x], [_mul, _x, _x], [_add, _x, _x]]),
@@ -150,6 +159,13 @@ class UnitTestCase(unittest.TestCase):
 
         # `x => expand_quasiquote(x)
         self.assertEqual(parser._expand([_quasiquote, 3]), [_quote, 3])
+
+        # (let ((var val)) body) => ((lambda (var) body) val)
+        self.assertEqual(parser._expand([_let, [[_x, 10], [_y, 20]], [_mul, _x, _y]]),
+                         [[_lambda, [_x, _y], [_progn, [_mul, _x, _y]]], 10, 20])
+
+        self.assertEqual(parser._expand([_flet, [[_func, [_x], [_mul, _x, _x]]], [_func, 3]]),
+                         [_progn, [[_lambda, [_x], [_mul, _x, _x]], 3]])
 
         # (m arg...) => macroexpand if m isinstance macro
         self.assertEqual(parser._expand([_test, 1, 2]), [_add, 1, 2])

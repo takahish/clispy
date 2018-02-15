@@ -134,6 +134,17 @@ def _expand_quasiquote(x):
     else:
         return [symbol._cons, _expand_quasiquote(x[0]), _expand_quasiquote(x[1:])]
 
+def _replace_expression(exp, old, new):
+    """Replace expression in nested list.
+    """
+    if not isinstance(exp, list) or len(exp) == 0:
+        if exp == old:
+            return new
+        else:
+            return exp
+    else:
+        return [_replace_expression(exp[0], old, new)] + _replace_expression(exp[1:], old, new)
+
 def _expand(x):
     """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
     """
@@ -175,11 +186,11 @@ def _expand(x):
             return [symbol._defun, f, exp]
     elif x[0] is symbol._progn:
         if len(x) == 1:
-            return None                        # (progn) => None
+            return False                       # (progn) => NIL
         else:
             return [_expand(xi) for xi in x]
     elif x[0] is symbol._lambda:               # (lambda (x) e1 e2)
-        _require(x, len(x)>=3)                 #  => (lambda (x) (begin e1 e2))
+        _require(x, len(x)>=3)                 #  => (lambda (x) (progn e1 e2))
         vars, body = x[1], x[2:]
         _require(x, (isinstance(vars, list) and all(isinstance(v, symbol._Symbol) for v in vars))
                  or isinstance(vars, symbol._Symbol), "illegal lambda argument list")
@@ -188,6 +199,22 @@ def _expand(x):
     elif x[0] is symbol._quasiquote:           # `x => expand_quasiquote(x)
         _require(x, len(x)==2)
         return _expand_quasiquote(x[1])
+    elif x[0] is symbol._let:                  # (let ((var val)) body)
+        _require(x, len(x)>2)                  #  => ((lambda (var) body) val)
+        bindings, body = x[1], x[2:]
+        _require(x, all(isinstance(b, list) and len(b) == 2 and isinstance(b[0], symbol._Symbol)
+                 for b in bindings), "illegal bindig list")
+        vars, vals = zip(*bindings)
+        return [[symbol._lambda, list(vars)] + [[symbol._progn] + list(map(_expand, body))]] + list(map(_expand, vals))
+    elif x[0] is symbol._flet:                 # (flet ((func var exp)) body)
+        _require(x, len(x)==3)                 #  => (progn body_replaced_func_to_lambda)
+        bindings, body = x[1], x[2:]
+        _require(x, all(isinstance(b, list) and len(b) == 3 and isinstance(b[0], symbol._Symbol)
+                        and isinstance(b[1], list) and isinstance(b[2], list)
+                        for b in bindings), "illegal binding list")
+        for binding in bindings:
+            body = _replace_expression(body, binding[0], [symbol._lambda, binding[1], binding[2]])
+        return [symbol._progn] + list(map(_expand, body))
     elif isinstance(x[0], symbol._Symbol) and x[0] in env._macro_env:
         return _expand(env._macro_env.find(x[0])[x[0]](*x[1:]))
                                                # (m arg...) => macroexpand if m isinstance macro
