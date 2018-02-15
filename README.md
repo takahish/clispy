@@ -82,3 +82,6 @@ $ ./unittest.sh
 - [lispy](http://norvig.com/lispy.html)
 - [lispy.py](http://norvig.com/lispy2.html)
 - [Common Lisp HyperSpec](http://www.lispworks.com/documentation/HyperSpec/Front/index.htm)
+
+## License
+[Apache License 2.0](https://github.com/takahish/clispy/blob/master/LICENSE)
