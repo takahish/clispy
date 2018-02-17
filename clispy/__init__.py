@@ -13,20 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-import unittest
-from clispy import symbol, util
-
-
-class UnitTestCase(unittest.TestCase):
-    def test_to_string(self):
-        self.assertEqual(util._to_string(True), 'T')
-        self.assertEqual(util._to_string(False), 'NIL')
-        self.assertEqual(util._to_string(symbol._Symbol('x')), 'x')
-        self.assertEqual(util._to_string("string"), '"string"')
-        self.assertEqual(util._to_string([1, 2, 3]), '(1 2 3)')
-        self.assertEqual(util._to_string(2 + 3j), '(2+3i)')
-        self.assertEqual(util._to_string(1), '1')
-
-    def test_require(self):
-        x = []
-        self.assertRaisesRegex(SyntaxError, "() wrong length", util._require, x, x != [])
+from clispy.repl import repl

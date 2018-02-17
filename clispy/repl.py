@@ -14,11 +14,12 @@
 # ==============================================================================
 
 import sys
-import symbol
-import parse
-import eval
-import expand
-import util
+from clispy import parse
+from clispy import symbol
+from clispy import util
+from clispy import expand
+from clispy import eval
+
 
 def repl(prompt='clispy> ', inport=parse._InPort(sys.stdin), out=sys.stdout):
     """A prompt-read-eval-print loop."

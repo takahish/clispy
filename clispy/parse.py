@@ -15,7 +15,8 @@
 
 import re
 import io
-import symbol
+from clispy import symbol
+
 
 class _InPort(object):
     """An input port. Retains a line of chars.

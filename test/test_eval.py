@@ -14,17 +14,15 @@
 # ==============================================================================
 
 import unittest
-import symbol
-import env
-import eval
-import cons
+from clispy import symbol, cons, env, eval
+
 
 class UnitTestCase(unittest.TestCase):
     def testProcedure(self):
         # (lambda (x) (* x x))
         params = ['x']
         exp = ['*', 'x', 'x']
-        proc = eval._Procedure(params, exp, env._var_env, env._func_env)
+        proc = eval._Procedure(params, exp, env.var_env, env.func_env)
         self.assertIsInstance(proc, eval._Procedure)
 
     def test_cons(self):
@@ -83,16 +81,16 @@ class UnitTestCase(unittest.TestCase):
         _x     = symbol._Symbol('x')
         eval._eval([_defun, _func1, [_lambda, [_x], [_mult, _x, _x]]])
         self.assertRaisesRegex(LookupError, "func1", _eval, _func1)
-        self.assertIsInstance(env._func_env['func1'], eval._Procedure)
+        self.assertIsInstance(env.func_env['func1'], eval._Procedure)
 
         # (progn exp+)
         _var2 = symbol._Symbol('var2')
         _var3 = symbol._Symbol('var3')
         _add  = symbol._Symbol('+')
         result = eval._eval([_progn,
-                        [_setq, _var2, 2],
-                        [_setq, _var3, 3],
-                        [_add, _var2, _var3]])
+                             [_setq, _var2, 2],
+                             [_setq, _var3, 3],
+                             [_add, _var2, _var3]])
         self.assertEqual(result, 5)
 
         # (function func)

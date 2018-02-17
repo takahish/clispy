@@ -15,7 +15,8 @@
 
 import operator as op
 from functools import reduce
-import cons
+from clispy import cons
+
 
 class _BuiltInFunction(dict):
     """Built-In Function, sub-class of dictionary.

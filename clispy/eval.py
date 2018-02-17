@@ -13,9 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-import symbol
-import env
-import cons
+from clispy import symbol
+from clispy import cons
+from clispy import env
+
 
 class _Procedure(object):
     """A user-defined scheme procedure.
@@ -31,8 +32,8 @@ class _Procedure(object):
     def __call__(self, *args):
         return _eval(
             self.exps,
-            env._VariableEnvironment(self.params, args, self.var_env),
-            env._FunctionEnvironment([], [], self.func_env)
+            env.VarEnv(self.params, args, self.var_env),
+            env.FuncEnv([], [], self.func_env)
         )
 
 def _cons(lst):
@@ -47,7 +48,7 @@ def _cons(lst):
     else:
         return lst
 
-def _eval(x, var_env=env._var_env, func_env=env._func_env):
+def _eval(x, var_env=env.var_env, func_env=env.func_env):
     """Evaluate an expression in an environment.
     """
     while True:
@@ -94,7 +95,7 @@ def _eval(x, var_env=env._var_env, func_env=env._func_env):
             exps = [_eval(exp, var_env, func_env) for exp in x[1:]]
             if isinstance(proc, _Procedure):
                 x = proc.exps
-                var_env = env._VariableEnvironment(proc.params, exps, proc.var_env)
-                func_env = env._FunctionEnvironment([], [], proc.func_env)
+                var_env = env.VarEnv(proc.params, exps, proc.var_env)
+                func_env = env.FuncEnv([], [], proc.func_env)
             else:
                 return proc(*exps)

@@ -14,7 +14,8 @@
 # ==============================================================================
 
 import unittest
-import symbol
+from clispy import symbol
+
 
 class UnitTestCase(unittest.TestCase):
     def testSymbolTable(self):

@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-import symbol
-import func
+from clispy import symbol
+from clispy import func
 
-class _Environment(dict):
+
+class _Env(dict):
     """An environment: a dict of {'var': val} pairs, with an outer Env.
     """
     def __init__(self, params=(), args=(), outer=None):
@@ -26,7 +27,7 @@ class _Environment(dict):
             self.update({params: list(args)})
         else:
             # bind rest parameters for lambda
-            params, args = _Environment._parse_rest_argument(params, args)
+            params, args = _Env._parse_rest_argument(params, args)
             if len(args) != len(params):
                 raise TypeError('expected %s, given %s, ' % (params, args))
             self.update(zip(params, args))
@@ -57,27 +58,27 @@ class _Environment(dict):
             args = args[:rest_index] + [args[rest_index:]]
         return params, args
 
-class _VariableEnvironment(_Environment):
+class VarEnv(_Env):
     """Environment for variable.
     """
     pass
 
-class _FunctionEnvironment(_Environment):
+class FuncEnv(_Env):
     """Environment for function.
     """
     pass
 
-class _MacroEnvironment(_Environment):
+class MacroEnv(_Env):
     """Environment for Macro.
     """
     pass
 
 # variable space environment
-_var_env = _VariableEnvironment()
+var_env = VarEnv()
 
 # function space environment
-_func_env = _FunctionEnvironment()
-_func_env.update(func._BuiltInFunction())
+func_env = FuncEnv()
+func_env.update(func._BuiltInFunction())
 
 # macro space environment
-_macro_env = _MacroEnvironment()
+macro_env = MacroEnv()

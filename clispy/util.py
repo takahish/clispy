@@ -13,8 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
-import symbol
-import cons
+from clispy import symbol
+from clispy import cons
+
 
 def _to_string(x):
     """Convert a Python object back into a Lisp-readable string.

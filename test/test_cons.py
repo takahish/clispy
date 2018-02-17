@@ -14,7 +14,8 @@
 # ==============================================================================
 
 import unittest
-import cons
+from clispy import cons
+
 
 class UnitTestCase(unittest.TestCase):
     def setUp(self):

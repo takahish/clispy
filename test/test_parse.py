@@ -15,8 +15,8 @@
 
 import unittest
 import io
-import symbol
-import parse
+from clispy import parse, symbol
+
 
 class UnitTestCase(unittest.TestCase):
     def testInPort(self):

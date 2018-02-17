@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-import symbol
-import env
-import eval
-import func
-import util
+from clispy import symbol
+from clispy import env
+from clispy import util
+from clispy import eval
+from clispy import func
+
 
 def _expand_quasiquote(x):
     """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).
@@ -26,10 +27,10 @@ def _expand_quasiquote(x):
         return [symbol._quote, x]
     util._require(x, x[0] is not symbol._unquote_splicing, "can't splice here")
     if x[0] is symbol._unquote:
-        util._require(x, len(x)==2)
+        util._require(x, len(x) == 2)
         return x[1]
     elif func._consp(x[0]) and x[0][0] is symbol._unquote_splicing:
-        util._require(x[0], len(x[0])==2)
+        util._require(x[0], len(x[0]) == 2)
         return [symbol._append, x[0][1], _expand_quasiquote(x[1:])]
     else:
         return [symbol._cons, _expand_quasiquote(x[0]), _expand_quasiquote(x[1:])]
@@ -45,22 +46,22 @@ def _replace_expression(exp, old, new):
     else:
         return [_replace_expression(exp[0], old, new)] + _replace_expression(exp[1:], old, new)
 
-def _expand(x, macro_env=env._macro_env):
+def _expand(x, macro_env=env.macro_env):
     """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
     """
-    util._require(x, x!=[])                         # () => Error
+    util._require(x, x != [])                         # () => Error
     if not isinstance(x, list):                # constant => unchanged
         return x
     elif x[0] is symbol._quote:                # (quote exp)
-        util._require(x, len(x)==2)
+        util._require(x, len(x) == 2)
         return x
     elif x[0] is symbol._if:
         if len(x) == 3:
             x = x + [False]                    # (if t c) => (if t c nil)
-        util._require(x, len(x)==4)
+        util._require(x, len(x) == 4)
         return [_expand(xi) for xi in x]
     elif x[0] is symbol._setq:
-        util._require (x, len(x)==3)
+        util._require (x, len(x) == 3)
         var = x[1]
         util._require(x, isinstance(var, symbol._Symbol), msg="can set! only a symbol")
         return [symbol._setq, var, _expand(x[2])]
@@ -69,9 +70,9 @@ def _expand(x, macro_env=env._macro_env):
                                                #  => (defun f (lambda (args) body))
             _def, f, args, body = x[0], x[1], x[2], x[3:]
             if isinstance(args, list) and args:
-                return _expand([_def, f, [symbol._lambda, args]+body])
+                return _expand([_def, f, [symbol._lambda, args] + body])
         else:
-            util._require(x, len(x)==3)             # (defun non-var/list exp) => Error
+            util._require(x, len(x) == 3)             # (defun non-var/list exp) => Error
             _def, f, exp = x[0], x[1], x[2]
             exp = _expand(x[2])
             if _def is symbol._defmacro:       # (defmacro v exp)
@@ -93,11 +94,11 @@ def _expand(x, macro_env=env._macro_env):
         util._require(x, len(x) >= 3)               # => (lambda (x) (progn e1 e2))
         vars, body = x[1], x[2:]
         util._require(x, (isinstance(vars, list) and all(isinstance(v, symbol._Symbol) for v in vars))
-                 or isinstance(vars, symbol._Symbol), "illegal lambda argument list")
+                      or isinstance(vars, symbol._Symbol), "illegal lambda argument list")
         exp = body[0] if len(body) == 1 else [symbol._progn] + body
         return [symbol._lambda, vars, _expand(exp)]
     elif x[0] is symbol._quasiquote:           # `x => expand_quasiquote(x)
-        util._require(x, len(x)==2)
+        util._require(x, len(x) == 2)
         return _expand_quasiquote(x[1])
     elif x[0] is symbol._let:                  # (let ((var val)) body) => ((lambda (var) body) val)
         return _let(x)
@@ -108,7 +109,7 @@ def _expand(x, macro_env=env._macro_env):
                                                # (m arg...) => macroexpand if m isinstance macro
     else:
         util._require(x, isinstance(x[0], symbol._Symbol)
-                 or (isinstance(x[0], list) and x[0][0] is symbol._lambda),
+                      or (isinstance(x[0], list) and x[0][0] is symbol._lambda),
                  "illegal function object")
         return [_expand(xi) for xi in x]
 
@@ -118,7 +119,7 @@ def _let(exp):
     util._require(exp, len(exp) > 2)  # => ((lambda (var) body) val)
     bindings, body = exp[1], exp[2:]
     util._require(exp, all(isinstance(b, list) and len(b) == 2 and isinstance(b[0], symbol._Symbol)
-                         for b in bindings), "illegal bindig list")
+                           for b in bindings), "illegal bindig list")
     vars, vals = zip(*bindings)
     return _expand([[symbol._lambda, list(vars)] + list(map(_expand, body))] + list(map(_expand, vals)))
 
@@ -128,8 +129,8 @@ def _flet(exp):
     util._require(exp, len(exp) == 3)
     bindings, body = exp[1], exp[2:]
     util._require(exp, all(isinstance(b, list) and len(b) == 3 and isinstance(b[0], symbol._Symbol)
-                         and isinstance(b[1], list) and isinstance(b[2], list)
-                         for b in bindings), "illegal binding list")
+                           and isinstance(b[1], list) and isinstance(b[2], list)
+                           for b in bindings), "illegal binding list")
     for binding in bindings:
         body = _replace_expression(body, binding[0], [symbol._lambda, binding[1], binding[2]])
     return _expand([symbol._progn] + list(map(_expand, body)))

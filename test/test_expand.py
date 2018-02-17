@@ -14,9 +14,8 @@
 # ==============================================================================
 
 import unittest
-import env
-import symbol
-import expand
+from clispy import symbol, env, expand
+
 
 class UnitTestCase(unittest.TestCase):
     def test_expand_quasiquote(self):
@@ -71,8 +70,8 @@ class UnitTestCase(unittest.TestCase):
 
         # (defmacro v proc) => None; add {v: proc} to macro_table
         expand._expand([_defmacro, _test, [_x, _y],
-                       [_quasiquote, [_add, [_unquote, _x], [_unquote, _y]]]])
-        self.assertTrue(callable(env._macro_env[_test]))
+                        [_quasiquote, [_add, [_unquote, _x], [_unquote, _y]]]])
+        self.assertTrue(callable(env.macro_env[_test]))
 
         # (progn) => NIL
         self.assertEqual(expand._expand([_progn]), False)
