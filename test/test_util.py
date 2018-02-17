@@ -14,7 +14,8 @@
 # ==============================================================================
 
 import unittest
-from clispy import symbol, util
+from clispy import symbol
+from clispy import util
 
 
 class UnitTestCase(unittest.TestCase):

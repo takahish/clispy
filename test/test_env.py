@@ -14,7 +14,9 @@
 # ==============================================================================
 
 import unittest
-from clispy import symbol, env
+from clispy import symbol
+from clispy import env
+
 
 class UnitTestCase(unittest.TestCase):
     def testEnv_parse_rest_argument(self):

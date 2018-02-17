@@ -15,7 +15,8 @@
 
 import unittest
 import io
-from clispy import parse, symbol
+from clispy import parse
+from clispy import symbol
 
 
 class UnitTestCase(unittest.TestCase):

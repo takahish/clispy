@@ -14,7 +14,9 @@
 # ==============================================================================
 
 import unittest
-from clispy import symbol, cons, func
+from clispy import symbol
+from clispy import cons
+from clispy import func
 
 
 class UnitTestCase(unittest.TestCase):
