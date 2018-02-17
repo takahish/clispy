@@ -1,0 +1,44 @@
+# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+import symbol
+import cons
+
+def _to_string(x):
+    """Convert a Python object back into a Lisp-readable string.
+    """
+    if x is True:
+        return 'T'
+    elif x is False:
+        return 'NIL'
+    elif isinstance(x, symbol._Symbol):
+        return x
+    elif isinstance(x, str):
+        return '"%s"' % x.encode('unicode_escape').decode('unicode_escape').replace('"', r'\"')
+    elif isinstance(x, cons._DottedPair):
+        x = x[:-1] + [symbol._dot] + [x[-1]]
+        return '(' + ' '.join(map(_to_string, x)) + ')'
+    elif isinstance(x, cons._Cons):
+        return '(' + ' '.join(map(_to_string, x)) + ')'
+    elif isinstance(x, complex):
+        return str(x).replace('j', 'i')
+    else:
+        return str(x)
+
+def _require(x, predicate, msg="wrong length"):
+    """Signal a syntax error if predicate is false.
+    """
+    if not predicate:
+        raise SyntaxError(_to_string(x) + ': ' + msg)

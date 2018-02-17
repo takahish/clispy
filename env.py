@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import symbol
-import function
+import func
 
 class _Environment(dict):
     """An environment: a dict of {'var': val} pairs, with an outer Env.
@@ -77,7 +77,7 @@ _var_env = _VariableEnvironment()
 
 # function space environment
 _func_env = _FunctionEnvironment()
-_func_env.update(function._BuiltInFunction())
+_func_env.update(func._BuiltInFunction())
 
 # macro space environment
 _macro_env = _MacroEnvironment()
