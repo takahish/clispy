@@ -36,7 +36,7 @@ class _Procedure(object):
             env.FuncEnv([], [], self.func_env)
         )
 
-def _cons(lst):
+def _cons_cell(lst):
     """Create cons sell (or dotted pair) object.
     """
     if len(lst) > 2 and lst[-2] == symbol._dot:
@@ -59,7 +59,7 @@ def _eval(x, var_env=env.var_env, func_env=env.func_env):
         elif x[0] is symbol._quote:          # (quote exp)
             (_, exp) = x
             if isinstance(exp, list):        # list literal
-                return _cons(exp)
+                return _cons_cell(exp)
             return exp
         elif x[0] is symbol._if:             # if test conseq alt
             (_, test, conseq, alt) = x

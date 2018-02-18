@@ -39,7 +39,7 @@ class _InPort(object):
             if token != '' and not token.startswith(';'):
                 return token
 
-def _atom(token):
+def _convert_to_atom(token):
     """Numbers become numbers; #t and #f are booleans; "..." string; otherwise Symbol.
     """
     if token == 't':
@@ -79,7 +79,7 @@ def _read_ahead(token, inport):
     elif token is symbol._eof_object:
         raise SyntaxError('unexpected EOF in list')
     else:
-        return _atom(token)
+        return _convert_to_atom(token)
 
 def _read(inport):
     """Read scheme expression from an inport port.

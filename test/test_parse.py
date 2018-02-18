@@ -38,17 +38,17 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(inport.next_token(), symbol._eof_object)
 
     def test_atom(self):
-        self.assertTrue(parse._atom('t'))
-        self.assertFalse(parse._atom('nil'))
-        self.assertEqual(parse._atom('"string"'), 'string')
+        self.assertTrue(parse._convert_to_atom('t'))
+        self.assertFalse(parse._convert_to_atom('nil'))
+        self.assertEqual(parse._convert_to_atom('"string"'), 'string')
 
-        self.assertIsInstance(parse._atom('2'), int)
-        self.assertEqual(parse._atom('2'), 2)
-        self.assertIsInstance(parse._atom('2.3'), float)
-        self.assertEqual(parse._atom('2.3'), 2.3)
-        self.assertIsInstance(parse._atom('2+3i'), complex)
-        self.assertEqual(parse._atom('2+3i'), 2 + 3j)
-        self.assertIsInstance(parse._atom('sym'), symbol._Symbol)
+        self.assertIsInstance(parse._convert_to_atom('2'), int)
+        self.assertEqual(parse._convert_to_atom('2'), 2)
+        self.assertIsInstance(parse._convert_to_atom('2.3'), float)
+        self.assertEqual(parse._convert_to_atom('2.3'), 2.3)
+        self.assertIsInstance(parse._convert_to_atom('2+3i'), complex)
+        self.assertEqual(parse._convert_to_atom('2+3i'), 2 + 3j)
+        self.assertIsInstance(parse._convert_to_atom('sym'), symbol._Symbol)
         
     def test_read_ahead(self):
         # success to tokenize

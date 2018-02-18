@@ -28,7 +28,7 @@ class UnitTestCase(unittest.TestCase):
         proc = eval._Procedure(params, exp, env.var_env, env.func_env)
         self.assertIsInstance(proc, eval._Procedure)
 
-    def test_cons(self):
+    def test_cons_cell(self):
         _a = symbol._Symbol('a')
         _b = symbol._Symbol('b')
         _c = symbol._Symbol('c')
@@ -36,16 +36,16 @@ class UnitTestCase(unittest.TestCase):
         _dot = symbol._dot
 
         # cons
-        self.assertIsInstance(eval._cons([_a, _b, _c]), cons._Cons)
-        self.assertEqual(eval._cons([_a, _b, _c]), ['a', 'b', 'c'])
+        self.assertIsInstance(eval._cons_cell([_a, _b, _c]), cons._Cons)
+        self.assertEqual(eval._cons_cell([_a, _b, _c]), ['a', 'b', 'c'])
 
         # dotted pair
-        self.assertIsInstance(eval._cons([_a, _dot, _b]), cons._DottedPair)
-        self.assertEqual(eval._cons([_a, _dot, _b]), ['a', 'b'])
+        self.assertIsInstance(eval._cons_cell([_a, _dot, _b]), cons._DottedPair)
+        self.assertEqual(eval._cons_cell([_a, _dot, _b]), ['a', 'b'])
 
         # dotted pair with nil
-        self.assertIsInstance(eval._cons([_a, _dot, False]), cons._Cons)
-        self.assertEqual(eval._cons([_a, _dot, False]), ['a'])
+        self.assertIsInstance(eval._cons_cell([_a, _dot, False]), cons._Cons)
+        self.assertEqual(eval._cons_cell([_a, _dot, False]), ['a'])
 
     def test_eval(self):
         _eval = eval._eval
