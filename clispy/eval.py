@@ -13,89 +13,129 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy import symbol
 from clispy import cons
-from clispy import env
+from clispy import symbol
 
-
-class _Procedure(object):
-    """A user-defined scheme procedure.
-    """
-    def __init__(self, params, exps, var_env, func_env):
-        self.params = params
-        self.exps = exps
-
-        # Environment
-        self.var_env = var_env
-        self.func_env = func_env
-
-    def __call__(self, *args):
-        return _eval(
-            self.exps,
-            env.VarEnv(self.params, args, self.var_env),
-            env.FuncEnv([], [], self.func_env)
-        )
 
 def _cons_cell(lst):
     """Create cons sell (or dotted pair) object.
+
+    Args:
+        lst: abstract syntax tree of common lisp consisted of list.
+
+    Returns:
+        cons cell (Cons or DottedPair).
     """
-    if len(lst) > 2 and lst[-2] == symbol._dot:
+    if len(lst) > 2 and lst[-2] == symbol.DOT:
         if lst[-1] is not False:
-            lst.remove(symbol._dot)
-            return cons._DottedPair(lst)
+            lst.remove(symbol.DOT)
+            return cons.DottedPair(lst)
         else:
             return lst[:-2]
     else:
         return lst
 
-def _eval(x, var_env=env.var_env, func_env=env.func_env):
-    """Evaluate an expression in an environment.
+def closure(symbol, env, func):
+    """Generate _eval function with global environment.
+
+    Args:
+        symbol: clispy.symbol module.
+        env: clispy.env module.
+        func: clispy.func moudle.
+
+    Return:
+        _eval function.
     """
-    while True:
-        if isinstance(x, symbol._Symbol):    # variable reference
-            return var_env.find(x)[x]
-        elif not isinstance(x, list):        # constant literal
-            return x
-        elif x[0] is symbol._quote:          # (quote exp)
-            (_, exp) = x
-            if isinstance(exp, list):        # list literal
-                return _cons_cell(exp)
-            return exp
-        elif x[0] is symbol._if:             # if test conseq alt
-            (_, test, conseq, alt) = x
-            x = (conseq if _eval(test, var_env, func_env) else alt)
-        elif x[0] is symbol._defun:
-            (_, func, exp) = x               # (defun f, var exp)
-            func_env[func] = _eval(exp, var_env, func_env)
-            return func_env[func]
-        elif x[0] is symbol._setq:           # (setq var exp)
-            (_, var, exp) = x
-            var_env[var] = _eval(exp, var_env, func_env)
-            return var_env[var]
-        elif x[0] is symbol._lambda:         # (lambda (var...) body)
-            (_, params, exp) = x
-            return _Procedure(params, exp, var_env, func_env)
-        elif x[0] is symbol._progn:          # (progn exp+)
-            for exp in x[1:-1]:
-                _eval(exp, var_env, func_env)
-            x = x[-1]
-        elif x[0] is symbol._function:       # (function func)
-            (_, func) = x
-            return func_env.find(func)[func]
-        elif x[0] is symbol._funcall:        # (funcall func args)
-            (_, func, *exps) = x
-            proc = var_env.find(func)[func]
-            exps = [_eval(exp, var_env, func_env) for exp in exps]
-            return proc(*exps)
-        else:
-            if isinstance(x[0], symbol._Symbol):
-                proc = func_env.find(x[0])[x[0]]
-            elif isinstance(x[0], list) and x[0][0] is symbol._lambda:
-                proc = _eval(x[0])
-            exps = [_eval(exp, var_env, func_env) for exp in x[1:]]
-            if isinstance(proc, _Procedure):
-                x = proc.exps
-                var_env = env.VarEnv(proc.params, exps, proc.var_env)
-                func_env = env.FuncEnv([], [], proc.func_env)
-            else:
+
+    # variable space environment
+    global_var_env = env.VarEnv()
+
+    # function space environment
+    global_func_env = env.FuncEnv()
+    global_func_env.update(func.BuiltInFunction())
+
+    class _Procedure(object):
+        """A user-defined common lisp procedure.
+        And an instance localizes environment, when it is evaluated.
+        """
+        def __init__(self, params, exps, var_env, func_env):
+            """Inits _Procedure with parameters, expression and environment.
+            """
+            self.params = params
+            self.exps = exps
+
+            # Environment
+            self.var_env = var_env
+            self.func_env = func_env
+
+        def __call__(self, *args):
+            """Make _Procedure to be callable
+            """
+            return _eval(
+                self.exps,
+                env.VarEnv(self.params, args, self.var_env),
+                env.FuncEnv([], [], self.func_env)
+            )
+
+    def _eval(x, var_env=global_var_env, func_env=global_func_env):
+        """Evaluate an expression in an environment.
+
+        Args:
+            x: Abstract syntax tree of common lisp consisted of list.
+            var_env: Variable environment.
+            funcenv: Function environment.
+
+        Returns:
+            Results of evaluation.
+        """
+        while True:
+            if isinstance(x, symbol.Symbol):     # variable reference
+                return var_env.find(x)[x]
+            elif not isinstance(x, list):        # constant literal
+                return x
+            elif x[0] is symbol.QUOTE:           # (quote exp)
+                (_, exp) = x
+                if isinstance(exp, list):        # list literal
+                    return _cons_cell(exp)
+                return exp
+            elif x[0] is symbol.IF:              # if test conseq alt
+                (_, test, conseq, alt) = x
+                x = (conseq if _eval(test, var_env, func_env) else alt)
+            elif x[0] is symbol.DEFUN:
+                (_, func, exp) = x               # (defun f, var exp)
+                func_env[func] = _eval(exp, var_env, func_env)
+                return func_env[func]
+            elif x[0] is symbol.SETQ:            # (setq var exp)
+                (_, var, exp) = x
+                var_env[var] = _eval(exp, var_env, func_env)
+                return var_env[var]
+            elif x[0] is symbol.LAMBDA:          # (lambda (var...) body)
+                (_, params, exp) = x
+                return _Procedure(params, exp, var_env, func_env)
+            elif x[0] is symbol.PROGN:           # (progn exp+)
+                for exp in x[1:-1]:
+                    _eval(exp, var_env, func_env)
+                x = x[-1]
+            elif x[0] is symbol.FUNCTION:        # (function func)
+                (_, func) = x
+                return func_env.find(func)[func]
+            elif x[0] is symbol.FUNCALL:         # (funcall func args)
+                (_, func, *exps) = x
+                proc = var_env.find(func)[func]
+                exps = [_eval(exp, var_env, func_env) for exp in exps]
                 return proc(*exps)
+            else:
+                if isinstance(x[0], symbol.Symbol):
+                    proc = func_env.find(x[0])[x[0]]
+                elif isinstance(x[0], list) and x[0][0] is symbol.LAMBDA:
+                    proc = _eval(x[0])
+                exps = [_eval(exp, var_env, func_env) for exp in x[1:]]
+                if isinstance(proc, _Procedure):
+                    x = proc.exps
+                    var_env = env.VarEnv(proc.params, exps, proc.var_env)
+                    func_env = env.FuncEnv([], [], proc.func_env)
+                else:
+                    return proc(*exps)
+
+    # _eval function closured in global environment.
+    return _eval

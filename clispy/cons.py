@@ -14,10 +14,10 @@
 # ==============================================================================
 
 # Cons cell is equal to list.
-_Cons = list
+Cons = list
 
-class _DottedPair(_Cons):
-    """Dotted Pair.
+class DottedPair(Cons):
+    """Dotted Pair inherite Cons (list)
     """
     def __init__(self, args):
-        _Cons.__init__(self, args)
+        Cons.__init__(self, args)

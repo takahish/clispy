@@ -21,7 +21,7 @@ from clispy import func
 
 class UnitTestCase(unittest.TestCase):
     def setUp(self):
-        self.builtin_operator = func._BuiltInFunction()
+        self.builtin_operator = func.BuiltInFunction()
 
     def test_null(self):
         self.assertTrue(func._null(False))      # (null nil) => T
@@ -55,15 +55,15 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(func._cons(1, [2, 3]), [1, 2, 3]) # (cons 1 '(2 3)) => (1 2 3)
 
         # dotted pair
-        self.assertIsInstance(func._cons(1, 2), cons._DottedPair)
-        self.assertEqual(func._cons(1, 2), cons._DottedPair([1, 2])) # (cons 1 2) => (1 . 2)
+        self.assertIsInstance(func._cons(1, 2), cons.DottedPair)
+        self.assertEqual(func._cons(1, 2), cons.DottedPair([1, 2])) # (cons 1 2) => (1 . 2)
 
     def test_car(self):
         self.assertEqual(func._car(False), False) # (car nil) => NIL
         self.assertEqual(func._car([]), False)    # (car '()) => NIL
         self.assertEqual(func._car([1]), 1)       # (car '(1)) => 1
         self.assertEqual(func._car([1, 2, 3]), 1) # (car '(1 2 3)) => 1
-        self.assertEqual(func._car(cons._DottedPair([1, 2])), 1) # (car '(1 . 2)) => 1
+        self.assertEqual(func._car(cons.DottedPair([1, 2])), 1) # (car '(1 . 2)) => 1
         self.assertRaisesRegex(TypeError, "The value 1 is not LIST.", func._car, 1) # (car 1) => Error
 
     def test_cdr(self):
@@ -71,11 +71,11 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(func._cdr([]), False)    # (cdr '()) => NIL
         self.assertEqual(func._cdr([1]), False)   # (cdr '(1)) => NIL
         self.assertEqual(func._cdr([1, 2]), [2])  # (cdr '(1 2)) => (2)
-        self.assertEqual(func._cdr(cons._DottedPair([1, 2])), 2) # (cdr '(1 . 2)) => 2
+        self.assertEqual(func._cdr(cons.DottedPair([1, 2])), 2) # (cdr '(1 . 2)) => 2
 
         # (cdr '(1 2 . 3)) => (2 . 3)
-        self.assertIsInstance(func._cdr(cons._DottedPair([1, 2, 3])), cons._DottedPair)
-        self.assertEqual(func._cdr(cons._DottedPair([1, 2, 3])), cons._DottedPair([2, 3]))
+        self.assertIsInstance(func._cdr(cons.DottedPair([1, 2, 3])), cons.DottedPair)
+        self.assertEqual(func._cdr(cons.DottedPair([1, 2, 3])), cons.DottedPair([2, 3]))
         self.assertRaisesRegex(TypeError, "The value 1 is not LIST.", func._cdr, 1) # (cdr 1) => Error
 
     def test_append(self):
@@ -118,8 +118,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(TypeError, "The value must be NUMBER.", func._div, "a")  # (/ "a") => Error
 
     def test_eq(self):
-        _a = symbol._Symbol('a')
-        _b = symbol._Symbol('b')
+        _a = symbol.Symbol('a')
+        _b = symbol.Symbol('b')
 
         self.assertTrue(func._eq(_a, _a))  # (eq 'a 'a) => T
         self.assertFalse(func._eq(_a, _b)) # (eq 'a 'b) => NIL
@@ -130,8 +130,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertFalse(func._eq(func._cons(_a, False), func._cons(_a, False)))
 
     def test_eql(self):
-        _a = symbol._Symbol('a')
-        _b = symbol._Symbol('b')
+        _a = symbol.Symbol('a')
+        _b = symbol.Symbol('b')
 
         self.assertTrue(func._eql(_a, _a))  # (eql 'a 'a) => T
         self.assertFalse(func._eql(_a, _b)) # (eql 'a 'b) => NIL

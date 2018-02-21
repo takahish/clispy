@@ -33,7 +33,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(args, [1, [2, 3, 4, 5]])
 
     def testEnvironment(self):
-        param = symbol._Symbol('a')
+        param = symbol.Symbol('a')
         args = [2, 3, 4]
         test_env = env._Env(param, args)
         self.assertEqual(test_env[param], args)
@@ -67,14 +67,3 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(test_env['x'], 1)
         self.assertEqual(test_env['y'], [2, 3, 4, 5])
 
-    def test_variable_env(self):
-        self.assertIsInstance(env.var_env, env._Env)
-        self.assertIsInstance(env.var_env, env.VarEnv)
-
-    def test_function_env(self):
-        self.assertIsInstance(env.func_env, env._Env)
-        self.assertIsInstance(env.func_env, env.FuncEnv)
-
-    def test_macro_env(self):
-        self.assertIsInstance(env.macro_env, env._Env)
-        self.assertIsInstance(env.macro_env, env.MacroEnv)

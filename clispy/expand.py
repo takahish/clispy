@@ -14,123 +14,172 @@
 # ==============================================================================
 
 from clispy import symbol
-from clispy import env
 from clispy import util
-from clispy import eval
 from clispy import func
 
 
 def _expand_quasiquote(x):
     """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).
+
+    Args:
+        x: Abstract syntax tree of common lisp consisted of list.
+
+    Returns:
+        Abstract syntax tree expanded quasiquote.
     """
     if not func._consp(x):
-        return [symbol._quote, x]
-    util._require(x, x[0] is not symbol._unquote_splicing, "can't splice here")
-    if x[0] is symbol._unquote:
-        util._require(x, len(x) == 2)
+        return [symbol.QUOTE, x]
+    util.require(x, x[0] is not symbol.UNQUOTE_SPLICING, "can't splice here")
+    if x[0] is symbol.UNQUOTE:
+        util.require(x, len(x) == 2)
         return x[1]
-    elif func._consp(x[0]) and x[0][0] is symbol._unquote_splicing:
-        util._require(x[0], len(x[0]) == 2)
-        return [symbol._append, x[0][1], _expand_quasiquote(x[1:])]
+    elif func._consp(x[0]) and x[0][0] is symbol.UNQUOTE_SPLICING:
+        util.require(x[0], len(x[0]) == 2)
+        return [symbol.APPEND, x[0][1], _expand_quasiquote(x[1:])]
     else:
-        return [symbol._cons, _expand_quasiquote(x[0]), _expand_quasiquote(x[1:])]
+        return [symbol.CONS, _expand_quasiquote(x[0]), _expand_quasiquote(x[1:])]
 
-def _replace_expression(exp, old, new):
+def _replace_expression(x, old, new):
     """Replace expression in nested list.
+
+    Args:
+        x: Abstract syntax tree of common lisp consisted of list.
+
+    Retruns:
+        Abstract syntax tree replaced old expression to new expression.
     """
-    if not isinstance(exp, list) or len(exp) == 0:
-        if exp == old:
+    if not isinstance(x, list) or len(x) == 0:
+        if x == old:
             return new
         else:
-            return exp
+            return x
     else:
-        return [_replace_expression(exp[0], old, new)] + _replace_expression(exp[1:], old, new)
+        return [_replace_expression(x[0], old, new)] + _replace_expression(x[1:], old, new)
 
-def _expand(x, macro_env=env.macro_env):
-    """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
+def closure(symbol, env, _eval):
+    """Generate _expand function with global environment.
+
+    Args:
+        symbol: clispy.symbol module.
+        env: clispy.symbol module.
+        _eval: eval function generated clispy.eval.closure.
+
+    Returns:
+        _expand function.
     """
-    util._require(x, x != [])                         # () => Error
-    if not isinstance(x, list):                # constant => unchanged
-        return x
-    elif x[0] is symbol._quote:                # (quote exp)
-        util._require(x, len(x) == 2)
-        return x
-    elif x[0] is symbol._if:
-        if len(x) == 3:
-            x = x + [False]                    # (if t c) => (if t c nil)
-        util._require(x, len(x) == 4)
-        return [_expand(xi) for xi in x]
-    elif x[0] is symbol._setq:
-        util._require (x, len(x) == 3)
-        var = x[1]
-        util._require(x, isinstance(var, symbol._Symbol), msg="can set! only a symbol")
-        return [symbol._setq, var, _expand(x[2])]
-    elif x[0] is symbol._defun or x[0] is symbol._defmacro:
-        if len(x) >= 4:                        # (defun f (args) body)
-                                               #  => (defun f (lambda (args) body))
-            _def, f, args, body = x[0], x[1], x[2], x[3:]
-            if isinstance(args, list) and args:
-                return _expand([_def, f, [symbol._lambda, args] + body])
-        else:
-            util._require(x, len(x) == 3)             # (defun non-var/list exp) => Error
-            _def, f, exp = x[0], x[1], x[2]
-            exp = _expand(x[2])
-            if _def is symbol._defmacro:       # (defmacro v exp)
-                                               #  => None; add {f: exp} to function env
-                proc = eval._eval(exp)
-                util._require(x, callable(proc), "macro must be a purocedure")
-                try:
-                    macro_env.find(f)[f] = proc
-                except LookupError:
-                    macro_env[f] = proc
-                return macro_env[f]
-            return [symbol._defun, f, exp]
-    elif x[0] is symbol._progn:
-        if len(x) == 1:
-            return False                       # (progn) => NIL
-        else:
+
+    # macro space environment
+    global_macro_env = env.MacroEnv()
+
+    def _expand(x, macro_env=global_macro_env):
+        """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
+
+        Args:
+            x: Abstract syntax tree of common lisp consisted of list.
+            macro_env: Macro environment.
+
+        Returns:
+            Results of expansion.
+        """
+        util.require(x, x != [])                   # () => Error
+        if not isinstance(x, list):                # constant => unchanged
+            return x
+        elif x[0] is symbol.QUOTE:                 # (quote exp)
+            util.require(x, len(x) == 2)
+            return x
+        elif x[0] is symbol.IF:
+            if len(x) == 3:
+                x = x + [False]                    # (if t c) => (if t c nil)
+            util.require(x, len(x) == 4)
             return [_expand(xi) for xi in x]
-    elif x[0] is symbol._lambda:               # (lambda (x) e1 e2)
-        util._require(x, len(x) >= 3)               # => (lambda (x) (progn e1 e2))
-        vars, body = x[1], x[2:]
-        util._require(x, (isinstance(vars, list) and all(isinstance(v, symbol._Symbol) for v in vars))
-                      or isinstance(vars, symbol._Symbol), "illegal lambda argument list")
-        exp = body[0] if len(body) == 1 else [symbol._progn] + body
-        return [symbol._lambda, vars, _expand(exp)]
-    elif x[0] is symbol._quasiquote:           # `x => expand_quasiquote(x)
-        util._require(x, len(x) == 2)
-        return _expand_quasiquote(x[1])
-    elif x[0] is symbol._let:                  # (let ((var val)) body) => ((lambda (var) body) val)
-        return _let(x)
-    elif x[0] is symbol._flet:                 # (flet ((func var exp)) body)
-        return _flet(x)                        #  => (progn body_replaced_func_to_lambda)
-    elif isinstance(x[0], symbol._Symbol) and x[0] in macro_env:
-        return _expand(macro_env.find(x[0])[x[0]](*x[1:]))
-                                               # (m arg...) => macroexpand if m isinstance macro
-    else:
-        util._require(x, isinstance(x[0], symbol._Symbol)
-                      or (isinstance(x[0], list) and x[0][0] is symbol._lambda),
-                 "illegal function object")
-        return [_expand(xi) for xi in x]
+        elif x[0] is symbol.SETQ:
+            util.require (x, len(x) == 3)
+            var = x[1]
+            util.require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
+            return [symbol.SETQ, var, _expand(x[2])]
+        elif x[0] is symbol.DEFUN or x[0] is symbol.DEFMACRO:
+            if len(x) >= 4:                        # (defun f (args) body)
+                                                   #  => (defun f (lambda (args) body))
+                _def, f, args, body = x[0], x[1], x[2], x[3:]
+                if isinstance(args, list) and args:
+                    return _expand([_def, f, [symbol.LAMBDA, args] + body])
+            else:
+                util.require(x, len(x) == 3)       # (defun non-var/list exp) => Error
+                _def, f, exp = x[0], x[1], x[2]
+                exp = _expand(x[2])
+                if _def is symbol.DEFMACRO:        # (defmacro v exp)
+                                                   #  => None; add {f: exp} to function env
+                    proc = _eval(exp)
+                    util.require(x, callable(proc), "macro must be a purocedure")
+                    try:
+                        macro_env.find(f)[f] = proc
+                    except LookupError:
+                        macro_env[f] = proc
+                    return macro_env[f]
+                return [symbol.DEFUN, f, exp]
+        elif x[0] is symbol.PROGN:
+            if len(x) == 1:
+                return False                       # (progn) => NIL
+            else:
+                return [_expand(xi) for xi in x]
+        elif x[0] is symbol.LAMBDA:                # (lambda (x) e1 e2)
+            util.require(x, len(x) >= 3)           #  => (lambda (x) (progn e1 e2))
+            vars, body = x[1], x[2:]
+            util.require(x, (isinstance(vars, list) and all(isinstance(v, symbol.Symbol) for v in vars))
+                         or isinstance(vars, symbol.Symbol), "illegal lambda argument list")
+            exp = body[0] if len(body) == 1 else [symbol.PROGN] + body
+            return [symbol.LAMBDA, vars, _expand(exp)]
+        elif x[0] is symbol.QUASIQUOTE:            # `x => expand_quasiquote(x)
+            util.require(x, len(x) == 2)
+            return _expand_quasiquote(x[1])
+        elif x[0] is symbol.LET:                   # (let ((var val) ...) body)
+            return _let(x)                         #  => ((lambda (var ...) body) val ...)
+        elif x[0] is symbol.FLET:                  # (flet ((func var exp)) body)
+            return _flet(x)                        #  => (progn body_replaced_func_to_lambda)
+        elif isinstance(x[0], symbol.Symbol) and x[0] in macro_env:
+            return _expand(macro_env.find(x[0])[x[0]](*x[1:]))
+                                                   # (m arg...) => macroexpand if m isinstance macro
+        else:
+            util.require(x, isinstance(x[0], symbol.Symbol)
+                         or (isinstance(x[0], list) and x[0][0] is symbol.LAMBDA),
+                          "illegal function object")
+            return [_expand(xi) for xi in x]
 
-def _let(exp):
-    """let special form
-    """
-    util._require(exp, len(exp) > 2)  # => ((lambda (var) body) val)
-    bindings, body = exp[1], exp[2:]
-    util._require(exp, all(isinstance(b, list) and len(b) == 2 and isinstance(b[0], symbol._Symbol)
-                           for b in bindings), "illegal bindig list")
-    vars, vals = zip(*bindings)
-    return _expand([[symbol._lambda, list(vars)] + list(map(_expand, body))] + list(map(_expand, vals)))
+    def _let(x):
+        """let special form.
+        (let ((var val) ...) body) => ((lambda (var ...) body) val ...).
 
-def _flet(exp):
-    """flet special form
-    """
-    util._require(exp, len(exp) == 3)
-    bindings, body = exp[1], exp[2:]
-    util._require(exp, all(isinstance(b, list) and len(b) == 3 and isinstance(b[0], symbol._Symbol)
-                           and isinstance(b[1], list) and isinstance(b[2], list)
-                           for b in bindings), "illegal binding list")
-    for binding in bindings:
-        body = _replace_expression(body, binding[0], [symbol._lambda, binding[1], binding[2]])
-    return _expand([symbol._progn] + list(map(_expand, body)))
+        Args:
+            x: Abstract syntax tree of common lisp consisted of list.
+
+        Returns:
+            Results of expansion.
+        """
+        util.require(x, len(x) > 2)
+        bindings, body = x[1], x[2:]
+        util.require(x, all(isinstance(b, list) and len(b) == 2 and isinstance(b[0], symbol.Symbol)
+                            for b in bindings), "illegal bindig list")
+        vars, vals = zip(*bindings)
+        return _expand([[symbol.LAMBDA, list(vars)] + list(map(_expand, body))] + list(map(_expand, vals)))
+
+    def _flet(x):
+        """flet special form.
+        (flet ((func var exp) ...) body) => (progn body_replaced_func_to_lambda)
+
+        Args:
+            x: Abstract syntax tree of common lisp consisted of list.
+
+        Returns:
+            Results of expansion.
+        """
+        util.require(x, len(x) == 3)
+        bindings, body = x[1], x[2:]
+        util.require(x, all(isinstance(b, list) and len(b) == 3 and isinstance(b[0], symbol.Symbol)
+                            and isinstance(b[1], list) and isinstance(b[2], list)
+                            for b in bindings), "illegal binding list")
+        for binding in bindings:
+            body = _replace_expression(body, binding[0], [symbol.LAMBDA, binding[1], binding[2]])
+        return _expand([symbol.PROGN] + list(map(_expand, body)))
+
+    # _expand function closured in global environment.
+    return _expand

@@ -13,52 +13,70 @@
 # limitations under the License.
 # ==============================================================================
 
-class _Symbol(str): pass
+class Symbol(str):
+    """Symbol class, sub class of str.
+    """
+    pass
 
 class _SymbolTable():
     """Find or create unique Symbol entry for str s in symbol table.
     """
     def __init__(self):
+        """Inits _SymbolTable.
+        """
         self.table = {}
 
     def __getitem__(self, s):
+        """Get an item like a dictionary.
+
+        Args:
+            s: String.
+
+        Returns:
+            Symbol object.
+        """
         s = s.upper()
         if s not in self.table:
-            self.table[s] = _Symbol(s)
+            self.table[s] = Symbol(s)
         return self.table[s]
 
-_symbol_table = _SymbolTable()
 
-_quote    = _symbol_table['quote']
-_if       = _symbol_table['if']
-_setq     = _symbol_table['setq']
-_defun    = _symbol_table['defun']
-_lambda   = _symbol_table['lambda']
-_progn    = _symbol_table['progn']
-_defmacro = _symbol_table['defmacro']
-_function = _symbol_table['function']
-_funcall  = _symbol_table['funcall']
+# Instance of _SymboleTable.
+symbol_table = _SymbolTable()
 
-_cons     = _symbol_table['cons']
-_dot      = _symbol_table['.']
-_append   = _symbol_table['append']
 
-_quasiquote       = _symbol_table['quasiquote']
-_unquote          = _symbol_table['unquote']
-_unquote_splicing = _symbol_table['unquote-splicing']
-_sharpquote       = _symbol_table['function']
+# Add some symbles to symbol_table.
+QUOTE    = symbol_table['quote']
+IF       = symbol_table['if']
+SETQ     = symbol_table['setq']
+DEFUN    = symbol_table['defun']
+LAMBDA   = symbol_table['lambda']
+PROGN    = symbol_table['progn']
+DEFMACRO = symbol_table['defmacro']
+FUNCTION = symbol_table['function']
+FUNCALL  = symbol_table['funcall']
 
-_let = _symbol_table['let']
-_flet = _symbol_table['flet']
+CONS     = symbol_table['cons']
+DOT      = symbol_table['.']
+APPEND   = symbol_table['append']
 
-# Syntactic sugar
-_quotes = {
-    "'":  _quote,
-    "`":  _quasiquote,
-    ",":  _unquote,
-    ",@": _unquote_splicing,
-    "#'": _sharpquote
-}
+QUASIQUOTE       = symbol_table['quasiquote']
+UNQUOTE          = symbol_table['unquote']
+UNQUOTE_SPLICING = symbol_table['unquote-splicing']
+SHARPQUOTE       = symbol_table['function']
+
+LET = symbol_table['let']
+FLET = symbol_table['flet']
 
 # Note uninterned; can't be read
-_eof_object = _symbol_table['#<eof-object>']
+EOF_OBJECT = symbol_table['#<eof-object>']
+
+
+# Symbol for syntactic sugar of quotes.
+QUOTES = {
+    "'":  QUOTE,
+    "`":  QUASIQUOTE,
+    ",":  UNQUOTE,
+    ",@": UNQUOTE_SPLICING,
+    "#'": SHARPQUOTE
+}

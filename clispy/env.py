@@ -14,16 +14,17 @@
 # ==============================================================================
 
 from clispy import symbol
-from clispy import func
 
 
 class _Env(dict):
-    """An environment: a dict of {'var': val} pairs, with an outer Env.
+    """An environment is a dict of {'var': val} pairs with an outer _Env.
     """
     def __init__(self, params=(), args=(), outer=None):
+        """Inits _Env with parameters, arguments and outer environment.
+        """
         # Bind param list to corresponding args, or single param to list of args
         self.outer = outer
-        if isinstance(params, symbol._Symbol):
+        if isinstance(params, symbol.Symbol):
             self.update({params: list(args)})
         else:
             # bind rest parameters for lambda
@@ -34,6 +35,13 @@ class _Env(dict):
 
     def find(self, var):
         """Find the innermost Env where var appears.
+
+        Args:
+            var: Variable for looking up.
+
+        Returns:
+            Value of variable. If own environment don't have value,
+            this method looks up variable from outer environment.
         """
         if var in self:
             return self
@@ -45,6 +53,13 @@ class _Env(dict):
     @staticmethod
     def _parse_rest_argument(params, args):
         """Fine rest argument to parse params and args.
+
+        Args:
+            params: Parameters include &rest or &body notation.
+            args: Arguments setted to params.
+
+        Returns:
+            Parameters and arguments.
         """
         if '&REST' in params or '&BODY' in params:
             params, args = list(params), list(args) # for slicing and appending
@@ -72,13 +87,3 @@ class MacroEnv(_Env):
     """Environment for Macro.
     """
     pass
-
-# variable space environment
-var_env = VarEnv()
-
-# function space environment
-func_env = FuncEnv()
-func_env.update(func._BuiltInFunction())
-
-# macro space environment
-macro_env = MacroEnv()

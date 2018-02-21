@@ -18,10 +18,12 @@ from functools import reduce
 from clispy import cons
 
 
-class _BuiltInFunction(dict):
+class BuiltInFunction(dict):
     """Built-In Function, sub-class of dictionary.
     """
     def __init__(self):
+        """Inits BuiltInFunction.
+        """
         self.update({
             'NULL': _null,
             'CONSP': _consp,
@@ -51,39 +53,76 @@ class _BuiltInFunction(dict):
 
 def _null(x):
     """Test whether x is nil or not.
+
+    Args:
+        x: S-expression.
+
+    Returns:
+        Boolean.
     """
     return x is False or x == []
 
 def _consp(x):
     """Test whether x is a cons sell or not.
+
+    Args:
+        x: S-expression.
+
+    Returns:
+        Boolean.
     """
-    if isinstance(x, cons._Cons) and len(x) > 0:
+    if isinstance(x, cons.Cons) and len(x) > 0:
         return True
     return False
 
 def _listp(lst):
     """Test whether lst is a list or not.
+
+    Args:
+        x: S-expression.
+
+    Returns:
+        Boolean.
     """
     return _null(lst) or _consp(lst)
 
 def _atom(x):
     """Test whether x is an atom nor not.
+
+    Args:
+        x: S-expression.
+
+    Returns:
+        Boolean.
     """
     if _consp(x):
         return False
     return True
 
 def _cons(x, lst):
-    """cons
+    """cons.
+
+    Args:
+        x: S-expression.
+        lst: List.
+
+    Returns:
+        Cons or DottedPair.
     """
     if not _null(lst) and _atom(lst):     # (cons 1 2) => (1 . 2)
-        return cons._DottedPair([x, lst])
+        return cons.DottedPair([x, lst])
     elif _null(lst):                      # (cons 1 nil) => (1)
         return [x]
     return [x] + lst                      # (cons 1 '(2)) => (1 2)
 
 def _car(lst):
-    """car
+    """car.
+
+    Args:
+        lst: List.
+
+    Returns:
+        Atom.
     """
     if _null(lst):
         return False
@@ -92,20 +131,32 @@ def _car(lst):
     raise TypeError("The value " + str(lst) + " is not LIST.")
 
 def _cdr(lst):
-    """cdr
+    """cdr.
+
+    Args:
+        lst: List.
+
+    Returns:
+        List or Atom.
     """
     if _null(lst) or (_consp(lst) and len(lst) <= 1):         # (cdr nil) or (cdr '()) => NIL
         return False
-    elif isinstance(lst, cons._DottedPair) and len(lst) == 2: # (cdr '(1 . 2)) => 2
+    elif isinstance(lst, cons.DottedPair) and len(lst) == 2: # (cdr '(1 . 2)) => 2
         return lst[1]
-    elif isinstance(lst, cons._DottedPair) and len(lst) > 2:  # (cdr '(1 2 . 3)) => (2 . 3)
-        return cons._DottedPair(lst[1:])
+    elif isinstance(lst, cons.DottedPair) and len(lst) > 2:  # (cdr '(1 2 . 3)) => (2 . 3)
+        return cons.DottedPair(lst[1:])
     elif _consp(lst) and len(lst) > 1:                        # (cdr '(1 2)) => (2)
         return lst[1:]
     raise TypeError("The value " + str(lst) + " is not LIST.")
 
 def _append(*args):
     """Append some lists.
+
+    Args:
+        args: Some lists
+
+    Returns:
+        List.
     """
     if len(args) == 0:
         return False
@@ -116,18 +167,38 @@ def _append(*args):
 
 def _list(*args):
     """Return a list containing the supplied objects.
+
+    Args:
+        args: Some atoms.
+
+    Return:
+        List.
     """
     if len(args) == 0:
         return False
     return list(args)
 
 def _eq(x, y):
-    """Equal
+    """eq.
+
+    Args:
+        x: S-expression.
+        y: S-expression.
+
+    Returns:
+        Boolean.
     """
     return x is y
 
 def _eql(x, y):
-    """Equal
+    """eql.
+
+    Args:
+        x: S-expression.
+        y: S-expression.
+
+    Returns:
+        Boolean.
     """
     if _consp(x) and _consp(y):
         if len(x) != len(y):
@@ -138,17 +209,36 @@ def _eql(x, y):
         return _eq(x, y)
 
 def _not(x):
-    """Not
+    """not.
+
+    Args:
+        x: S-expression.
+
+    Returns:
+        Boolean.
     """
     return op.not_(x)
 
 def _numberp(x):
     """Test whether x is number or not.
+
+    Args:
+        x: S-expression.
+
+    Returns:
+        Boolean.
     """
     return isinstance(x, int) or isinstance(x, float)
 
 def _arithemetic(arithemetic, args):
     """Arithemetic operator for variable arguments.
+
+    Args:
+        arithemetic: Arithemetic operator.
+        args: Some numbers.
+
+    Returns:
+        Number.
     """
     if all([_numberp(arg) for arg in args]):
         return reduce(arithemetic, args)
@@ -156,27 +246,58 @@ def _arithemetic(arithemetic, args):
         raise TypeError("The value must be NUMBER.")
 
 def _add(*args):
-    """Add
+    """Add.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Number.
     """
     return _arithemetic(op.add, args)
 
 def _sub(*args):
-    """Subtruct
+    """Subtruct.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Number.
     """
     return _arithemetic(op.sub, args)
 
 def _mul(*args):
-    """Multiply
+    """Multiply.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Number.
     """
     return _arithemetic(op.mul, args)
 
 def _div(*args):
-    """Divide
+    """Divide.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Number.
     """
     return _arithemetic(op.truediv, args)
 
 def _comp(comp, *args):
     """Comparison function for variable arguments.
+
+    Args:
+        comp: Comparison operator.
+        args: Some numbers.
+
+    Returns:
+        Boolean.
     """
     if len(args) == 1:
         return True
@@ -188,6 +309,13 @@ def _comp(comp, *args):
 
 def _comp_with_argument_check(comp, *args):
     """comparison function with argument check.
+
+    Args:
+        comp: Comparison operator.
+        args: Some numbers.
+
+    Returns:
+        Boolean.
     """
     if len(args) == 0:
         raise TypeError("At least 1 expected.")
@@ -198,36 +326,78 @@ def _comp_with_argument_check(comp, *args):
         raise TypeError("The value must be NUMBER.")
 
 def _gt(*args):
-    """Greater than
+    """Greater than.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Boolean.
     """
     return _comp_with_argument_check(op.gt, *args)
 
 def _lt(*args):
-    """Less than
+    """Less than.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Boolean.
     """
     return _comp_with_argument_check(op.lt, *args)
 
 def _ge(*args):
-    """Greater than equal
+    """Greater than equal.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Boolean.
     """
     return _comp_with_argument_check(op.ge, *args)
 
 def _le(*args):
-    """Less than equal
+    """Less than equal.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Boolean.
     """
     return _comp_with_argument_check(op.le, *args)
 
 def _neq(*args):
-    """Number equal
+    """Number equal.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Boolean.
     """
     return _comp_with_argument_check(op.eq, *args)
 
 def _max(*args):
-    """Maximum
+    """Maximum.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Boolean.
     """
     return _arithemetic(max, args)
 
 def _min(*args):
-    """Minimum
+    """Minimum.
+
+    Args:
+        args: Some numbers.
+
+    Returns:
+        Boolean.
     """
     return _arithemetic(min, args)
