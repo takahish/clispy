@@ -132,54 +132,11 @@ def closure(symbol, env, _eval):
         elif x[0] is symbol.QUASIQUOTE:            # `x => expand_quasiquote(x)
             util.require(x, len(x) == 2)
             return _expand_quasiquote(x[1])
-        elif x[0] is symbol.LET:                   # (let ((var val) ...) body)
-            return _let(x)                         #  => ((lambda (var ...) body) val ...)
-        elif x[0] is symbol.FLET:                  # (flet ((func var exp)) body)
-            return _flet(x)                        #  => (progn body_replaced_func_to_lambda)
         elif isinstance(x[0], symbol.Symbol) and x[0] in macro_env:
             return _expand(macro_env.find(x[0])[x[0]](*x[1:]))
                                                    # (m arg...) => macroexpand if m isinstance macro
         else:
-            util.require(x, isinstance(x[0], symbol.Symbol)
-                         or (isinstance(x[0], list) and x[0][0] is symbol.LAMBDA),
-                          "illegal function object")
             return [_expand(xi) for xi in x]
-
-    def _let(x):
-        """let special form.
-        (let ((var val) ...) body) => ((lambda (var ...) body) val ...).
-
-        Args:
-            x: Abstract syntax tree of common lisp consisted of list.
-
-        Returns:
-            Results of expansion.
-        """
-        util.require(x, len(x) > 2)
-        bindings, body = x[1], x[2:]
-        util.require(x, all(isinstance(b, list) and len(b) == 2 and isinstance(b[0], symbol.Symbol)
-                            for b in bindings), "illegal bindig list")
-        vars, vals = zip(*bindings)
-        return _expand([[symbol.LAMBDA, list(vars)] + list(map(_expand, body))] + list(map(_expand, vals)))
-
-    def _flet(x):
-        """flet special form.
-        (flet ((func var exp) ...) body) => (progn body_replaced_func_to_lambda)
-
-        Args:
-            x: Abstract syntax tree of common lisp consisted of list.
-
-        Returns:
-            Results of expansion.
-        """
-        util.require(x, len(x) == 3)
-        bindings, body = x[1], x[2:]
-        util.require(x, all(isinstance(b, list) and len(b) == 3 and isinstance(b[0], symbol.Symbol)
-                            and isinstance(b[1], list) and isinstance(b[2], list)
-                            for b in bindings), "illegal binding list")
-        for binding in bindings:
-            body = _replace_expression(body, binding[0], [symbol.LAMBDA, binding[1], binding[2]])
-        return _expand([symbol.PROGN] + list(map(_expand, body)))
 
     # _expand function closured in global environment.
     return _expand

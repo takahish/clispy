@@ -95,13 +95,5 @@ class UnitTestCase(unittest.TestCase):
         # `x => expand_quasiquote(x)
         self.assertEqual(_expand([_quasiquote, 3]), [_quote, 3])
 
-        # (let ((var val)) body) => ((lambda (var) body) val)
-        self.assertEqual(_expand([_let, [[_x, 10], [_y, 20]], [_mul, _x, _y]]),
-                         [[_lambda, [_x, _y], [_mul, _x, _y]], 10, 20])
-
-        # (flet ((func var exp)) body) => (progn body_replaced_func_to_lambda)
-        self.assertEqual(_expand([_flet, [[_func, [_x], [_mul, _x, _x]]], [_func, 3]]),
-                         [_progn, [[_lambda, [_x], [_mul, _x, _x]], 3]])
-
         # (m arg...) => macroexpand if m isinstance macro
         self.assertEqual(_expand([_test, 1, 2]), [_add, 1, 2])

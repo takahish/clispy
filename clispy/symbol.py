@@ -66,7 +66,9 @@ UNQUOTE_SPLICING = symbol_table['unquote-splicing']
 SHARPQUOTE       = symbol_table['function']
 
 LET = symbol_table['let']
+LET_ASTER = symbol_table['let*']
 FLET = symbol_table['flet']
+LABELS = symbol_table['labels']
 
 # Note uninterned; can't be read
 EOF_OBJECT = symbol_table['#<eof-object>']
