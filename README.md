@@ -12,8 +12,8 @@ $ python
 >>> sys.version_info
 sys.version_info(major=3, minor=6, micro=2, releaselevel='final', serial=0)
 
->>> import repl
->>> repl.repl()
+>>> import clispy
+>>> clispy.repl()
 CLisPy Version 0.2
 clispy> (setq pi 3.14)
 3.14
