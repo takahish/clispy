@@ -23,77 +23,82 @@ from clispy import expand
 
 class UnitTestCase(unittest.TestCase):
     def setUp(self):
-        self._eval = eval.closure(symbol, env, func)
-        self._expand = expand.closure(symbol, env, self._eval)
+        # Inits global variable environment.
+        self.global_var_env = env.VarEnv()
 
-    def test_expand_quasiquote(self):
-        _symbol = symbol.Symbol('symbol')
-        _quote = symbol.QUOTE
-        _unquote = symbol.UNQUOTE
-        _unquote_splicing = symbol.UNQUOTE_SPLICING
-        _cons = symbol.CONS
-        _append = symbol.APPEND
-        _add = symbol.Symbol('+')
+        # Inits global function environment.
+        self.global_func_env = env.FuncEnv()
+        self.global_func_env.update(func.BuiltInFunction())
 
-        self.assertEqual(expand._expand_quasiquote(_symbol), [symbol.QUOTE, _symbol])
-        self.assertEqual(expand._expand_quasiquote([_unquote, [_add, 1, 2]]), [_add, 1, 2])
-        self.assertEqual(expand._expand_quasiquote([[_unquote_splicing, [1, 2]], 3]),
-                         [_append, [1, 2], [_cons, [_quote, 3], [_quote, []]]])
+        # Make instance of Evaluator.
+        self.evaluator = eval.Evaluator(self.global_var_env, self.global_func_env)
 
-    def test_replace_expression(self):
-        self.assertEqual(expand._replace_expression(['func', 1, 2], 'func', 'add'), ['add', 1, 2])
-        self.assertEqual(expand._replace_expression([['func', 1, 2], 3], 'func', 'add'),
-                         [['add', 1, 2], 3])
-        self.assertEqual(expand._replace_expression(['add', ['func', 1, 2], 3], 'func', 'sub'),
-                         ['add', ['sub', 1, 2], 3])
+        # Inits global macro environment.
+        self.global_macro_env = env.MacroEnv()
+
+        # Make instance of Expander.
+        self.expander = expand.Expander(self.evaluator, self.global_macro_env)
+
+    def test__expand_quasiquote(self):
+        QUOTE = symbol.QUOTE
+        UNQUOTE = symbol.UNQUOTE
+        UNQUOTE_SPLICING = symbol.UNQUOTE_SPLICING
+        CONS = symbol.CONS
+        APPEND = symbol.APPEND
+        S = symbol.Symbol('S')
+        ADD = symbol.Symbol('+')
+
+        self.assertEqual(self.expander._Expander__expand_quasiquote(S), [QUOTE, S])
+        self.assertEqual(self.expander._Expander__expand_quasiquote([UNQUOTE, [ADD, 1, 2]]), [ADD, 1, 2])
+        self.assertEqual(self.expander._Expander__expand_quasiquote([[UNQUOTE_SPLICING, [1, 2]], 3]),
+                         [APPEND, [1, 2], [CONS, [QUOTE, 3], [QUOTE, []]]])
 
     def test_expand(self):
-        _expand = self._expand
+        expand = lambda x: self.expander.expand(x)
 
-        _quote = symbol.QUOTE
-        _if = symbol.IF
-        _defun = symbol.DEFUN
-        _progn = symbol.PROGN
-        _lambda = symbol.LAMBDA
-        _defmacro = symbol.DEFMACRO
-        _quasiquote = symbol.QUASIQUOTE
-        _unquote = symbol.UNQUOTE
-        _let = symbol.LET
-        _flet = symbol.FLET
-        _func = symbol.Symbol('func')
-        _x = symbol.Symbol('x')
-        _y = symbol.Symbol('y')
-        _add = symbol.Symbol('+')
-        _mul = symbol.Symbol('*')
-        _test = symbol.Symbol('test')
+        QUOTE = symbol.QUOTE
+        IF = symbol.IF
+        DEFUN = symbol.DEFUN
+        PROGN = symbol.PROGN
+        LAMBDA = symbol.LAMBDA
+        DEFMACRO = symbol.DEFMACRO
+        QUASIQUOTE = symbol.QUASIQUOTE
+        UNQUOTE = symbol.UNQUOTE
+
+        FUNC = symbol.Symbol('FUNC')
+        X = symbol.Symbol('X')
+        Y = symbol.Symbol('Y')
+        ADD = symbol.Symbol('+')
+        MUL = symbol.Symbol('*')
+        MACRO = symbol.Symbol('MACRO')
 
         # constant => unchanged
-        self.assertEqual(_expand(3), 3)
+        self.assertEqual(expand(3), 3)
 
         # (quote exp)
-        self.assertEqual(_expand([_quote, [1, 2]]), [_quote, [1, 2]])
+        self.assertEqual(expand([QUOTE, [1, 2]]), [QUOTE, [1, 2]])
 
-        # (if t c) => (if t c False)
-        self.assertEqual(_expand([_if, True, 2]), [_if, True, 2, False])
+        # (if t c) => (if t c nil)
+        self.assertEqual(expand([IF, True, 2]), [IF, True, 2, False])
 
         # (defun f (args) body) => (defun f (lambda (args) body))
-        self.assertEqual(_expand([_defun, _func, [_x], [_mul, _x, _x]]),
-                         [_defun, _func, [_lambda, [_x], [_mul, _x, _x]]])
+        self.assertEqual(expand([DEFUN, FUNC, [X], [MUL, X, X]]),
+                         [DEFUN, FUNC, [LAMBDA, [X], [MUL, X, X]]])
 
         # (defmacro v proc) => None; add {v: proc} to macro_table
-        _expand([_defmacro, _test, [_x, _y],
-                 [_quasiquote, [_add, [_unquote, _x], [_unquote, _y]]]])
-        #self.assertTrue(callable(env.macro_env[_test]))
+        expand([DEFMACRO, MACRO, [X, Y],
+                [QUASIQUOTE, [ADD, [UNQUOTE, X], [UNQUOTE, Y]]]])
+        self.assertTrue(callable(self.global_macro_env[MACRO]))
 
         # (progn) => NIL
-        self.assertEqual(_expand([_progn]), False)
+        self.assertEqual(expand([PROGN]), False)
 
         # (lambda (x) e1 e2) => (lambda (x) (begin e1 e2))
-        self.assertEqual(_expand([_lambda, [_x], [_mul, _x, _x], [_add, _x, _x]]),
-                         [_lambda, [_x], [_progn, [_mul, _x, _x], [_add, _x, _x]]])
+        self.assertEqual(expand([LAMBDA, [X], [MUL, X, X], [ADD, X, X]]),
+                         [LAMBDA, [X], [PROGN, [MUL, X, X], [ADD, X, X]]])
 
         # `x => expand_quasiquote(x)
-        self.assertEqual(_expand([_quasiquote, 3]), [_quote, 3])
+        self.assertEqual(expand([QUASIQUOTE, 3]), [QUOTE, 3])
 
         # (m arg...) => macroexpand if m isinstance macro
-        self.assertEqual(_expand([_test, 1, 2]), [_add, 1, 2])
+        self.assertEqual(expand([MACRO, 1, 2]), [ADD, 1, 2])

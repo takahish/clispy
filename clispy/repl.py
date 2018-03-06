@@ -34,22 +34,32 @@ def repl(prompt='clispy> ', inport=parse._InPort(sys.stdin), out=sys.stdout):
     sys.stderr.write("CLisPy Version 0.2\n")
     sys.stderr.flush() # flush buffer explicitly
 
-    # Generate eval function, closure with some modules.
-    eval_ = eval.closure(symbol, env, func)
+    # Global variable environment.
+    global_var_env = env.VarEnv()
 
-    # Generate expand function, closure with some modules and eval.
-    expand_ = expand.closure(symbol, env, eval_)
+    # Global function environment.
+    global_func_env = env.FuncEnv()
+    global_func_env.update(func.BuiltInFunction())
+
+    # Make instance of Evaluator.
+    evaluator = eval.Evaluator(global_var_env, global_func_env)
+
+    # Global macro environment.
+    global_macro_env = env.MacroEnv()
+
+    # Make instance of Expander.
+    expander = expand.Expander(evaluator, global_macro_env)
 
     while True:
         try:
             if prompt:
                 sys.stderr.write(prompt)
                 sys.stderr.flush() # flush buffer explicitly
-            x = expand_(parse.parse(inport))
+            x = expander.expand(parse.parse(inport))
             if x is symbol.EOF_OBJECT:
                 print(file=out)
                 return
-            val = eval_(x)
+            val = evaluator.eval(x)
             if val is not None and out:
                 print(util.to_string(val), file=out)
         except Exception as e:

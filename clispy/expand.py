@@ -18,60 +18,16 @@ from clispy import util
 from clispy import func
 
 
-def _expand_quasiquote(x):
-    """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).
-
-    Args:
-        x: Abstract syntax tree of common lisp consisted of list.
-
-    Returns:
-        Abstract syntax tree expanded quasiquote.
+class Expander(object):
+    """Provide a method to expand abstract syntax tree.
     """
-    if not func._consp(x):
-        return [symbol.QUOTE, x]
-    util.require(x, x[0] is not symbol.UNQUOTE_SPLICING, "can't splice here")
-    if x[0] is symbol.UNQUOTE:
-        util.require(x, len(x) == 2)
-        return x[1]
-    elif func._consp(x[0]) and x[0][0] is symbol.UNQUOTE_SPLICING:
-        util.require(x[0], len(x[0]) == 2)
-        return [symbol.APPEND, x[0][1], _expand_quasiquote(x[1:])]
-    else:
-        return [symbol.CONS, _expand_quasiquote(x[0]), _expand_quasiquote(x[1:])]
+    def __init__(self, evaluator, global_macro_env):
+        """Inits Expander with evaluator and global macro environment.
+        """
+        self.evaluator = evaluator
+        self.global_macro_env = global_macro_env
 
-def _replace_expression(x, old, new):
-    """Replace expression in nested list.
-
-    Args:
-        x: Abstract syntax tree of common lisp consisted of list.
-
-    Retruns:
-        Abstract syntax tree replaced old expression to new expression.
-    """
-    if not isinstance(x, list) or len(x) == 0:
-        if x == old:
-            return new
-        else:
-            return x
-    else:
-        return [_replace_expression(x[0], old, new)] + _replace_expression(x[1:], old, new)
-
-def closure(symbol, env, _eval):
-    """Generate _expand function with global environment.
-
-    Args:
-        symbol: clispy.symbol module.
-        env: clispy.symbol module.
-        _eval: eval function generated clispy.eval.closure.
-
-    Returns:
-        _expand function.
-    """
-
-    # macro space environment
-    global_macro_env = env.MacroEnv()
-
-    def _expand(x, macro_env=global_macro_env):
+    def expand(self, x, macro_env=None):
         """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
 
         Args:
@@ -82,6 +38,10 @@ def closure(symbol, env, _eval):
             Results of expansion.
         """
         util.require(x, x != [])                   # () => Error
+
+        if macro_env is None:
+            macro_env = self.global_macro_env
+
         if not isinstance(x, list):                # constant => unchanged
             return x
         elif x[0] is symbol.QUOTE:                 # (quote exp)
@@ -91,52 +51,79 @@ def closure(symbol, env, _eval):
             if len(x) == 3:
                 x = x + [False]                    # (if t c) => (if t c nil)
             util.require(x, len(x) == 4)
-            return [_expand(xi) for xi in x]
+            return [self.expand(xi, macro_env) for xi in x]
         elif x[0] is symbol.SETQ:
-            util.require (x, len(x) == 3)
-            var = x[1]
-            util.require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
-            return [symbol.SETQ, var, _expand(x[2])]
+            if len(x) == 1:                        # (setq) => NIL
+                return False
+            else:
+                pairs = x[1:]
+                if len(pairs) % 2 == 1:            # (setq a 1 b) => (setq a 1 b nil)
+                    pairs.append(False)
+                x = [symbol.SETQ]
+                for var, exp in zip(*[iter(pairs)]*2):
+                    util.require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
+                    x = x + [var, exp]
+                return x
         elif x[0] is symbol.DEFUN or x[0] is symbol.DEFMACRO:
-            if len(x) >= 4:                        # (defun f (args) body)
-                                                   #  => (defun f (lambda (args) body))
-                _def, f, args, body = x[0], x[1], x[2], x[3:]
-                if isinstance(args, list) and args:
-                    return _expand([_def, f, [symbol.LAMBDA, args] + body])
+            if len(x) >= 4:                        # (defun name args body) => (defun name (lambda args body))
+                _def, name, args, body = x[0], x[1], x[2], x[3:]
+                if func._null(args):
+                    args = []
+                return self.expand([_def, name, [symbol.LAMBDA, args] + body], macro_env)
             else:
                 util.require(x, len(x) == 3)       # (defun non-var/list exp) => Error
-                _def, f, exp = x[0], x[1], x[2]
-                exp = _expand(x[2])
-                if _def is symbol.DEFMACRO:        # (defmacro v exp)
-                                                   #  => None; add {f: exp} to function env
-                    proc = _eval(exp)
+                _def, name, exp = x[0], x[1], x[2]
+                exp = self.expand(x[2], macro_env)
+                if _def is symbol.DEFMACRO:        # (defmacro v exp) => None; add {f: exp} to function env
+                    proc = self.evaluator.eval(exp)
                     util.require(x, callable(proc), "macro must be a purocedure")
                     try:
-                        macro_env.find(f)[f] = proc
+                        macro_env.find(name)[name] = proc
                     except LookupError:
-                        macro_env[f] = proc
-                    return macro_env[f]
-                return [symbol.DEFUN, f, exp]
+                        macro_env[name] = proc
+                    return macro_env[name]
+                return [symbol.DEFUN, name, exp]
         elif x[0] is symbol.PROGN:
             if len(x) == 1:
                 return False                       # (progn) => NIL
             else:
-                return [_expand(xi) for xi in x]
-        elif x[0] is symbol.LAMBDA:                # (lambda (x) e1 e2)
-            util.require(x, len(x) >= 3)           #  => (lambda (x) (progn e1 e2))
+                return [self.expand(xi, macro_env) for xi in x]
+        elif x[0] is symbol.LAMBDA:                # (lambda (x) e1 e2) => (lambda (x) (progn e1 e2))
+            util.require(x, len(x) >= 3)
             vars, body = x[1], x[2:]
             util.require(x, (isinstance(vars, list) and all(isinstance(v, symbol.Symbol) for v in vars))
                          or isinstance(vars, symbol.Symbol), "illegal lambda argument list")
             exp = body[0] if len(body) == 1 else [symbol.PROGN] + body
-            return [symbol.LAMBDA, vars, _expand(exp)]
-        elif x[0] is symbol.QUASIQUOTE:            # `x => expand_quasiquote(x)
+            return [symbol.LAMBDA, vars, self.expand(exp, macro_env)]
+        elif x[0] is symbol.QUASIQUOTE:            # `x => __expand_quasiquote(x)
             util.require(x, len(x) == 2)
-            return _expand_quasiquote(x[1])
+            return self.__expand_quasiquote(x[1])
         elif isinstance(x[0], symbol.Symbol) and x[0] in macro_env:
-            return _expand(macro_env.find(x[0])[x[0]](*x[1:]))
+            return self.expand(macro_env.find(x[0])[x[0]](*x[1:]), macro_env)
                                                    # (m arg...) => macroexpand if m isinstance macro
         else:
-            return [_expand(xi) for xi in x]
+            return [self.expand(xi, macro_env) for xi in x]
 
-    # _expand function closured in global environment.
-    return _expand
+
+    ########## Helper methods ##########
+
+    def __expand_quasiquote(self, x):
+        """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).
+
+        Args:
+            x: Abstract syntax tree of common lisp consisted of list.
+
+        Returns:
+            Abstract syntax tree expanded quasiquote.
+        """
+        if not func._consp(x):
+            return [symbol.QUOTE, x]
+        util.require(x, x[0] is not symbol.UNQUOTE_SPLICING, "can't splice here")
+        if x[0] is symbol.UNQUOTE:
+            util.require(x, len(x) == 2)
+            return x[1]
+        elif func._consp(x[0]) and x[0][0] is symbol.UNQUOTE_SPLICING:
+            util.require(x[0], len(x[0]) == 2)
+            return [symbol.APPEND, x[0][1], self.__expand_quasiquote(x[1:])]
+        else:
+            return [symbol.CONS, self.__expand_quasiquote(x[0]), self.__expand_quasiquote(x[1:])]
