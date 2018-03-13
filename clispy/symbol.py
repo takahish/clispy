@@ -54,7 +54,6 @@ LAMBDA   = symbol_table['lambda']
 PROGN    = symbol_table['progn']
 DEFMACRO = symbol_table['defmacro']
 FUNCTION = symbol_table['function']
-FUNCALL  = symbol_table['funcall']
 
 CONS     = symbol_table['cons']
 DOT      = symbol_table['.']
@@ -69,6 +68,7 @@ LET = symbol_table['let']
 LET_ASTER = symbol_table['let*']
 FLET = symbol_table['flet']
 LABELS = symbol_table['labels']
+MACROLET = symbol_table['macrolet']
 
 # Note uninterned; can't be read
 EOF_OBJECT = symbol_table['#<eof-object>']

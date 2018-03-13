@@ -59,7 +59,7 @@ class Evaluator(object):
         """Evaluate an expression in an environment.
 
         Args:
-            x: Abstract syntax tree of common lisp consisted of list.
+            x: Abstract syntax tree of lisp, consisted of python list.
             var_env: Variable environment.
             func_env: Function environment.
 
@@ -74,39 +74,23 @@ class Evaluator(object):
 
         while True:
             if isinstance(x, symbol.Symbol):          # variable reference
-                return var_env.find(x)[x]
+                return self.__refer(x, var_env)
             elif not isinstance(x, list):             # constant literal
                 return x
-            elif x[0] is symbol.QUOTE:                # (quote exp)
-                (_, exp) = x
-                if isinstance(exp, list):             # list literal
-                    return self.__cons_cell(exp)
-                return exp
-            elif x[0] is symbol.IF:                   # if test conseq alt
-                (_, test, conseq, alt) = x
-                x = (conseq if self.eval(test, var_env, func_env) else alt)
-            elif x[0] is symbol.DEFUN:
-                (_, func, exp) = x                    # (defun func var exp)
-                func_env[func] = self.eval(exp, var_env, func_env)
-                return func
+            elif x[0] is symbol.DEFUN:                # (defun sym (lambda args body))
+                return self.__defun(x, var_env, func_env)
+            elif x[0] is symbol.LAMBDA:               # (lambda (var...) body)
+                return self.__lambda(x, var_env, func_env)
+            elif x[0] is symbol.QUOTE:                # Special form: quote, (quote exp)
+                return self.__quote(x)
+            elif x[0] is symbol.IF:                   # Special form: if, (if test-form then-form else-form)
+                x = self.__if(x, var_env, func_env)
             elif x[0] is symbol.SETQ:                 # Special form: setq, (setq var exp ...)
                 x, var_env = self.__setq(x, var_env, func_env)
-                return x
-            elif x[0] is symbol.LAMBDA:               # (lambda (var...) body)
-                (_, params, exp) = x
-                return Procedure(self, params, exp, var_env, func_env)
-            elif x[0] is symbol.PROGN:                # (progn exp+)
-                for exp in x[1:-1]:
-                    self.eval(exp, var_env, func_env)
-                x = x[-1]
-            elif x[0] is symbol.FUNCTION:             # (function func)
-                (_, func) = x
-                return func_env.find(func)[func]
-            elif x[0] is symbol.FUNCALL:              # (funcall func args)
-                (_, func, *exps) = x
-                proc = var_env.find(func)[func]
-                exps = [self.eval(exp, var_env, func_env) for exp in exps]
-                return proc(*exps)
+            elif x[0] is symbol.PROGN:                # Special form: progn, (progn exp+)
+                x = self.__progn(x, var_env, func_env)
+            elif x[0] is symbol.FUNCTION:             # Special form: function, (function func)
+                x = self.__function(x, var_env, func_env)
             elif x[0] is symbol.LET:                  # Special form: let, (let ((var val) ...) body)
                 x, var_env = self.__let(x, var_env, func_env)
             elif x[0] is symbol.LET_ASTER:            # Special form: let*, (let* ((var val) ...) body)
@@ -116,21 +100,16 @@ class Evaluator(object):
             elif x[0] is symbol.LABELS:               # Special form: labels, (labels ((func var exp) ...) body)
                 x, func_env = self.__labels(x, var_env, func_env)
             else:
-                if isinstance(x[0], symbol.Symbol):
-                    proc = func_env.find(x[0])[x[0]]
-                elif isinstance(x[0], list) and x[0][0] is symbol.LAMBDA:
-                    proc = self.eval(x[0], var_env, func_env)
-                exps = [self.eval(exp, var_env, func_env) for exp in x[1:]]
-                return proc(*exps)
+                return self.__execute(x, var_env, func_env)
 
 
     ########## Helper methods ##########
 
-    def __cons_cell(self, lst):
+    def __cons(self, lst):
         """Create cons sell (or dotted pair) object.
 
         Args:
-            lst: abstract syntax tree of common lisp consisted of list.
+            lst: Abstract syntax tree of lisp, consisted of python list.
 
         Returns:
             cons cell (Cons or DottedPair).
@@ -144,17 +123,103 @@ class Evaluator(object):
         else:
             return lst
 
+    def __refer(self, x, var_env):
+        """Reference value bound variable:
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+
+        Returns:
+             An value.
+        """
+        return var_env.find(x)[x]
+
+    def __defun(self, x, var_env, func_env):
+        """Set procedure to func_env. Procedure is lambda expression.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            Assigned symbol.
+        """
+        (_, sym, exp) = x # x is (defun sym (lambda args body))
+        func_env[sym] = self.eval(exp, var_env, func_env)
+        return sym
+
+    def __lambda(self, x, var_env, func_env):
+        """Make instance of Procedure that is lambda expression.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A procedure.
+        """
+        (_, params, exp) = x # x[0] is symbol.
+        return Procedure(self, params, exp, var_env, func_env)
+
+    def __execute(self, x, var_env, func_env):
+        """Execute expression.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+            An executed value
+        """
+        if isinstance(x[0], symbol.Symbol):
+            proc = func_env.find(x[0])[x[0]]
+        elif isinstance(x[0], list) and x[0][0] is symbol.LAMBDA:
+            proc = self.eval(x[0], var_env, func_env)
+        exps = [self.eval(exp, var_env, func_env) for exp in x[1:]]
+        return proc(*exps)
+
 
     ########## Special forms ##########
+
+    def __quote(self, x):
+        """quote just returns object.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            An expression.
+        """
+        _, exp = x # x[0] is symbol.
+        if isinstance(exp, list): # List literal is converted to cons cell.
+            return self.__cons(exp)
+        return exp
+
+    def __if(self, x, var_env, func_env):
+        """if allows the execution of a form to be dependent on a single test-form.
+        First test-form is evaluated. If the result is true, then then-form is selected;
+        otherwise else-form is selected. Which form is selected is then evaluated.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+            A series of forms
+        """
+        (_, test_form, then_form, else_form) = x # x[0] is symbol.
+        x = (then_form if self.eval(test_form, var_env, func_env) else else_form)
+        return x
 
     def __setq(self, x, var_env, func_env):
         """setq is simple variable assignment of common lisp.
 
         Args:
-            x: Abstract syntax tree of common lisp consisted of list.
+            x: Abstract syntax tree of lisp, consisted of python list.
 
         Returns:
-            Last assigned value.
+            Last assigned symbol.
         """
         for var, exp in zip(*[iter(x[1:])]*2):
             val = self.eval(exp, var_env, func_env)
@@ -164,12 +229,50 @@ class Evaluator(object):
                 var_env[var] = val
         return val, var_env
 
+    def __progn(self, x, var_env, func_env):
+        """progn evaluates forms, in the order in which they are given. The values
+        of each form but the last are discarded. If progn appears as a top level
+        form, then all forms within that progn are considered by the compiler to be
+        top level form.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+            A series of forms.
+        """
+        for exp in x[1:-1]:
+            self.eval(exp, var_env, func_env)
+        x = x[-1]
+        return x
+
+    def __function(self, x, var_env, func_env):
+        """The value of function is the functional value name in the current lexical
+        environment.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+            A callable object.
+        """
+        (_, exp) = x # x[0] is symbol.
+        if isinstance(exp, list) and exp[0] is symbol.LAMBDA:
+            x = self.__lambda(exp, var_env, func_env)
+        else:
+            x = func_env.find(exp)[exp]
+        return x
+
     def __let(self, x, var_env, func_env):
         """let create new variable bindings and execute a series of forms that
         use these bindings. let performs the bindings in parallel.
 
         Args:
-            x: Abstract syntax tree of common lisp consisted of list.
+            x: Abstract syntax tree of lisp, consisted of python list.
             var_env: Variable environment.
             func_env: Function environment.
 
@@ -194,7 +297,7 @@ class Evaluator(object):
         use these bindings. let* performs the bindings in sequential.
 
         Args:
-            x: Abstract syntax tree of common lisp consisted of list.
+            x: Abstract syntax tree of lisp, consisted of python list.
             var_env: Variable environment.
             func_env: Function environment.
 
@@ -217,7 +320,7 @@ class Evaluator(object):
         The scope of the name bindings encompasses only the body.
 
         Args:
-            x: Abstract syntax tree of common lisp consisted of list.
+            x: Abstract syntax tree of lisp, consisted of python list.
             var_env: Variable environment.
             func_env: Function environment.
 
@@ -242,7 +345,7 @@ class Evaluator(object):
         the body.
 
         Args:
-            x: Abstract syntax tree of common lisp consisted of list.
+            x: Abstract syntax tree of lisp, consisted of python list.
             var_env: Variable environment.
             func_env: Function environment.
 

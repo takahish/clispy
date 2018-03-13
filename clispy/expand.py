@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+from clispy import env
 from clispy import symbol
 from clispy import util
 from clispy import func
@@ -31,7 +32,7 @@ class Expander(object):
         """Walk tree of x, making optimizations/fixes, and sinaling SyntaxError
 
         Args:
-            x: Abstract syntax tree of common lisp consisted of list.
+            x: Abstract syntax tree of lisp, consisted of python list.
             macro_env: Macro environment.
 
         Returns:
@@ -44,70 +45,48 @@ class Expander(object):
 
         if not isinstance(x, list):                # constant => unchanged
             return x
-        elif x[0] is symbol.QUOTE:                 # (quote exp)
-            util.require(x, len(x) == 2)
-            return x
-        elif x[0] is symbol.IF:
-            if len(x) == 3:
-                x = x + [False]                    # (if t c) => (if t c nil)
-            util.require(x, len(x) == 4)
-            return [self.expand(xi, macro_env) for xi in x]
-        elif x[0] is symbol.SETQ:
-            if len(x) == 1:                        # (setq) => NIL
-                return False
-            else:
-                pairs = x[1:]
-                if len(pairs) % 2 == 1:            # (setq a 1 b) => (setq a 1 b nil)
-                    pairs.append(False)
-                x = [symbol.SETQ]
-                for var, exp in zip(*[iter(pairs)]*2):
-                    util.require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
-                    x = x + [var, exp]
-                return x
-        elif x[0] is symbol.DEFUN or x[0] is symbol.DEFMACRO:
-            if len(x) >= 4:                        # (defun name args body) => (defun name (lambda args body))
-                _def, name, args, body = x[0], x[1], x[2], x[3:]
-                if func._null(args):
-                    args = []
-                return self.expand([_def, name, [symbol.LAMBDA, args] + body], macro_env)
-            else:
-                util.require(x, len(x) == 3)       # (defun non-var/list exp) => Error
-                _def, name, exp = x[0], x[1], x[2]
-                exp = self.expand(x[2], macro_env)
-                if _def is symbol.DEFMACRO:        # (defmacro v exp) => None; add {f: exp} to function env
-                    proc = self.evaluator.eval(exp)
-                    util.require(x, callable(proc), "macro must be a purocedure")
-                    try:
-                        macro_env.find(name)[name] = proc
-                    except LookupError:
-                        macro_env[name] = proc
-                    return macro_env[name]
-                return [symbol.DEFUN, name, exp]
-        elif x[0] is symbol.PROGN:
-            if len(x) == 1:
-                return False                       # (progn) => NIL
-            else:
-                return [self.expand(xi, macro_env) for xi in x]
-        elif x[0] is symbol.LAMBDA:                # (lambda (x) e1 e2) => (lambda (x) (progn e1 e2))
-            util.require(x, len(x) >= 3)
-            vars, body = x[1], x[2:]
-            util.require(x, (isinstance(vars, list) and all(isinstance(v, symbol.Symbol) for v in vars))
-                         or isinstance(vars, symbol.Symbol), "illegal lambda argument list")
-            exp = body[0] if len(body) == 1 else [symbol.PROGN] + body
-            return [symbol.LAMBDA, vars, self.expand(exp, macro_env)]
-        elif x[0] is symbol.QUASIQUOTE:            # `x => __expand_quasiquote(x)
-            util.require(x, len(x) == 2)
-            return self.__expand_quasiquote(x[1])
+        elif x[0] is symbol.DEFUN:                 # (defun sym (lambda args body))
+            return self.__defun(x, macro_env)
+        elif x[0] is symbol.DEFMACRO:              # (defmacro sym (lambda args body))
+            return self.__defmacro(x, macro_env)
+        elif x[0] is symbol.LAMBDA:                # (lambda (var...) body)
+            return self.__lambda(x, macro_env)
+        elif x[0] is symbol.QUASIQUOTE:            # `x => (quasiquote x)
+            return self.__quasiquote(x)
+        elif x[0] is symbol.QUOTE:                 # Special form: quote, (quote exp)
+            return self.__quote(x)
+        elif x[0] is symbol.IF:                    # Special form: if, (if test-form then-form else-form)
+            return self.__if(x, macro_env)
+        elif x[0] is symbol.SETQ:                  # Special form: setq, (setq var val ...)
+            return self.__setq(x)
+        elif x[0] is symbol.PROGN:                 # Special form: progn, (progn exp+)
+            return self.__progn(x, macro_env)
+        elif x[0] is symbol.FUNCTION:              # Special form: function, (function func)
+            return self.__function(x, macro_env)
+        elif x[0] is symbol.MACROLET:              # Special form: macrolet, (macrolet ((macro var exp) ...) body)
+            return self.__macrolet(x, macro_env)
         elif isinstance(x[0], symbol.Symbol) and x[0] in macro_env:
-            return self.expand(macro_env.find(x[0])[x[0]](*x[1:]), macro_env)
                                                    # (m arg...) => macroexpand if m isinstance macro
+            return self.__expand_macro(x, macro_env)
         else:
-            return [self.expand(xi, macro_env) for xi in x]
+            return self.__expand_recur(x, macro_env)
 
 
     ########## Helper methods ##########
 
-    def __expand_quasiquote(self, x):
+    def __quasiquote(self, x):
+        """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).
+
+        Args:
+            x: Abstract syntax tree of common lisp consisted of list.
+
+        Returns:
+            Abstract syntax tree expanded quasiquote.
+        """
+        util.require(x, len(x) == 2)
+        return self.__quasiquote_recur(x[1])
+
+    def __quasiquote_recur(self, x):
         """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).
 
         Args:
@@ -118,12 +97,217 @@ class Expander(object):
         """
         if not func._consp(x):
             return [symbol.QUOTE, x]
+
         util.require(x, x[0] is not symbol.UNQUOTE_SPLICING, "can't splice here")
+
         if x[0] is symbol.UNQUOTE:
             util.require(x, len(x) == 2)
             return x[1]
         elif func._consp(x[0]) and x[0][0] is symbol.UNQUOTE_SPLICING:
             util.require(x[0], len(x[0]) == 2)
-            return [symbol.APPEND, x[0][1], self.__expand_quasiquote(x[1:])]
+            return [symbol.APPEND, x[0][1], self.__quasiquote_recur(x[1:])]
         else:
-            return [symbol.CONS, self.__expand_quasiquote(x[0]), self.__expand_quasiquote(x[1:])]
+            return [symbol.CONS, self.__quasiquote_recur(x[0]), self.__quasiquote_recur(x[1:])]
+
+    def __defun(self, x, macro_env):
+        """Expand a series of forms for defun.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Macro environment.
+
+        Returns:
+            A series of forms.
+        """
+        if len(x) >= 4: # (defun name args body) => (defun name (lambda args body))
+            defun, name, args, body = x[0], x[1], x[2], x[3:]
+            if func._null(args): # (def name nil body) => (def name [] body)
+                args = []
+            return self.expand([defun, name, [symbol.LAMBDA, args] + body], macro_env)
+        else:
+            util.require(x, len(x) == 3) # (defun non-var/list exp) => Error
+            defun, name, exp = x[0], x[1], x[2]
+            exp = self.expand(exp, macro_env)
+            return [defun, name, exp]
+
+    def __defmacro(self, x, macro_env):
+        """Expand a series of forms for defmacro.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Macro environment.
+
+        Returns:
+            A series of forms or defined macro symbol.
+        """
+        if len(x) >= 4: # (defun name args body) => (defun name (lambda args body))
+            defun, name, args, body = x[0], x[1], x[2], x[3:]
+            if func._null(args): # (def name nil body) => (def name [] body)
+                args = []
+            return self.__defmacro([defun, name, [symbol.LAMBDA, args] + body], macro_env)
+        else:
+            util.require(x, len(x) == 3) # (defun non-var/list exp) => Error
+            _def, name, exp = x[0], x[1], x[2]
+            exp = self.expand(x[2], macro_env)
+
+            proc = self.evaluator.eval(exp)
+            util.require(x, callable(proc), "macro must be a purocedure")
+            try:
+                macro_env.find(name)[name] = proc
+            except LookupError:
+                macro_env[name] = proc
+            return [symbol.QUOTE, name] # quote is needed for eval and print
+
+    def __lambda(self, x, macro_env):
+        """Make instance of Procedure that is lambda expression.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Macro environment.
+
+        Returns:
+            A procedure.
+        """
+        util.require(x, len(x) >= 3)
+        vars, body = x[1], x[2:]
+        util.require(x, (isinstance(vars, list) and all(isinstance(v, symbol.Symbol) for v in vars))
+                     or isinstance(vars, symbol.Symbol), "illegal lambda argument list")
+        exp = body[0] if len(body) == 1 else [symbol.PROGN] + body
+        return [symbol.LAMBDA, vars, self.expand(exp, macro_env)]
+
+    def __expand_macro(self, x, macro_env):
+        """Expand macro.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Macro environment.
+
+        Returns:
+            A series of forms expanded macro.
+        """
+        return self.expand(macro_env.find(x[0])[x[0]](*x[1:]), macro_env)
+
+    def __expand_recur(self, x, macro_env):
+        """Expand recursion.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Macro environment.
+
+        Returns:
+            A series of forms
+        """
+        return [self.expand(xi, macro_env) for xi in x]
+
+
+    ########## Special forms ##########
+
+    def __quote(self, x):
+        """quote just returns object.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            An expression.
+        """
+        util.require(x, len(x) == 2)
+        return x
+
+    def __if(self, x, macro_env):
+        """if allows the execution of a form to be dependent on a single test-form.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Macro environment.
+
+        Returns:
+            A series of forms
+        """
+        if len(x) == 3: # (if t c) => (if t c nil)
+            x = x + [False]
+        util.require(x, len(x) == 4)
+        return [self.expand(xi, macro_env) for xi in x]
+
+    def __setq(self, x):
+        """setq is simple variable assignment of common lisp.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A series of forms.
+        """
+        if len(x) == 1:  # (setq) => NIL
+            return False
+        else:
+            pairs = x[1:]
+            if len(pairs) % 2 == 1: # (setq a 1 b) => (setq a 1 b nil)
+                pairs.append(False)
+            x = [symbol.SETQ]
+            for var, exp in zip(*[iter(pairs)] * 2):
+                util.require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
+                x = x + [var, exp]
+            return x
+
+    def __progn(self, x, macro_env):
+        """progn evaluates forms, in the order in which they are given.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Macro environment.
+
+        Returns:
+            A series of forms.
+        """
+        if len(x) == 1: # (progn) => NIL
+            return False
+        else:
+            return [self.expand(xi, macro_env) for xi in x]
+
+    def __function(self, x, macro_env):
+        """The value of function is the functional value name in the current lexical
+        environment.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Variable environment.
+
+        Returns:
+            A series of forms.
+        """
+        util.require(x, len(x) == 2)
+        util.require(x, isinstance(x[1], symbol.Symbol), "an argument must be symbol")
+        return x
+
+    def __macrolet(self, x, macro_env):
+        """macrolet establishes local macro definitions, using the same format used by defmacro.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A series of forms and new macro bindings.
+        """
+        util.require(x, len(x) >= 2)
+
+        bindings, body = x[1], x[2:]
+
+        local_macro_env = env.MacroEnv([], [], macro_env)
+
+        for binding in bindings:
+            name, exp = binding[0], binding[1:]
+
+            exp = [symbol.LAMBDA] + exp
+            exp = self.expand(exp, macro_env)
+
+            proc = self.evaluator.eval(exp)
+            util.require(x, callable(proc), "macro must be a purocedure")
+
+            try:
+                local_macro_env.find(name)[name] = proc
+            except LookupError:
+                local_macro_env[name] = proc
+
+        x = [symbol.PROGN] + body
+        return self.expand(x, local_macro_env)

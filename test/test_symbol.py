@@ -26,7 +26,6 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(symbol.symbol_table['lambda'], symbol.Symbol)
         self.assertIsInstance(symbol.symbol_table['progn'], symbol.Symbol)
         self.assertIsInstance(symbol.symbol_table['defmacro'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['funcall'], symbol.Symbol)
         self.assertIsInstance(symbol.symbol_table['function'], symbol.Symbol)
 
         self.assertIsInstance(symbol.symbol_table['cons'], symbol.Symbol)
@@ -46,7 +45,6 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(symbol.LAMBDA, symbol.Symbol)
         self.assertIsInstance(symbol.PROGN, symbol.Symbol)
         self.assertIsInstance(symbol.DEFMACRO, symbol.Symbol)
-        self.assertIsInstance(symbol.FUNCALL, symbol.Symbol)
         self.assertIsInstance(symbol.FUNCTION, symbol.Symbol)
 
         self.assertIsInstance(symbol.CONS, symbol.Symbol)
