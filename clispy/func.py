@@ -109,6 +109,8 @@ def _cons(x, lst):
     Returns:
         Cons or DottedPair.
     """
+    if isinstance(lst, cons.DottedPair):  # (cons 1 '(2 . 3)) => (1 2 . 3)
+        return cons.DottedPair([x] + lst)
     if not _null(lst) and _atom(lst):     # (cons 1 2) => (1 . 2)
         return cons.DottedPair([x, lst])
     elif _null(lst):                      # (cons 1 nil) => (1)

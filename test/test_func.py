@@ -57,6 +57,8 @@ class UnitTestCase(unittest.TestCase):
         # dotted pair
         self.assertIsInstance(func._cons(1, 2), cons.DottedPair)
         self.assertEqual(func._cons(1, 2), cons.DottedPair([1, 2])) # (cons 1 2) => (1 . 2)
+        self.assertIsInstance(func._cons(1, cons.DottedPair([2, 3])), cons.DottedPair)
+        self.assertEqual(func._cons(1, cons.DottedPair([2, 3])), cons.DottedPair([1, 2, 3]))
 
     def test_car(self):
         self.assertEqual(func._car(False), False) # (car nil) => NIL
