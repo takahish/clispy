@@ -86,7 +86,7 @@ class Evaluator(object):
             elif x[0] is symbol.IF:                   # Special form: if, (if test-form then-form else-form)
                 x = self.__if(x, var_env, func_env)
             elif x[0] is symbol.SETQ:                 # Special form: setq, (setq var exp ...)
-                x, var_env = self.__setq(x, var_env, func_env)
+                return self.__setq(x, var_env, func_env)
             elif x[0] is symbol.PROGN:                # Special form: progn, (progn exp+)
                 x = self.__progn(x, var_env, func_env)
             elif x[0] is symbol.FUNCTION:             # Special form: function, (function func)
@@ -227,7 +227,7 @@ class Evaluator(object):
                 var_env.find(var)[var] = val
             except LookupError:
                 var_env[var] = val
-        return val, var_env
+        return val
 
     def __progn(self, x, var_env, func_env):
         """progn evaluates forms, in the order in which they are given. The values
