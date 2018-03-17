@@ -93,78 +93,6 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(eval_([ADD, 2, 3]), 5)
 
 
-    ########## Helper methods ##########
-
-    def test__cons(self):
-        DOT = symbol.DOT
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        C = symbol.Symbol('C')
-
-        # __cons is private method in Evaluator.
-
-        # cons
-        self.assertIsInstance(self.evaluator._Evaluator__cons([A, B, C]), cons.Cons)
-        self.assertEqual(self.evaluator._Evaluator__cons([A, B, C]), ['A', 'B', 'C'])
-
-        # dotted pair
-        self.assertIsInstance(self.evaluator._Evaluator__cons([A, DOT, B]), cons.DottedPair)
-        self.assertEqual(self.evaluator._Evaluator__cons([A, DOT, B]), ['A', 'B'])
-
-        # dotted pair with nil
-        self.assertIsInstance(self.evaluator._Evaluator__cons([A, DOT, False]), cons.Cons)
-        self.assertEqual(self.evaluator._Evaluator__cons([A, DOT, False]), ['A'])
-
-    def test__refer(self):
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        C = symbol.Symbol('C')
-
-        # Set local values.
-        var_env = env.VarEnv([A, B], [10, 20], self.global_func_env)
-
-        self.assertEqual(self.evaluator._Evaluator__refer(A, var_env), 10)
-        self.assertEqual(self.evaluator._Evaluator__refer(B, var_env), 20)
-        self.assertRaisesRegex(LookupError, "C", self.evaluator._Evaluator__refer, C, var_env)
-
-    def test__defun(self):
-        DEFUN = symbol.DEFUN
-        LAMBDA = symbol.LAMBDA
-        FUNC = symbol.Symbol('FUNC')
-        MUL = symbol.Symbol('*')
-        X = symbol.Symbol('X')
-
-        # (defun func (lambda (x) (* x x)))
-        x = [DEFUN, FUNC, [LAMBDA, [X], [MUL, X, X]]]
-        self.evaluator._Evaluator__defun(x, self.global_var_env, self.global_func_env)
-
-        self.assertTrue(FUNC in self.global_func_env)
-        self.assertIsInstance(self.global_func_env[FUNC], eval_module.Procedure)
-
-    def test__lambda(self):
-        LAMBDA = symbol.LAMBDA
-        MUL = symbol.Symbol('*')
-        X = symbol.Symbol('X')
-
-        x = [LAMBDA, [X], [MUL, X, X]]
-        f = self.evaluator._Evaluator__lambda(x, self.global_var_env, self.global_func_env)
-        self.assertIsInstance(f, eval_module.Procedure)
-
-    def test__execute(self):
-        ADD = symbol.Symbol('+')
-        LAMBDA = symbol.LAMBDA
-        MUL = symbol.Symbol('*')
-        X = symbol.Symbol('X')
-
-        x = [ADD, 1, 2, 3]
-        val = self.evaluator._Evaluator__execute(x, self.global_var_env, self.global_func_env)
-        self.assertEqual(val, 6)
-
-        x = [[LAMBDA, [X], [MUL, X, X]], 10]
-        val = self.evaluator._Evaluator__execute(x, self.global_var_env, self.global_func_env)
-        self.assertEqual(val, 100)
-
-
     ########## Special forms ##########
 
     def test__quote(self):
@@ -322,3 +250,75 @@ class UnitTestCase(unittest.TestCase):
         # themselves as well as the body.
         self.assertEqual(func_env[FUNC].func_env, func_env[FUNC].func_env)
         self.assertEqual(func_env[FUNC].func_env.outer, self.global_func_env)
+
+
+    ########## Helper methods ##########
+
+    def test__cons(self):
+        DOT = symbol.DOT
+        A = symbol.Symbol('A')
+        B = symbol.Symbol('B')
+        C = symbol.Symbol('C')
+
+        # __cons is private method in Evaluator.
+
+        # cons
+        self.assertIsInstance(self.evaluator._Evaluator__cons([A, B, C]), cons.Cons)
+        self.assertEqual(self.evaluator._Evaluator__cons([A, B, C]), ['A', 'B', 'C'])
+
+        # dotted pair
+        self.assertIsInstance(self.evaluator._Evaluator__cons([A, DOT, B]), cons.DottedPair)
+        self.assertEqual(self.evaluator._Evaluator__cons([A, DOT, B]), ['A', 'B'])
+
+        # dotted pair with nil
+        self.assertIsInstance(self.evaluator._Evaluator__cons([A, DOT, False]), cons.Cons)
+        self.assertEqual(self.evaluator._Evaluator__cons([A, DOT, False]), ['A'])
+
+    def test__refer(self):
+        A = symbol.Symbol('A')
+        B = symbol.Symbol('B')
+        C = symbol.Symbol('C')
+
+        # Set local values.
+        var_env = env.VarEnv([A, B], [10, 20], self.global_func_env)
+
+        self.assertEqual(self.evaluator._Evaluator__refer(A, var_env), 10)
+        self.assertEqual(self.evaluator._Evaluator__refer(B, var_env), 20)
+        self.assertRaisesRegex(LookupError, "C", self.evaluator._Evaluator__refer, C, var_env)
+
+    def test__defun(self):
+        DEFUN = symbol.DEFUN
+        LAMBDA = symbol.LAMBDA
+        FUNC = symbol.Symbol('FUNC')
+        MUL = symbol.Symbol('*')
+        X = symbol.Symbol('X')
+
+        # (defun func (lambda (x) (* x x)))
+        x = [DEFUN, FUNC, [LAMBDA, [X], [MUL, X, X]]]
+        self.evaluator._Evaluator__defun(x, self.global_var_env, self.global_func_env)
+
+        self.assertTrue(FUNC in self.global_func_env)
+        self.assertIsInstance(self.global_func_env[FUNC], eval_module.Procedure)
+
+    def test__lambda(self):
+        LAMBDA = symbol.LAMBDA
+        MUL = symbol.Symbol('*')
+        X = symbol.Symbol('X')
+
+        x = [LAMBDA, [X], [MUL, X, X]]
+        f = self.evaluator._Evaluator__lambda(x, self.global_var_env, self.global_func_env)
+        self.assertIsInstance(f, eval_module.Procedure)
+
+    def test__execute(self):
+        ADD = symbol.Symbol('+')
+        LAMBDA = symbol.LAMBDA
+        MUL = symbol.Symbol('*')
+        X = symbol.Symbol('X')
+
+        x = [ADD, 1, 2, 3]
+        val = self.evaluator._Evaluator__execute(x, self.global_var_env, self.global_func_env)
+        self.assertEqual(val, 6)
+
+        x = [[LAMBDA, [X], [MUL, X, X]], 10]
+        val = self.evaluator._Evaluator__execute(x, self.global_var_env, self.global_func_env)
+        self.assertEqual(val, 100)

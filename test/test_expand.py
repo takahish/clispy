@@ -90,6 +90,96 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(expand([MACRO, 1, 2]), [ADD, 1, 2])
 
 
+    ########## Special forms ##########
+
+    def test__quote(self):
+        QUOTE = symbol.QUOTE
+        A = symbol.Symbol('A')
+        B = symbol.Symbol('B')
+
+        x = [QUOTE, A]
+        exp = self.expander._Expander__quote(x)
+        self.assertEqual(exp, x)
+
+        x = [QUOTE, A, B]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__quote, x)
+
+    def test__if(self):
+        IF = symbol.IF
+        A = symbol.Symbol('A')
+        B = symbol.Symbol('B')
+
+        x = [IF, True, A, B]
+        exp = self.expander._Expander__if(x, self.global_macro_env)
+        self.assertEqual(exp, [IF, True, A, B])
+
+        x = [IF, True, A]
+        exp = self.expander._Expander__if(x, self.global_macro_env)
+        self.assertEqual(exp, [IF, True, A, False])
+
+        x = [IF, True]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__if, x, self.global_macro_env)
+
+        x = [IF, True, A, B, False]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__if, x, self.global_macro_env)
+
+    def test__setq(self):
+        SETQ = symbol.SETQ
+        A = symbol.Symbol('A')
+        B = symbol.Symbol('B')
+        ADD = symbol.Symbol('+')
+
+        x = [SETQ]
+        exp = self.expander._Expander__setq(x)
+        self.assertFalse(exp)
+
+        x = [SETQ, A, 10, B]
+        exp = self.expander._Expander__setq(x)
+        self.assertEqual(exp, [SETQ, A, 10, B, False])
+
+        x = [SETQ, [ADD, A, B], 10]
+        self.assertRaisesRegex(SyntaxError, "can set! only a symbol", self.expander._Expander__setq, x)
+
+    def test__progn(self):
+        PROGN = symbol.PROGN
+        SETQ = symbol.SETQ
+
+        x = [PROGN]
+        exp = self.expander._Expander__progn(x, self.global_macro_env)
+        self.assertFalse(exp)
+
+        x = [PROGN, [SETQ]]
+        exp = self.expander._Expander__progn(x, self.global_macro_env)
+        self.assertEqual(exp, [PROGN, False])
+
+    def test__function(self):
+        FUNCTION = symbol.FUNCTION
+        FUNC = symbol.Symbol('FUNC')
+
+        x = [FUNCTION, FUNC]
+        exp = self.expander._Expander__function(x, self.global_macro_env)
+        self.assertEqual(exp, [FUNCTION, FUNC])
+
+        x = [FUNCTION, 10]
+        self.assertRaisesRegex(SyntaxError, "an argument must be symbol", self.expander._Expander__function, x, self.global_macro_env)
+
+    def test__macrolet(self):
+        MACROLET = symbol.MACROLET
+        QUASIQUOTE = symbol.QUASIQUOTE
+        UNQUOTE = symbol.UNQUOTE
+        PROGN = symbol.PROGN
+        MACRO = symbol.Symbol('MACRO')
+        X = symbol.Symbol('X')
+        Y = symbol.Symbol('Y')
+        ADD = symbol.Symbol('ADD')
+
+        x = [MACROLET, [[MACRO, [X, Y], [QUASIQUOTE, [ADD, [UNQUOTE, X], [UNQUOTE, Y]]]]], [MACRO, 10, 20]]
+        exp = self.expander._Expander__macrolet(x, self.global_macro_env)
+
+        self.assertEqual(exp, [PROGN, [ADD, 10, 20]])
+        self.assertFalse(MACRO in self.global_func_env)
+
+
     ########## Helper methods ##########
 
     def test__quasiquote(self):
@@ -208,93 +298,3 @@ class UnitTestCase(unittest.TestCase):
         x = [[LAMBDA, [X, Y], [ADD, X, Y], [MUL, X, Y]], [MACRO, 10, 20], 30]
         exp = self.expander._Expander__expand_recur(x, self.global_macro_env)
         self.assertEqual(exp, [[LAMBDA, [X, Y], [PROGN, [ADD, X, Y], [MUL, X, Y]]], [ADD, 10, 20], 30])
-
-
-    ########## Special forms ##########
-
-    def test__quote(self):
-        QUOTE = symbol.QUOTE
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-
-        x = [QUOTE, A]
-        exp = self.expander._Expander__quote(x)
-        self.assertEqual(exp, x)
-
-        x = [QUOTE, A, B]
-        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__quote, x)
-
-    def test__if(self):
-        IF = symbol.IF
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-
-        x = [IF, True, A, B]
-        exp = self.expander._Expander__if(x, self.global_macro_env)
-        self.assertEqual(exp, [IF, True, A, B])
-
-        x = [IF, True, A]
-        exp = self.expander._Expander__if(x, self.global_macro_env)
-        self.assertEqual(exp, [IF, True, A, False])
-
-        x = [IF, True]
-        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__if, x, self.global_macro_env)
-
-        x = [IF, True, A, B, False]
-        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__if, x, self.global_macro_env)
-
-    def test__setq(self):
-        SETQ = symbol.SETQ
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        ADD = symbol.Symbol('+')
-
-        x = [SETQ]
-        exp = self.expander._Expander__setq(x)
-        self.assertFalse(exp)
-
-        x = [SETQ, A, 10, B]
-        exp = self.expander._Expander__setq(x)
-        self.assertEqual(exp, [SETQ, A, 10, B, False])
-
-        x = [SETQ, [ADD, A, B], 10]
-        self.assertRaisesRegex(SyntaxError, "can set! only a symbol", self.expander._Expander__setq, x)
-
-    def test__progn(self):
-        PROGN = symbol.PROGN
-        SETQ = symbol.SETQ
-
-        x = [PROGN]
-        exp = self.expander._Expander__progn(x, self.global_macro_env)
-        self.assertFalse(exp)
-
-        x = [PROGN, [SETQ]]
-        exp = self.expander._Expander__progn(x, self.global_macro_env)
-        self.assertEqual(exp, [PROGN, False])
-
-    def test__function(self):
-        FUNCTION = symbol.FUNCTION
-        FUNC = symbol.Symbol('FUNC')
-
-        x = [FUNCTION, FUNC]
-        exp = self.expander._Expander__function(x, self.global_macro_env)
-        self.assertEqual(exp, [FUNCTION, FUNC])
-
-        x = [FUNCTION, 10]
-        self.assertRaisesRegex(SyntaxError, "an argument must be symbol", self.expander._Expander__function, x, self.global_macro_env)
-
-    def test__macrolet(self):
-        MACROLET = symbol.MACROLET
-        QUASIQUOTE = symbol.QUASIQUOTE
-        UNQUOTE = symbol.UNQUOTE
-        PROGN = symbol.PROGN
-        MACRO = symbol.Symbol('MACRO')
-        X = symbol.Symbol('X')
-        Y = symbol.Symbol('Y')
-        ADD = symbol.Symbol('ADD')
-
-        x = [MACROLET, [[MACRO, [X, Y], [QUASIQUOTE, [ADD, [UNQUOTE, X], [UNQUOTE, Y]]]]], [MACRO, 10, 20]]
-        exp = self.expander._Expander__macrolet(x, self.global_macro_env)
-
-        self.assertEqual(exp, [PROGN, [ADD, 10, 20]])
-        self.assertFalse(MACRO in self.global_func_env)

@@ -72,7 +72,120 @@ class Expander(object):
             return self.__expand_recur(x, macro_env)
 
 
-    ########## Helper methods ##########
+    ########## Special forms ##########
+
+    def __quote(self, x):
+        """quote just returns object.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            An expression.
+        """
+        util.require(x, len(x) == 2)
+        return x
+
+    def __if(self, x, macro_env):
+        """if allows the execution of a form to be dependent on a single test-form.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Macro environment.
+
+        Returns:
+            A series of forms
+        """
+        if len(x) == 3: # (if t c) => (if t c nil)
+            x = x + [False]
+        util.require(x, len(x) == 4)
+        return [self.expand(xi, macro_env) for xi in x]
+
+    def __setq(self, x):
+        """setq is simple variable assignment of common lisp.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A series of forms.
+        """
+        if len(x) == 1:  # (setq) => NIL
+            return False
+        else:
+            pairs = x[1:]
+            if len(pairs) % 2 == 1: # (setq a 1 b) => (setq a 1 b nil)
+                pairs.append(False)
+            x = [symbol.SETQ]
+            for var, exp in zip(*[iter(pairs)] * 2):
+                util.require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
+                x = x + [var, exp]
+            return x
+
+    def __progn(self, x, macro_env):
+        """progn evaluates forms, in the order in which they are given.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Macro environment.
+
+        Returns:
+            A series of forms.
+        """
+        if len(x) == 1: # (progn) => NIL
+            return False
+        else:
+            return [self.expand(xi, macro_env) for xi in x]
+
+    def __function(self, x, macro_env):
+        """The value of function is the functional value name in the current lexical
+        environment.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Variable environment.
+
+        Returns:
+            A series of forms.
+        """
+        util.require(x, len(x) == 2)
+        util.require(x, isinstance(x[1], symbol.Symbol), "an argument must be symbol")
+        return x
+
+    def __macrolet(self, x, macro_env):
+        """macrolet establishes local macro definitions, using the same format used by defmacro.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A series of forms and new macro bindings.
+        """
+        util.require(x, len(x) >= 2)
+
+        bindings, body = x[1], x[2:]
+
+        local_macro_env = env.MacroEnv([], [], macro_env)
+
+        for binding in bindings:
+            name, exp = binding[0], binding[1:]
+
+            exp = [symbol.LAMBDA] + exp
+            exp = self.expand(exp, macro_env)
+
+            proc = self.evaluator.eval(exp)
+            util.require(x, callable(proc), "macro must be a purocedure")
+
+            try:
+                local_macro_env.find(name)[name] = proc
+            except LookupError:
+                local_macro_env[name] = proc
+
+        x = [symbol.PROGN] + body
+        return self.expand(x, local_macro_env)
+
+
+   ########## Helper methods ##########
 
     def __quasiquote(self, x):
         """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).
@@ -198,116 +311,3 @@ class Expander(object):
             A series of forms
         """
         return [self.expand(xi, macro_env) for xi in x]
-
-
-    ########## Special forms ##########
-
-    def __quote(self, x):
-        """quote just returns object.
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-
-        Returns:
-            An expression.
-        """
-        util.require(x, len(x) == 2)
-        return x
-
-    def __if(self, x, macro_env):
-        """if allows the execution of a form to be dependent on a single test-form.
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-            macro_env: Macro environment.
-
-        Returns:
-            A series of forms
-        """
-        if len(x) == 3: # (if t c) => (if t c nil)
-            x = x + [False]
-        util.require(x, len(x) == 4)
-        return [self.expand(xi, macro_env) for xi in x]
-
-    def __setq(self, x):
-        """setq is simple variable assignment of common lisp.
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-
-        Returns:
-            A series of forms.
-        """
-        if len(x) == 1:  # (setq) => NIL
-            return False
-        else:
-            pairs = x[1:]
-            if len(pairs) % 2 == 1: # (setq a 1 b) => (setq a 1 b nil)
-                pairs.append(False)
-            x = [symbol.SETQ]
-            for var, exp in zip(*[iter(pairs)] * 2):
-                util.require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
-                x = x + [var, exp]
-            return x
-
-    def __progn(self, x, macro_env):
-        """progn evaluates forms, in the order in which they are given.
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-            macro_env: Macro environment.
-
-        Returns:
-            A series of forms.
-        """
-        if len(x) == 1: # (progn) => NIL
-            return False
-        else:
-            return [self.expand(xi, macro_env) for xi in x]
-
-    def __function(self, x, macro_env):
-        """The value of function is the functional value name in the current lexical
-        environment.
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-            macro_env: Variable environment.
-
-        Returns:
-            A series of forms.
-        """
-        util.require(x, len(x) == 2)
-        util.require(x, isinstance(x[1], symbol.Symbol), "an argument must be symbol")
-        return x
-
-    def __macrolet(self, x, macro_env):
-        """macrolet establishes local macro definitions, using the same format used by defmacro.
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-
-        Returns:
-            A series of forms and new macro bindings.
-        """
-        util.require(x, len(x) >= 2)
-
-        bindings, body = x[1], x[2:]
-
-        local_macro_env = env.MacroEnv([], [], macro_env)
-
-        for binding in bindings:
-            name, exp = binding[0], binding[1:]
-
-            exp = [symbol.LAMBDA] + exp
-            exp = self.expand(exp, macro_env)
-
-            proc = self.evaluator.eval(exp)
-            util.require(x, callable(proc), "macro must be a purocedure")
-
-            try:
-                local_macro_env.find(name)[name] = proc
-            except LookupError:
-                local_macro_env[name] = proc
-
-        x = [symbol.PROGN] + body
-        return self.expand(x, local_macro_env)

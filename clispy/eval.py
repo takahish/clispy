@@ -103,82 +103,6 @@ class Evaluator(object):
                 return self.__execute(x, var_env, func_env)
 
 
-    ########## Helper methods ##########
-
-    def __cons(self, lst):
-        """Create cons sell (or dotted pair) object.
-
-        Args:
-            lst: Abstract syntax tree of lisp, consisted of python list.
-
-        Returns:
-            cons cell (Cons or DottedPair).
-        """
-        if len(lst) > 2 and lst[-2] == symbol.DOT:
-            if lst[-1] is not False:
-                lst.remove(symbol.DOT)
-                return cons.DottedPair(lst)
-            else:
-                return lst[:-2]
-        else:
-            return lst
-
-    def __refer(self, x, var_env):
-        """Reference value bound variable:
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-            var_env: Variable environment.
-
-        Returns:
-             An value.
-        """
-        return var_env.find(x)[x]
-
-    def __defun(self, x, var_env, func_env):
-        """Set procedure to func_env. Procedure is lambda expression.
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-
-        Returns:
-            Assigned symbol.
-        """
-        (_, sym, exp) = x # x is (defun sym (lambda args body))
-        func_env[sym] = self.eval(exp, var_env, func_env)
-        return sym
-
-    def __lambda(self, x, var_env, func_env):
-        """Make instance of Procedure that is lambda expression.
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-
-        Returns:
-            A procedure.
-        """
-        (_, params, exp) = x # x[0] is symbol.
-        return Procedure(self, params, exp, var_env, func_env)
-
-    def __execute(self, x, var_env, func_env):
-        """Execute expression.
-
-        Args:
-            x: Abstract syntax tree of lisp, consisted of python list.
-            var_env: Variable environment.
-            func_env: Function environment.
-
-        Returns:
-            An executed value
-        """
-        if isinstance(x[0], symbol.Symbol):
-            proc = func_env.find(x[0])[x[0]]
-        elif isinstance(x[0], list) and x[0][0] is symbol.LAMBDA:
-            proc = self.eval(x[0], var_env, func_env)
-        exps = [self.eval(exp, var_env, func_env) for exp in x[1:]]
-        return proc(*exps)
-
-
     ########## Special forms ##########
 
     def __quote(self, x):
@@ -364,3 +288,79 @@ class Evaluator(object):
 
         x = [symbol.PROGN] + body
         return x, local_func_env
+
+
+    ########## Helper methods ##########
+
+    def __cons(self, lst):
+        """Create cons sell (or dotted pair) object.
+
+        Args:
+            lst: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            cons cell (Cons or DottedPair).
+        """
+        if len(lst) > 2 and lst[-2] == symbol.DOT:
+            if lst[-1] is not False:
+                lst.remove(symbol.DOT)
+                return cons.DottedPair(lst)
+            else:
+                return lst[:-2]
+        else:
+            return lst
+
+    def __refer(self, x, var_env):
+        """Reference value bound variable:
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+
+        Returns:
+             An value.
+        """
+        return var_env.find(x)[x]
+
+    def __defun(self, x, var_env, func_env):
+        """Set procedure to func_env. Procedure is lambda expression.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            Assigned symbol.
+        """
+        (_, sym, exp) = x # x is (defun sym (lambda args body))
+        func_env[sym] = self.eval(exp, var_env, func_env)
+        return sym
+
+    def __lambda(self, x, var_env, func_env):
+        """Make instance of Procedure that is lambda expression.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A procedure.
+        """
+        (_, params, exp) = x # x[0] is symbol.
+        return Procedure(self, params, exp, var_env, func_env)
+
+    def __execute(self, x, var_env, func_env):
+        """Execute expression.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+            An executed value
+        """
+        if isinstance(x[0], symbol.Symbol):
+            proc = func_env.find(x[0])[x[0]]
+        elif isinstance(x[0], list) and x[0][0] is symbol.LAMBDA:
+            proc = self.eval(x[0], var_env, func_env)
+        exps = [self.eval(exp, var_env, func_env) for exp in x[1:]]
+        return proc(*exps)
