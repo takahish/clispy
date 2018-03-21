@@ -31,3 +31,10 @@ class UnitTestCase(unittest.TestCase):
     def test_require(self):
         x = []
         self.assertRaisesRegex(SyntaxError, "() wrong length", util.require, x, x != [])
+
+    def test_callcc(self):
+        self.assertEqual(util.callcc(lambda throw: 5 + 10 * throw(1)), 1)
+        self.assertEqual(util.callcc(lambda throw: 5 + 10 * 1), 15)
+        self.assertEqual(util.callcc(lambda throw: 5 + 10 * util.callcc(lambda escape: 100 * escape(3))), 35)
+        self.assertEqual(util.callcc(lambda throw: 5 + 10 * util.callcc(lambda escape: 100 * throw(3))), 3)
+        self.assertEqual(util.callcc(lambda throw: 5 + 10 * util.callcc(lambda escape: 100 * 1)), 1005)

@@ -179,6 +179,33 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(exp, [PROGN, [ADD, 10, 20]])
         self.assertFalse(MACRO in self.global_func_env)
 
+    def test__blocl(self):
+        BLOCK = symbol.BLOCK
+        NAME = symbol.Symbol('NAME')
+
+        x = [BLOCK]
+        self.assertRaisesRegex(SyntaxError, "block name must be symbol", self.expander._Expander__block, x, self.global_macro_env)
+
+        x = [BLOCK, 10]
+        self.assertRaisesRegex(SyntaxError, "block name must be symbol", self.expander._Expander__block, x, self.global_macro_env)
+
+        x = [BLOCK, NAME]
+        self.assertEqual(self.expander._Expander__block(x, self.global_macro_env), False)
+
+    def test__return_from(self):
+        RETURN_FROM = symbol.RETURN_FROM
+        NAME = symbol.Symbol('NAME')
+        ADD = symbol.Symbol('+')
+
+        x = [RETURN_FROM]
+        self.assertRaisesRegex(SyntaxError, "block name must be symbol", self.expander._Expander__return_from, x,self.global_macro_env)
+
+        x = [RETURN_FROM, 10]
+        self.assertRaisesRegex(SyntaxError, "block name must be symbol", self.expander._Expander__return_from, x, self.global_macro_env)
+
+        x = [RETURN_FROM, NAME, [ADD, 10, 20], [ADD, 30, 40]]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__return_from, x, self.global_macro_env)
+
 
     ########## Helper methods ##########
 

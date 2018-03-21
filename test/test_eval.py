@@ -251,6 +251,33 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(func_env[FUNC].func_env, func_env[FUNC].func_env)
         self.assertEqual(func_env[FUNC].func_env.outer, self.global_func_env)
 
+    def test_block(self):
+        BLOCK = symbol.BLOCK
+        NAME = symbol.Symbol('NAME')
+        SETQ = symbol.SETQ
+        X = symbol.Symbol('X')
+
+        var_env = env.VarEnv([X], [False], self.global_var_env)
+        x = [BLOCK, NAME, [SETQ, X, 10], [SETQ, X, 20]]
+        x = self.evaluator._Evaluator__block(x, var_env, self.global_func_env)
+
+        self.assertEqual(x, 20)
+        self.assertEqual(var_env.find(X)[X], 20)
+
+    def test__return_from(self):
+        RETURN_FROM = symbol.RETURN_FROM
+        BLOCK = symbol.BLOCK
+        NAME = symbol.Symbol('NAME')
+        SETQ = symbol.SETQ
+        X = symbol.Symbol('X')
+
+        var_env = env.VarEnv([X], [False], self.global_var_env)
+        x = [BLOCK, NAME, [SETQ, X, 10], [RETURN_FROM, NAME], [SETQ, X, 20]]
+        x = self.evaluator._Evaluator__block(x, var_env, self.global_func_env)
+
+        self.assertEqual(x, False)
+        self.assertEqual(var_env.find(X)[X], 10)
+
 
     ########## Helper methods ##########
 

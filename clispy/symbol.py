@@ -69,6 +69,8 @@ LET_ASTER = symbol_table['let*']
 FLET = symbol_table['flet']
 LABELS = symbol_table['labels']
 MACROLET = symbol_table['macrolet']
+BLOCK = symbol_table['block']
+RETURN_FROM = symbol_table['return-from']
 
 # Note uninterned; can't be read
 EOF_OBJECT = symbol_table['#<eof-object>']

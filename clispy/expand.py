@@ -49,7 +49,7 @@ class Expander(object):
             return self.__defun(x, macro_env)
         elif x[0] is symbol.DEFMACRO:              # (defmacro sym (lambda args body))
             return self.__defmacro(x, macro_env)
-        elif x[0] is symbol.LAMBDA:                # (lambda (var...) body)
+        elif x[0] is symbol.LAMBDA:                # (lambda (var) body)
             return self.__lambda(x, macro_env)
         elif x[0] is symbol.QUASIQUOTE:            # `x => (quasiquote x)
             return self.__quasiquote(x)
@@ -57,14 +57,18 @@ class Expander(object):
             return self.__quote(x)
         elif x[0] is symbol.IF:                    # Special form: if, (if test-form then-form else-form)
             return self.__if(x, macro_env)
-        elif x[0] is symbol.SETQ:                  # Special form: setq, (setq var val ...)
+        elif x[0] is symbol.SETQ:                  # Special form: setq, (setq var val)
             return self.__setq(x)
         elif x[0] is symbol.PROGN:                 # Special form: progn, (progn exp+)
             return self.__progn(x, macro_env)
         elif x[0] is symbol.FUNCTION:              # Special form: function, (function func)
             return self.__function(x, macro_env)
-        elif x[0] is symbol.MACROLET:              # Special form: macrolet, (macrolet ((macro var exp) ...) body)
+        elif x[0] is symbol.MACROLET:              # Special form: macrolet, (macrolet ((macro var exp)) body)
             return self.__macrolet(x, macro_env)
+        elif x[0] is symbol.BLOCK:                 # Special form: block, (block name)
+            return self.__block(x, macro_env)
+        elif x[0] is symbol.RETURN_FROM:           # Special form: return-from, (block name (return-from name))
+            return self.__return_from(x, macro_env)
         elif isinstance(x[0], symbol.Symbol) and x[0] in macro_env:
                                                    # (m arg...) => macroexpand if m isinstance macro
             return self.__expand_macro(x, macro_env)
@@ -184,8 +188,37 @@ class Expander(object):
         x = [symbol.PROGN] + body
         return self.expand(x, local_macro_env)
 
+    def __block(self, x, macro_env):
+        """block establishes a block named name and then evaluates forms as an implicit
+        progn.
 
-   ########## Helper methods ##########
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A series of forms and new macro bindings.
+        """
+        util.require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
+        if len(x) == 2: # (block empty) => nil
+            return False
+        else:
+            return [self.expand(xi, macro_env) for xi in x]
+
+    def __return_from(self, x, macro_env):
+        """Return control from a lexically enclosing block.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A series of forms and new macro bindings.
+        """
+        util.require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
+        util.require(x, len(x) == 2 or len(x) == 3)
+        return [self.expand(xi, macro_env) for xi in x]
+
+
+    ########## Helper methods ##########
 
     def __quasiquote(self, x):
         """Expand `x => 'x; `,x => x; `(,@x y) => (append x y).

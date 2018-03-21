@@ -16,6 +16,7 @@
 from clispy import cons
 from clispy import env
 from clispy import symbol
+from clispy import util
 
 
 class Procedure(object):
@@ -79,26 +80,30 @@ class Evaluator(object):
                 return x
             elif x[0] is symbol.DEFUN:                # (defun sym (lambda args body))
                 return self.__defun(x, var_env, func_env)
-            elif x[0] is symbol.LAMBDA:               # (lambda (var...) body)
+            elif x[0] is symbol.LAMBDA:               # (lambda (var) body)
                 return self.__lambda(x, var_env, func_env)
             elif x[0] is symbol.QUOTE:                # Special form: quote, (quote exp)
                 return self.__quote(x)
             elif x[0] is symbol.IF:                   # Special form: if, (if test-form then-form else-form)
                 x = self.__if(x, var_env, func_env)
-            elif x[0] is symbol.SETQ:                 # Special form: setq, (setq var exp ...)
+            elif x[0] is symbol.SETQ:                 # Special form: setq, (setq var exp)
                 return self.__setq(x, var_env, func_env)
             elif x[0] is symbol.PROGN:                # Special form: progn, (progn exp+)
                 x = self.__progn(x, var_env, func_env)
             elif x[0] is symbol.FUNCTION:             # Special form: function, (function func)
                 x = self.__function(x, var_env, func_env)
-            elif x[0] is symbol.LET:                  # Special form: let, (let ((var val) ...) body)
+            elif x[0] is symbol.LET:                  # Special form: let, (let ((var val)) body)
                 x, var_env = self.__let(x, var_env, func_env)
-            elif x[0] is symbol.LET_ASTER:            # Special form: let*, (let* ((var val) ...) body)
+            elif x[0] is symbol.LET_ASTER:            # Special form: let*, (let* ((var val)) body)
                 x, var_env = self.__let_aster(x, var_env, func_env)
-            elif x[0] is symbol.FLET:                 # Special form: flet, (flet ((func var exp) ...) body)
+            elif x[0] is symbol.FLET:                 # Special form: flet, (flet ((func var exp)) body)
                 x, func_env = self.__flet(x, var_env, func_env)
-            elif x[0] is symbol.LABELS:               # Special form: labels, (labels ((func var exp) ...) body)
+            elif x[0] is symbol.LABELS:               # Special form: labels, (labels ((func var exp)) body)
                 x, func_env = self.__labels(x, var_env, func_env)
+            elif x[0] is symbol.BLOCK:                # Special form: block, (block name)
+                x = self.__block(x, var_env, func_env)
+            elif x[0] is symbol.RETURN_FROM:          # Special form: return-from, (block name (return-from name))
+                return self.__return_from(x, var_env, func_env)
             else:
                 return self.__execute(x, var_env, func_env)
 
@@ -257,6 +262,7 @@ class Evaluator(object):
         for binding in bindings:
             func, exp = binding[0], binding[1:]
             exp = [symbol.LAMBDA] + exp
+
             # The scope of the name bindings encompasses only the body.
             local_func_env[func] = self.eval(exp, var_env, func_env)
 
@@ -288,6 +294,54 @@ class Evaluator(object):
 
         x = [symbol.PROGN] + body
         return x, local_func_env
+
+    def __block(self, x, var_env, func_env):
+        """block establishes a block named name and then evaluates forms as an implicit
+        progn. The special operators block and return-from work together to probide a
+        structured, lexical, non-local exit facility.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+            A series of forms and new function bindings.
+        """
+        (_, name, exp) = x[0], x[1], x[2:]
+
+        # throw is param of lambda in call/cc.
+        throw = [name]
+        # An implicit progn.
+        exp = [symbol.PROGN] + exp
+
+        # call/cc is used to control.
+        x = util.callcc(Procedure(self, throw, exp, var_env, func_env))
+        return x
+
+    def __return_from(self, x, var_env, func_env):
+        """Return control from a lexically enclosing block. A block form named must
+        lexically enclose the occurrence of return-from; any vlaue yield by the
+        evaluation of result are immediately returned from the innermost such lexically
+        enclosing block.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+            A series of forms and new function bindings.
+        """
+        if len(x) > 2:
+            (_, name, exp) = x[0], x[1], x[2]
+        else:
+            (_, name) = x[0], x[1]
+            exp = False # if there is no exp, return-from returns nil.
+
+        # name is param of lambda and have throw function as value in call/cc.
+        x = var_env.find(name)[name](exp)
+        return x
 
 
     ########## Helper methods ##########

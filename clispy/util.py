@@ -54,3 +54,18 @@ def require(x, predicate, msg="wrong length"):
     """
     if not predicate:
         raise SyntaxError(to_string(x) + ': ' + msg)
+
+def callcc(proc):
+    ball = RuntimeWarning("Sorry, can't continue this continuation any longer.")
+
+    def throw(retval):
+        ball.retval = retval
+        raise ball
+
+    try:
+        return proc(throw)
+    except RuntimeWarning as w:
+        if w is ball:
+            return ball.retval
+        else:
+            raise w
