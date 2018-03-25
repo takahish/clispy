@@ -106,7 +106,7 @@ class Evaluator(object):
                 return self.__return_from(x, var_env, func_env)
             elif x[0] is symbol.TAGBODY:              # Special form: tagbody, (tagbody tag)
                 return self.__tagbody(x, var_env, func_env)
-            elif x[0] is symbol.GO:                   # Special form: tagbody, (tagbody tag (go tag))
+            elif x[0] is symbol.GO:                   # Special form: go, (tagbody tag (go tag))
                 return self.__go(x, var_env)
             else:
                 return self.__execute(x, var_env, func_env)
