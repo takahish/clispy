@@ -16,7 +16,7 @@
 from clispy import cons
 from clispy import env
 from clispy import symbol
-from clispy import util
+from clispy.util import callcc
 
 
 class Procedure(object):
@@ -104,6 +104,10 @@ class Evaluator(object):
                 x = self.__block(x, var_env, func_env)
             elif x[0] is symbol.RETURN_FROM:          # Special form: return-from, (block name (return-from name))
                 return self.__return_from(x, var_env, func_env)
+            elif x[0] is symbol.TAGBODY:              # Special form: tagbody, (tagbody tag)
+                return self.__tagbody(x, var_env, func_env)
+            elif x[0] is symbol.GO:                   # Special form: tagbody, (tagbody tag (go tag))
+                return self.__go(x, var_env)
             else:
                 return self.__execute(x, var_env, func_env)
 
@@ -316,7 +320,7 @@ class Evaluator(object):
         exp = [symbol.PROGN] + exp
 
         # call/cc is used to control.
-        x = util.callcc(Procedure(self, throw, exp, var_env, func_env))
+        x = callcc(Procedure(self, throw, exp, var_env, func_env))
         return x
 
     def __return_from(self, x, var_env, func_env):
@@ -337,10 +341,74 @@ class Evaluator(object):
             (_, name, exp) = x[0], x[1], x[2]
         else:
             (_, name) = x[0], x[1]
-            exp = False # if there is no exp, return-from returns nil.
+            exp = False  # if there is no exp, return-from returns nil.
 
         # name is param of lambda and have throw function as value in call/cc.
         x = var_env.find(name)[name](exp)
+        return x
+
+    def __tagbody(self, x, var_env, func_env):
+        """Execute zero or more statements in a lexical environment that provides for
+        control transfers labels indicated by the tag. The statements in a tagbody
+        are evaluated in order from left to right, and their values are discarded. If
+        at any time there are no remaining statements, tagbody returns nil. However if
+        (go tag) is evaluated, control jumps to the part of the body labeled with tag.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+            False.
+        """
+        (_, register) = x[0], x[1:]
+
+        pointer = 0
+        while True:
+            # there is no expression in register.
+            if pointer >= len(register) - 1:
+                break
+
+            exp = register[pointer]
+
+            # exp is tag.
+            if isinstance(exp, symbol.Symbol):
+                pointer = pointer + 1
+                exp = register[pointer]
+
+            # NIL is param of lambda in call/cc.
+            # NIL is converted to False implicitly in parse, so it never collide.
+            x = callcc(Procedure(self, [symbol.NIL], exp, var_env, func_env))
+
+            # exp is (go tag), then pointer is jumped to tag.
+            if isinstance(x, symbol.Symbol) and x in register:
+                pointer = register.index(x)
+                continue
+
+            pointer = pointer + 1
+
+        # tagbody retruns nil
+        x = False
+        return x
+
+    def __go(self, x, var_env):
+        """go transfers control to the point in the body an enclosing tagbody from
+        labeled by a tag. If there is no such tag in the body, the bodies of lexically
+        containing tagbody forms (if any) are examined as well.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            var_env: Variable environment.
+
+        Returns:
+            Tag (symbol).
+        """
+        (_, tag) = x
+
+        # NIL is param of lambda and have throw function as value in call/cc.
+        # NIL is converted to False implicitly in parse, so it never collide.
+        x = var_env.find(symbol.NIL)[symbol.NIL](tag)
         return x
 
 

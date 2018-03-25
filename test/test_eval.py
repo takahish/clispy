@@ -278,6 +278,35 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(x, False)
         self.assertEqual(var_env.find(X)[X], 10)
 
+    def test__tagbody(self):
+        TAGBODY = symbol.TAGBODY
+        START = symbol.Symbol('START')
+        END = symbol.Symbol('END')
+        SETQ = symbol.SETQ
+        X = symbol.Symbol('X')
+
+        var_env = env.VarEnv([X], [10], self.global_var_env)
+        x = [TAGBODY, START, [SETQ, X, 20], END]
+        x = self.evaluator._Evaluator__tagbody(x, var_env, self.global_func_env)
+
+        self.assertEqual(x, False)
+        self.assertEqual(var_env.find(X)[X], 20)
+
+    def test__go(self):
+        GO = symbol.GO
+        TAGBODY = symbol.TAGBODY
+        START = symbol.Symbol('START')
+        END = symbol.Symbol('END')
+        SETQ = symbol.SETQ
+        X = symbol.Symbol('X')
+
+        var_env = env.VarEnv([X], [10], self.global_var_env)
+        x = [TAGBODY, START, [GO, END], [SETQ, X, 20], END]
+        x = self.evaluator._Evaluator__tagbody(x, var_env, self.global_func_env)
+
+        self.assertEqual(x, False)
+        self.assertEqual(var_env.find(X)[X], 10)
+
 
     ########## Helper methods ##########
 

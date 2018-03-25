@@ -44,6 +44,8 @@ class _SymbolTable():
 # Instance of _SymboleTable.
 symbol_table = _SymbolTable()
 
+NIL = symbol_table['nil']
+T = symbol_table['t']
 
 # Add some symbles to symbol_table.
 QUOTE    = symbol_table['quote']
@@ -71,6 +73,8 @@ LABELS = symbol_table['labels']
 MACROLET = symbol_table['macrolet']
 BLOCK = symbol_table['block']
 RETURN_FROM = symbol_table['return-from']
+TAGBODY = symbol_table['TAGBODY']
+GO = symbol_table['GO']
 
 # Note uninterned; can't be read
 EOF_OBJECT = symbol_table['#<eof-object>']
