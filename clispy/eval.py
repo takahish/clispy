@@ -360,7 +360,7 @@ class Evaluator(object):
             func_env: Function environment.
 
         Returns:
-            False.
+            False (NIL).
         """
         (_, register) = x[0], x[1:]
 
@@ -388,7 +388,7 @@ class Evaluator(object):
 
             pointer = pointer + 1
 
-        # tagbody retruns nil
+        # tagbody returns nil.
         x = False
         return x
 
@@ -402,7 +402,7 @@ class Evaluator(object):
             var_env: Variable environment.
 
         Returns:
-            Tag (symbol).
+            A tag (symbol).
         """
         (_, tag) = x
 
