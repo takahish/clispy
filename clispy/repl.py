@@ -20,7 +20,7 @@ from clispy import expand
 from clispy import func
 from clispy import parse
 from clispy import symbol
-from clispy import util
+from clispy import utils
 
 
 def repl(prompt='clispy> ', inport=parse._InPort(sys.stdin), out=sys.stdout):
@@ -61,6 +61,6 @@ def repl(prompt='clispy> ', inport=parse._InPort(sys.stdin), out=sys.stdout):
                 return
             val = evaluator.eval(x)
             if val is not None and out:
-                print(util.to_string(val), file=out)
+                print(utils.to_string(val), file=out)
         except Exception as e:
             print('%s: %s' % (type(e).__name__, e))

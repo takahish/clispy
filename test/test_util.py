@@ -15,26 +15,26 @@
 
 import unittest
 from clispy import symbol
-from clispy import util
+from clispy import utils
 
 
 class UnitTestCase(unittest.TestCase):
     def test_to_string(self):
-        self.assertEqual(util.to_string(True), 'T')
-        self.assertEqual(util.to_string(False), 'NIL')
-        self.assertEqual(util.to_string(symbol.Symbol('x')), 'x')
-        self.assertEqual(util.to_string("string"), '"string"')
-        self.assertEqual(util.to_string([1, 2, 3]), '(1 2 3)')
-        self.assertEqual(util.to_string(2 + 3j), '(2+3i)')
-        self.assertEqual(util.to_string(1), '1')
+        self.assertEqual(utils.to_string(True), 'T')
+        self.assertEqual(utils.to_string(False), 'NIL')
+        self.assertEqual(utils.to_string(symbol.Symbol('x')), 'x')
+        self.assertEqual(utils.to_string("string"), '"string"')
+        self.assertEqual(utils.to_string([1, 2, 3]), '(1 2 3)')
+        self.assertEqual(utils.to_string(2 + 3j), '(2+3i)')
+        self.assertEqual(utils.to_string(1), '1')
 
     def test_require(self):
         x = []
-        self.assertRaisesRegex(SyntaxError, "() wrong length", util.require, x, x != [])
+        self.assertRaisesRegex(SyntaxError, "() wrong length", utils.require, x, x != [])
 
     def test_callcc(self):
-        self.assertEqual(util.callcc(lambda throw: 5 + 10 * throw(1)), 1)
-        self.assertEqual(util.callcc(lambda throw: 5 + 10 * 1), 15)
-        self.assertEqual(util.callcc(lambda throw: 5 + 10 * util.callcc(lambda escape: 100 * escape(3))), 35)
-        self.assertEqual(util.callcc(lambda throw: 5 + 10 * util.callcc(lambda escape: 100 * throw(3))), 3)
-        self.assertEqual(util.callcc(lambda throw: 5 + 10 * util.callcc(lambda escape: 100 * 1)), 1005)
+        self.assertEqual(utils.callcc(lambda throw: 5 + 10 * throw(1)), 1)
+        self.assertEqual(utils.callcc(lambda throw: 5 + 10 * 1), 15)
+        self.assertEqual(utils.callcc(lambda throw: 5 + 10 * utils.callcc(lambda escape: 100 * escape(3))), 35)
+        self.assertEqual(utils.callcc(lambda throw: 5 + 10 * utils.callcc(lambda escape: 100 * throw(3))), 3)
+        self.assertEqual(utils.callcc(lambda throw: 5 + 10 * utils.callcc(lambda escape: 100 * 1)), 1005)

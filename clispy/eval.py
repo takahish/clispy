@@ -16,7 +16,7 @@
 from clispy import cons
 from clispy import env
 from clispy import symbol
-from clispy.util import callcc
+from clispy.utils import callcc
 
 
 class Procedure(object):

@@ -15,7 +15,7 @@
 
 from clispy import env
 from clispy import symbol
-from clispy import util
+from clispy.utils import require
 from clispy import func
 
 
@@ -38,7 +38,7 @@ class Expander(object):
         Returns:
             Results of expansion.
         """
-        util.require(x, x != [])                   # () => Error
+        require(x, x != [])                   # () => Error
 
         if macro_env is None:
             macro_env = self.global_macro_env
@@ -87,7 +87,7 @@ class Expander(object):
         Returns:
             An expression.
         """
-        util.require(x, len(x) == 2)
+        require(x, len(x) == 2)
         return x
 
     def __if(self, x, macro_env):
@@ -102,7 +102,7 @@ class Expander(object):
         """
         if len(x) == 3: # (if t c) => (if t c nil)
             x = x + [False]
-        util.require(x, len(x) == 4)
+        require(x, len(x) == 4)
         return [self.expand(xi, macro_env) for xi in x]
 
     def __setq(self, x):
@@ -122,7 +122,7 @@ class Expander(object):
                 pairs.append(False)
             x = [symbol.SETQ]
             for var, exp in zip(*[iter(pairs)] * 2):
-                util.require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
+                require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
                 x = x + [var, exp]
             return x
 
@@ -152,8 +152,8 @@ class Expander(object):
         Returns:
             A series of forms.
         """
-        util.require(x, len(x) == 2)
-        util.require(x, isinstance(x[1], symbol.Symbol), "an argument must be symbol")
+        require(x, len(x) == 2)
+        require(x, isinstance(x[1], symbol.Symbol), "an argument must be symbol")
         return x
 
     def __macrolet(self, x, macro_env):
@@ -165,7 +165,7 @@ class Expander(object):
         Returns:
             A series of forms and new macro bindings.
         """
-        util.require(x, len(x) >= 2)
+        require(x, len(x) >= 2)
 
         bindings, body = x[1], x[2:]
 
@@ -178,7 +178,7 @@ class Expander(object):
             exp = self.expand(exp, macro_env)
 
             proc = self.evaluator.eval(exp)
-            util.require(x, callable(proc), "macro must be a purocedure")
+            require(x, callable(proc), "macro must be a purocedure")
 
             try:
                 local_macro_env.find(name)[name] = proc
@@ -198,7 +198,7 @@ class Expander(object):
         Returns:
             A series of forms and new macro bindings.
         """
-        util.require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
+        require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
         if len(x) == 2: # (block empty) => nil
             return False
         else:
@@ -213,13 +213,13 @@ class Expander(object):
         Returns:
             A series of forms and new macro bindings.
         """
-        util.require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
+        require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
 
         # if there is no exp, nil appended.
         if len(x) == 2:
             x.append(False)
 
-        util.require(x, len(x) == 3)
+        require(x, len(x) == 3)
         return [self.expand(xi, macro_env) for xi in x]
 
 
@@ -234,7 +234,7 @@ class Expander(object):
         Returns:
             Abstract syntax tree expanded quasiquote.
         """
-        util.require(x, len(x) == 2)
+        require(x, len(x) == 2)
         return self.__quasiquote_recur(x[1])
 
     def __quasiquote_recur(self, x):
@@ -249,13 +249,13 @@ class Expander(object):
         if not func._consp(x):
             return [symbol.QUOTE, x]
 
-        util.require(x, x[0] is not symbol.UNQUOTE_SPLICING, "can't splice here")
+        require(x, x[0] is not symbol.UNQUOTE_SPLICING, "can't splice here")
 
         if x[0] is symbol.UNQUOTE:
-            util.require(x, len(x) == 2)
+            require(x, len(x) == 2)
             return x[1]
         elif func._consp(x[0]) and x[0][0] is symbol.UNQUOTE_SPLICING:
-            util.require(x[0], len(x[0]) == 2)
+            require(x[0], len(x[0]) == 2)
             return [symbol.APPEND, x[0][1], self.__quasiquote_recur(x[1:])]
         else:
             return [symbol.CONS, self.__quasiquote_recur(x[0]), self.__quasiquote_recur(x[1:])]
@@ -276,7 +276,7 @@ class Expander(object):
                 args = []
             return self.expand([defun, name, [symbol.LAMBDA, args] + body], macro_env)
         else:
-            util.require(x, len(x) == 3) # (defun non-var/list exp) => Error
+            require(x, len(x) == 3) # (defun non-var/list exp) => Error
             defun, name, exp = x[0], x[1], x[2]
             exp = self.expand(exp, macro_env)
             return [defun, name, exp]
@@ -297,12 +297,12 @@ class Expander(object):
                 args = []
             return self.__defmacro([defun, name, [symbol.LAMBDA, args] + body], macro_env)
         else:
-            util.require(x, len(x) == 3) # (defun non-var/list exp) => Error
+            require(x, len(x) == 3) # (defun non-var/list exp) => Error
             _def, name, exp = x[0], x[1], x[2]
             exp = self.expand(x[2], macro_env)
 
             proc = self.evaluator.eval(exp)
-            util.require(x, callable(proc), "macro must be a purocedure")
+            require(x, callable(proc), "macro must be a purocedure")
             try:
                 macro_env.find(name)[name] = proc
             except LookupError:
@@ -319,10 +319,10 @@ class Expander(object):
         Returns:
             A procedure.
         """
-        util.require(x, len(x) >= 3)
+        require(x, len(x) >= 3)
         vars, body = x[1], x[2:]
-        util.require(x, (isinstance(vars, list) and all(isinstance(v, symbol.Symbol) for v in vars))
-                     or isinstance(vars, symbol.Symbol), "illegal lambda argument list")
+        require(x, (isinstance(vars, list) and all(isinstance(v, symbol.Symbol) for v in vars))
+                      or isinstance(vars, symbol.Symbol), "illegal lambda argument list")
         exp = body[0] if len(body) == 1 else [symbol.PROGN] + body
         return [symbol.LAMBDA, vars, self.expand(exp, macro_env)]
 
