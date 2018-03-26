@@ -214,7 +214,12 @@ class Expander(object):
             A series of forms and new macro bindings.
         """
         util.require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
-        util.require(x, len(x) == 2 or len(x) == 3)
+
+        # if there is no exp, nil appended.
+        if len(x) == 2:
+            x.append(False)
+
+        util.require(x, len(x) == 3)
         return [self.expand(xi, macro_env) for xi in x]
 
 

@@ -337,11 +337,7 @@ class Evaluator(object):
         Returns:
             A series of forms and new function bindings.
         """
-        if len(x) > 2:
-            (_, name, exp) = x[0], x[1], x[2]
-        else:
-            (_, name) = x[0], x[1]
-            exp = False  # if there is no exp, return-from returns nil.
+        (_, name, exp) = x[0], x[1], x[2]
 
         # name is param of lambda and have throw function as value in call/cc.
         x = var_env.find(name)[name](exp)

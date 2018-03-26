@@ -272,7 +272,7 @@ class UnitTestCase(unittest.TestCase):
         X = symbol.Symbol('X')
 
         var_env = env.VarEnv([X], [False], self.global_var_env)
-        x = [BLOCK, NAME, [SETQ, X, 10], [RETURN_FROM, NAME], [SETQ, X, 20]]
+        x = [BLOCK, NAME, [SETQ, X, 10], [RETURN_FROM, NAME, False], [SETQ, X, 20]]
         x = self.evaluator._Evaluator__block(x, var_env, self.global_func_env)
 
         self.assertEqual(x, False)

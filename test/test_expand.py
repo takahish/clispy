@@ -206,6 +206,10 @@ class UnitTestCase(unittest.TestCase):
         x = [RETURN_FROM, NAME, [ADD, 10, 20], [ADD, 30, 40]]
         self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__return_from, x, self.global_macro_env)
 
+        x = [RETURN_FROM, NAME]
+        x = self.expander._Expander__return_from(x, self.global_macro_env)
+        self.assertEqual(x, [RETURN_FROM, NAME, False])
+
 
     ########## Helper methods ##########
 
