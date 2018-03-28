@@ -38,7 +38,7 @@ class Expander(object):
         Returns:
             Results of expansion.
         """
-        require(x, x != [])                   # () => Error
+        require(x, x != [])                        # () => Error
 
         if macro_env is None:
             macro_env = self.global_macro_env
@@ -139,7 +139,7 @@ class Expander(object):
         if len(x) == 1: # (progn) => NIL
             return False
         else:
-            return [self.expand(xi, macro_env) for xi in x]
+            return self.__expand_recur(x, macro_env)
 
     def __function(self, x, macro_env):
         """The value of function is the functional value name in the current lexical
@@ -202,7 +202,7 @@ class Expander(object):
         if len(x) == 2: # (block empty) => nil
             return False
         else:
-            return [self.expand(xi, macro_env) for xi in x]
+            return self.__expand_recur(x, macro_env)
 
     def __return_from(self, x, macro_env):
         """Return control from a lexically enclosing block.
@@ -220,7 +220,7 @@ class Expander(object):
             x.append(False)
 
         require(x, len(x) == 3)
-        return [self.expand(xi, macro_env) for xi in x]
+        return self.__expand_recur(x, macro_env)
 
 
     ########## Helper methods ##########
@@ -274,6 +274,8 @@ class Expander(object):
             defun, name, args, body = x[0], x[1], x[2], x[3:]
             if func._null(args): # (def name nil body) => (def name [] body)
                 args = []
+            # Implicit BLOCK.
+            body = [[symbol.BLOCK, name] + body]
             return self.expand([defun, name, [symbol.LAMBDA, args] + body], macro_env)
         else:
             require(x, len(x) == 3) # (defun non-var/list exp) => Error
@@ -323,7 +325,16 @@ class Expander(object):
         vars, body = x[1], x[2:]
         require(x, (isinstance(vars, list) and all(isinstance(v, symbol.Symbol) for v in vars))
                       or isinstance(vars, symbol.Symbol), "illegal lambda argument list")
-        exp = body[0] if len(body) == 1 else [symbol.PROGN] + body
+
+        # Set expression in lambda.
+        # There is BLOCK in body, this lambda is defined by defun,
+        # or there is one expression in body.
+        if len(body) == 1 or body[0][0] is symbol.BLOCK:
+            exp = body[0]
+        else:
+            # Implicit progn for some body.
+            exp = [symbol.PROGN] + body
+
         return [symbol.LAMBDA, vars, self.expand(exp, macro_env)]
 
     def __expand_macro(self, x, macro_env):

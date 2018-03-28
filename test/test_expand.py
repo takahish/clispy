@@ -46,6 +46,7 @@ class UnitTestCase(unittest.TestCase):
         IF = symbol.IF
         DEFUN = symbol.DEFUN
         PROGN = symbol.PROGN
+        BLOCK = symbol.BLOCK
         LAMBDA = symbol.LAMBDA
         DEFMACRO = symbol.DEFMACRO
         QUASIQUOTE = symbol.QUASIQUOTE
@@ -69,7 +70,7 @@ class UnitTestCase(unittest.TestCase):
 
         # (defun f (args) body) => (defun f (lambda (args) body))
         self.assertEqual(expand([DEFUN, FUNC, [X], [MUL, X, X]]),
-                         [DEFUN, FUNC, [LAMBDA, [X], [MUL, X, X]]])
+                         [DEFUN, FUNC, [LAMBDA, [X], [BLOCK, FUNC, [MUL, X, X]]]])
 
         # (defmacro v proc) => None; add {v: proc} to macro_table
         expand([DEFMACRO, MACRO, [X, Y],
@@ -255,13 +256,14 @@ class UnitTestCase(unittest.TestCase):
     def test__defun(self):
         DEFUN = symbol.DEFUN
         LAMBDA = symbol.LAMBDA
+        BLOCK = symbol.BLOCK
         FUNC = symbol.Symbol('FUNC')
         X = symbol.Symbol('X')
         MUL = symbol.Symbol('*')
 
         x = [DEFUN, FUNC, [X], [MUL, X, X]]
         val = self.expander._Expander__defun(x, self.global_macro_env)
-        self.assertEqual(val, [DEFUN, FUNC, [LAMBDA, [X], [MUL, X, X]]])
+        self.assertEqual(val, [DEFUN, FUNC, [LAMBDA, [X], [BLOCK, FUNC, [MUL, X, X]]]])
 
     def test__defmacro(self):
         QUASIQUOTE = symbol.QUASIQUOTE
