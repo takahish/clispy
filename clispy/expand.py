@@ -69,6 +69,10 @@ class Expander(object):
             return self.__block(x, macro_env)
         elif x[0] is symbol.RETURN_FROM:           # Special form: return-from, (block name (return-from name))
             return self.__return_from(x, macro_env)
+        elif x[0] is symbol.CATCH:                 # Special form: catch, (catch 'tag)
+            return self.__catch(x, macro_env)
+        elif x[0] is symbol.THROW:                 # Special form: throw, (catch 'tag (throw 'tag retval))
+            return self.__throw(x, macro_env)
         elif isinstance(x[0], symbol.Symbol) and x[0] in macro_env:
                                                    # (m arg...) => macroexpand if m isinstance macro
             return self.__expand_macro(x, macro_env)
@@ -214,6 +218,39 @@ class Expander(object):
             A series of forms and new macro bindings.
         """
         require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
+
+        # if there is no exp, nil appended.
+        if len(x) == 2:
+            x.append(False)
+
+        require(x, len(x) == 3)
+        return self.__expand_recur(x, macro_env)
+
+    def __catch(self, x, macro_env):
+        """catch is used as the destination of a non-local control transfer by throw.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A series of forms and new macro bindings.
+        """
+        require(x, len(x) >= 2)
+        if len(x) == 2:  # (catch 'empty) => nil
+            return False
+        else:
+            return self.__expand_recur(x, macro_env)
+
+    def __throw(self, x, macro_env):
+        """throw causes a non-local control transfer to a catch whose tag is eq to tag.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+
+        Returns:
+            A series of forms and new macro bindings.
+        """
+        require(x, len(x) >= 2)
 
         # if there is no exp, nil appended.
         if len(x) == 2:

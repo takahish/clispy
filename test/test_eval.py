@@ -307,6 +307,39 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(x, False)
         self.assertEqual(var_env.find(X)[X], 10)
 
+    def test__catch(self):
+        CATCH = symbol.CATCH
+        ADD = symbol.Symbol('+')
+
+        # implicit progn.
+        x = [CATCH, [ADD, 10, 20], [ADD, 30, 40]]
+        x = self.evaluator._Evaluator__catch(x, self.global_var_env, self.global_func_env)
+
+        self.assertEqual(x, 70)
+
+    def test__throw(self):
+        CATCH = symbol.CATCH
+        THROW = symbol.THROW
+        QUOTE = symbol.QUOTE
+        DUMMY_TAG_1 = symbol.Symbol('DUMMY-TAG-1')
+        DUMMY_TAG_2 = symbol.Symbol('DUMMY-TAG-2')
+
+        x = [THROW, [QUOTE, DUMMY_TAG_1], 10]
+        self.assertRaisesRegex(eval_module.ControlError, "attempt to throw to the nonexistent tag "+DUMMY_TAG_1,
+                               self.evaluator._Evaluator__throw, x, self.global_var_env, self.global_func_env)
+
+        x = [CATCH, [QUOTE, DUMMY_TAG_1], [THROW, [QUOTE, DUMMY_TAG_1], 10], 20]
+        x = self.evaluator._Evaluator__catch(x, self.global_var_env, self.global_func_env)
+        self.assertEqual(x, 10)
+
+        x = [CATCH, [QUOTE, DUMMY_TAG_1], [CATCH, [QUOTE, DUMMY_TAG_2], [THROW, [QUOTE, DUMMY_TAG_2], 10]], 20]
+        x = self.evaluator._Evaluator__catch(x, self.global_var_env, self.global_func_env)
+        self.assertEqual(x, 20)
+
+        x = [CATCH, [QUOTE, DUMMY_TAG_1], [CATCH, [QUOTE, DUMMY_TAG_2], [THROW, [QUOTE, DUMMY_TAG_1], 10]], 20]
+        x = self.evaluator._Evaluator__catch(x, self.global_var_env, self.global_func_env)
+        self.assertEqual(x, 10)
+
 
     ########## Helper methods ##########
 

@@ -19,6 +19,17 @@ from clispy import symbol
 from clispy.utils import callcc
 
 
+class ControlError(Exception):
+    """Control error of eval is raised by special form throw.
+    """
+    def __init__(self, message, tag, retval):
+        """Inits ControlError with message, tag and return value.
+        """
+        super().__init__(message)
+        self.tag = tag
+        self.retval = retval
+
+
 class Procedure(object):
     """A user-defined common lisp procedure.
     And an instance localizes environment, when it is evaluated.
@@ -108,6 +119,10 @@ class Evaluator(object):
                 return self.__tagbody(x, var_env, func_env)
             elif x[0] is symbol.GO:                   # Special form: go, (tagbody tag (go tag))
                 return self.__go(x, var_env)
+            elif x[0] is symbol.CATCH:                # Special form: catch, (catch 'tag)
+                x = self.__catch(x, var_env, func_env)
+            elif x[0] is symbol.THROW:                # Special form: throw, (catch 'tag (throw 'tag retval))
+                return self.__throw(x, var_env, func_env)
             else:
                 return self.__execute(x, var_env, func_env)
 
@@ -406,6 +421,54 @@ class Evaluator(object):
         # NIL is converted to False implicitly in parse, so it never collide.
         x = var_env.find(symbol.NIL)[symbol.NIL](tag)
         return x
+
+    def __catch(self, x, var_env, func_env):
+        """catch is used as the destination of a non-local control transfer by throw.
+        Tags are used to find the catch to which a throw is transferring control.
+        (catch 'foo form) catches a (throw 'tag form) but not a (throw 'bar form).
+
+        Args:
+            x: Abstract syntax tree of lisp consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+             A series of forms.
+        """
+        (_, tag, exp) = x[0], x[1], x[2:]
+
+        tag = self.eval(tag, var_env, func_env)
+        # implicit progn.
+        exp = [symbol.PROGN] + exp
+
+        # catch differs from block in that catch tags have dynamic scope.
+        try:
+            x = self.eval(exp, var_env, func_env)
+        except ControlError as e:
+            if e.tag == tag:
+                x = e.retval
+            else:
+                raise e
+
+        return x
+
+    def __throw(self, x, var_env, func_env):
+        """throw causes a non-local control transfer to a catch whose tag is eq to tag.
+
+        Args:
+            x: Abstract syntax tree of lisp consisted of python list.
+            var_env: Variable environment.
+            func_env: Function environment.
+
+        Returns:
+             A series of forms.
+        """
+        (_, tag, exp) = x[0], x[1], x[2]
+
+        tag = self.eval(tag, var_env, func_env)
+        x = self.eval(exp, var_env, func_env)
+
+        raise ControlError("attempt to throw to the nonexistent tag " + str(tag), tag, x)
 
 
     ########## Helper methods ##########

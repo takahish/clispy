@@ -75,6 +75,8 @@ BLOCK = symbol_table['block']
 RETURN_FROM = symbol_table['return-from']
 TAGBODY = symbol_table['TAGBODY']
 GO = symbol_table['GO']
+CATCH = symbol_table['CATCH']
+THROW = symbol_table['throw']
 
 # Note uninterned; can't be read
 EOF_OBJECT = symbol_table['#<eof-object>']

@@ -211,6 +211,32 @@ class UnitTestCase(unittest.TestCase):
         x = self.expander._Expander__return_from(x, self.global_macro_env)
         self.assertEqual(x, [RETURN_FROM, NAME, False])
 
+    def test__catch(self):
+        CATCH = symbol.CATCH
+        QUOTE = symbol.QUOTE
+        TAG = symbol.Symbol('TAG')
+
+        x = [CATCH]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__catch, x, self.global_macro_env)
+
+        x = [CATCH, [QUOTE, TAG]]
+        self.assertEqual(self.expander._Expander__catch(x, self.global_macro_env), False)
+
+    def test__throw(self):
+        THROW = symbol.THROW
+        QUOTE = symbol.QUOTE
+        TAG = symbol.Symbol('TAG')
+
+        x = [THROW]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__throw, x, self.global_macro_env)
+
+        x = [THROW, [QUOTE, TAG]]
+        x = self.expander._Expander__throw(x, self.global_var_env)
+        self.assertEqual(x, [THROW, [QUOTE, TAG], False])
+
+        x = [THROW, [QUOTE, TAG], 10, 20, 30]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__throw, x, self.global_macro_env)
+
 
     ########## Helper methods ##########
 
