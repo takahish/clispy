@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy import symbol
+from clispy.symbol import *
 from clispy import cons
 
 
@@ -30,12 +30,12 @@ def to_string(x):
         return 'T'
     elif x is False:
         return 'NIL'
-    elif isinstance(x, symbol.Symbol):
+    elif isinstance(x, Symbol):
         return x
     elif isinstance(x, str):
         return '"%s"' % x.encode('unicode_escape').decode('unicode_escape').replace('"', r'\"')
     elif isinstance(x, cons.DottedPair):
-        x = x[:-1] + [symbol.DOT] + [x[-1]]
+        x = x[:-1] + [DOT] + [x[-1]]
         return '(' + ' '.join(map(to_string, x)) + ')'
     elif isinstance(x, cons.Cons):
         return '(' + ' '.join(map(to_string, x)) + ')'

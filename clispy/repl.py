@@ -14,12 +14,12 @@
 # ==============================================================================
 
 import sys
+from clispy.symbol import *
 from clispy import env
 from clispy import eval
 from clispy import expand
 from clispy import func
 from clispy import parse
-from clispy import symbol
 from clispy import utils
 
 
@@ -56,7 +56,7 @@ def repl(prompt='clispy> ', inport=parse._InPort(sys.stdin), out=sys.stdout):
                 sys.stderr.write(prompt)
                 sys.stderr.flush() # flush buffer explicitly
             x = expander.expand(parse.parse(inport))
-            if x is symbol.EOF_OBJECT:
+            if x is EOF_OBJECT:
                 print(file=out)
                 return
             val = evaluator.eval(x)

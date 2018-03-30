@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import unittest
-from clispy import symbol
+from clispy.symbol import *
 from clispy import cons
 from clispy import env
 from clispy import eval as eval_module
@@ -36,18 +36,10 @@ class UnitTestCase(unittest.TestCase):
     def test_eval(self):
         eval_ = lambda x: self.evaluator.eval(x)
 
-        QUOTE = symbol.QUOTE
-        SETQ = symbol.SETQ
-        IF = symbol.IF
-        DEFUN = symbol.DEFUN
-        LAMBDA = symbol.LAMBDA
-        PROGN = symbol.PROGN
-        FUNCTION = symbol.FUNCTION
-
         # Special forms
 
         # variable reference
-        VAR = symbol.Symbol('VAR')
+        VAR = Symbol('VAR')
         self.assertRaisesRegex(LookupError, "VAR", eval_, VAR)
 
         # (setq var 1)
@@ -61,22 +53,22 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(eval_([QUOTE, [1, 2, 3]]), [1, 2, 3])
 
         # (if test conseq alt)
-        GT = symbol.Symbol('>')
+        GT = Symbol('>')
         self.assertEqual(eval_([IF, [GT, 2, 1], 3, 4]), 3)
         self.assertEqual(eval_([IF, [GT, 1, 2], 3, 4]), 4)
 
         # (defun func (lambda (x) (* x x)))
-        FUNC = symbol.Symbol('FUNC')
-        MUL = symbol.Symbol('*')
-        X = symbol.Symbol('X')
+        FUNC = Symbol('FUNC')
+        MUL = Symbol('*')
+        X = Symbol('X')
         eval_([DEFUN, FUNC, [LAMBDA, [X], [MUL, X, X]]])
         self.assertRaisesRegex(LookupError, "FUNC", eval_, FUNC)
         self.assertIsInstance(self.global_func_env['FUNC'], eval_module.Procedure)
 
         # (progn exp+)
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        ADD = symbol.Symbol('+')
+        A = Symbol('A')
+        B = Symbol('B')
+        ADD = Symbol('+')
         result = eval_([PROGN,
                        [SETQ, A, 2],
                        [SETQ, B, 3],
@@ -96,8 +88,7 @@ class UnitTestCase(unittest.TestCase):
     ########## Special forms ##########
 
     def test__quote(self):
-        QUOTE = symbol.QUOTE
-        A = symbol.Symbol('A')
+        A = Symbol('A')
 
         # List literal is converted to cons cell.
         exp = self.evaluator._Evaluator__quote([QUOTE, [1, 2, 3]])
@@ -109,8 +100,6 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(exp, A)
 
     def test__if(self):
-        IF = symbol.IF
-
         x = [IF, True, 3, 4]
         self.assertEqual(self.evaluator._Evaluator__if(x, self.global_var_env, self.global_func_env), 3)
 
@@ -120,10 +109,9 @@ class UnitTestCase(unittest.TestCase):
     def test__setq(self):
         var_env = env.VarEnv([], [], self.global_var_env)
 
-        SETQ = symbol.SETQ
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        C = symbol.Symbol('C')
+        A = Symbol('A')
+        B = Symbol('B')
+        C = Symbol('C')
 
         x = [SETQ, A, 10, B, 20]
         self.evaluator._Evaluator__setq(x, var_env, self.global_func_env)
@@ -137,11 +125,9 @@ class UnitTestCase(unittest.TestCase):
     def test__progn(self):
         var_env = env.VarEnv([], [], self.global_var_env)
 
-        PROGN = symbol.PROGN
-        SETQ = symbol.SETQ
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        ADD = symbol.Symbol('+')
+        A = Symbol('A')
+        B = Symbol('B')
+        ADD = Symbol('+')
 
         x = [PROGN, [SETQ, A, 10], [SETQ, B, 20], [ADD, A, B]]
         exp = self.evaluator._Evaluator__progn(x, var_env, self.global_var_env)
@@ -156,12 +142,10 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(exp, [ADD, A, B])
 
     def test__function(self):
-        FUNCTION = symbol.FUNCTION
-        LAMBDA = symbol.LAMBDA
-        MUL = symbol.Symbol('*')
-        X = symbol.Symbol('X')
-        ADD = symbol.Symbol('+')
-        NO_DEFIED_FUNCTION = symbol.Symbol('NO_DEFIED_FUNCTION')
+        MUL = Symbol('*')
+        X = Symbol('X')
+        ADD = Symbol('+')
+        NO_DEFIED_FUNCTION = Symbol('NO_DEFIED_FUNCTION')
 
         x = [FUNCTION, [LAMBDA, [X], [MUL, X, X]]]
         p = self.evaluator._Evaluator__function(x, self.global_var_env, self.global_func_env)
@@ -176,11 +160,9 @@ class UnitTestCase(unittest.TestCase):
                                self.global_var_env, self.global_func_env)
 
     def test__let(self):
-        LET = symbol.LET
-        PROGN = symbol.PROGN
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        ADD = symbol.Symbol('+')
+        A = Symbol('A')
+        B = Symbol('B')
+        ADD = Symbol('+')
 
         # __let is private method in Evaluator.
         x = [LET, [[A, 1], [B, 2]], [ADD, A, B]]
@@ -194,11 +176,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(var_env.outer, self.global_var_env)
 
     def test__let_aster(self):
-        LET_ASTER = symbol.LET_ASTER
-        PROGN = symbol.PROGN
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        ADD = symbol.Symbol('+')
+        A = Symbol('A')
+        B = Symbol('B')
+        ADD = Symbol('+')
 
         # __let_aster is private method in Evaluator.
         x = [LET_ASTER, [[A, 1], [B, A]], [ADD, A, B]]
@@ -213,12 +193,10 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(var_env.outer.outer, self.global_var_env)
 
     def test__flet(self):
-        FLET = symbol.FLET
-        PROGN = symbol.PROGN
-        FUNC = symbol.Symbol('FUNC')
-        X = symbol.Symbol('X')
-        ADD = symbol.Symbol('+')
-        MUL = symbol.Symbol('*')
+        FUNC = Symbol('FUNC')
+        X = Symbol('X')
+        ADD = Symbol('+')
+        MUL = Symbol('*')
 
         # __flet is private method in Evaluator.
         x = [FLET, [[FUNC, [X], [MUL, X, X]]], [ADD, [FUNC, 2], [FUNC, 2]]]
@@ -232,15 +210,13 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsNone(func_env[FUNC].func_env.outer)
 
     def test__lables(self):
-        LABLES = symbol.LABELS
-        PROGN = symbol.PROGN
-        FUNC = symbol.Symbol('FUNC')
-        X = symbol.Symbol('X')
-        ADD = symbol.Symbol('+')
-        MUL = symbol.Symbol('*')
+        FUNC = Symbol('FUNC')
+        X = Symbol('X')
+        ADD = Symbol('+')
+        MUL = Symbol('*')
 
         # __flet is private method in Evaluator.
-        x = [LABLES, [[FUNC, [X], [MUL, X, X]]], [ADD, [FUNC, 2], [FUNC, 2]]]
+        x = [LABELS, [[FUNC, [X], [MUL, X, X]]], [ADD, [FUNC, 2], [FUNC, 2]]]
         x, func_env = self.evaluator._Evaluator__labels(x, self.global_var_env, self.global_func_env)
 
         self.assertEqual(x, [PROGN, [ADD, [FUNC, 2], [FUNC, 2]]])
@@ -252,10 +228,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(func_env[FUNC].func_env.outer, self.global_func_env)
 
     def test_block(self):
-        BLOCK = symbol.BLOCK
-        NAME = symbol.Symbol('NAME')
-        SETQ = symbol.SETQ
-        X = symbol.Symbol('X')
+        NAME = Symbol('NAME')
+        X = Symbol('X')
 
         var_env = env.VarEnv([X], [False], self.global_var_env)
         x = [BLOCK, NAME, [SETQ, X, 10], [SETQ, X, 20]]
@@ -265,11 +239,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(var_env.find(X)[X], 20)
 
     def test__return_from(self):
-        RETURN_FROM = symbol.RETURN_FROM
-        BLOCK = symbol.BLOCK
-        NAME = symbol.Symbol('NAME')
-        SETQ = symbol.SETQ
-        X = symbol.Symbol('X')
+        NAME = Symbol('NAME')
+        X = Symbol('X')
 
         var_env = env.VarEnv([X], [False], self.global_var_env)
         x = [BLOCK, NAME, [SETQ, X, 10], [RETURN_FROM, NAME, False], [SETQ, X, 20]]
@@ -279,11 +250,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(var_env.find(X)[X], 10)
 
     def test__tagbody(self):
-        TAGBODY = symbol.TAGBODY
-        START = symbol.Symbol('START')
-        END = symbol.Symbol('END')
-        SETQ = symbol.SETQ
-        X = symbol.Symbol('X')
+        START = Symbol('START')
+        END = Symbol('END')
+        X = Symbol('X')
 
         var_env = env.VarEnv([X], [10], self.global_var_env)
         x = [TAGBODY, START, [SETQ, X, 20], END]
@@ -293,12 +262,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(var_env.find(X)[X], 20)
 
     def test__go(self):
-        GO = symbol.GO
-        TAGBODY = symbol.TAGBODY
-        START = symbol.Symbol('START')
-        END = symbol.Symbol('END')
-        SETQ = symbol.SETQ
-        X = symbol.Symbol('X')
+        START = Symbol('START')
+        END = Symbol('END')
+        X = Symbol('X')
 
         var_env = env.VarEnv([X], [10], self.global_var_env)
         x = [TAGBODY, START, [GO, END], [SETQ, X, 20], END]
@@ -308,8 +274,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(var_env.find(X)[X], 10)
 
     def test__catch(self):
-        CATCH = symbol.CATCH
-        ADD = symbol.Symbol('+')
+        ADD = Symbol('+')
 
         # implicit progn.
         x = [CATCH, [ADD, 10, 20], [ADD, 30, 40]]
@@ -318,11 +283,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(x, 70)
 
     def test__throw(self):
-        CATCH = symbol.CATCH
-        THROW = symbol.THROW
-        QUOTE = symbol.QUOTE
-        DUMMY_TAG_1 = symbol.Symbol('DUMMY-TAG-1')
-        DUMMY_TAG_2 = symbol.Symbol('DUMMY-TAG-2')
+        DUMMY_TAG_1 = Symbol('DUMMY-TAG-1')
+        DUMMY_TAG_2 = Symbol('DUMMY-TAG-2')
 
         x = [THROW, [QUOTE, DUMMY_TAG_1], 10]
         self.assertRaisesRegex(eval_module.ControlError, "attempt to throw to the nonexistent tag "+DUMMY_TAG_1,
@@ -344,10 +306,9 @@ class UnitTestCase(unittest.TestCase):
     ########## Helper methods ##########
 
     def test__cons(self):
-        DOT = symbol.DOT
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        C = symbol.Symbol('C')
+        A = Symbol('A')
+        B = Symbol('B')
+        C = Symbol('C')
 
         # __cons is private method in Evaluator.
 
@@ -364,9 +325,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(self.evaluator._Evaluator__cons([A, DOT, False]), ['A'])
 
     def test__refer(self):
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        C = symbol.Symbol('C')
+        A = Symbol('A')
+        B = Symbol('B')
+        C = Symbol('C')
 
         # Set local values.
         var_env = env.VarEnv([A, B], [10, 20], self.global_func_env)
@@ -376,11 +337,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(LookupError, "C", self.evaluator._Evaluator__refer, C, var_env)
 
     def test__defun(self):
-        DEFUN = symbol.DEFUN
-        LAMBDA = symbol.LAMBDA
-        FUNC = symbol.Symbol('FUNC')
-        MUL = symbol.Symbol('*')
-        X = symbol.Symbol('X')
+        FUNC = Symbol('FUNC')
+        MUL = Symbol('*')
+        X = Symbol('X')
 
         # (defun func (lambda (x) (* x x)))
         x = [DEFUN, FUNC, [LAMBDA, [X], [MUL, X, X]]]
@@ -390,19 +349,17 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(self.global_func_env[FUNC], eval_module.Procedure)
 
     def test__lambda(self):
-        LAMBDA = symbol.LAMBDA
-        MUL = symbol.Symbol('*')
-        X = symbol.Symbol('X')
+        MUL = Symbol('*')
+        X = Symbol('X')
 
         x = [LAMBDA, [X], [MUL, X, X]]
         f = self.evaluator._Evaluator__lambda(x, self.global_var_env, self.global_func_env)
         self.assertIsInstance(f, eval_module.Procedure)
 
     def test__execute(self):
-        ADD = symbol.Symbol('+')
-        LAMBDA = symbol.LAMBDA
-        MUL = symbol.Symbol('*')
-        X = symbol.Symbol('X')
+        ADD = Symbol('+')
+        MUL = Symbol('*')
+        X = Symbol('X')
 
         x = [ADD, 1, 2, 3]
         val = self.evaluator._Evaluator__execute(x, self.global_var_env, self.global_func_env)

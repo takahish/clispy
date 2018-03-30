@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import unittest
-from clispy import symbol
+from clispy.symbol import *
 from clispy import utils
 
 
@@ -22,7 +22,7 @@ class UnitTestCase(unittest.TestCase):
     def test_to_string(self):
         self.assertEqual(utils.to_string(True), 'T')
         self.assertEqual(utils.to_string(False), 'NIL')
-        self.assertEqual(utils.to_string(symbol.Symbol('x')), 'x')
+        self.assertEqual(utils.to_string(Symbol('x')), 'x')
         self.assertEqual(utils.to_string("string"), '"string"')
         self.assertEqual(utils.to_string([1, 2, 3]), '(1 2 3)')
         self.assertEqual(utils.to_string(2 + 3j), '(2+3i)')

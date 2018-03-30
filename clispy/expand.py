@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+from clispy.symbol import *
 from clispy import env
-from clispy import symbol
 from clispy.utils import require
 from clispy import func
 
@@ -43,38 +43,38 @@ class Expander(object):
         if macro_env is None:
             macro_env = self.global_macro_env
 
-        if not isinstance(x, list):                # constant => unchanged
+        if not isinstance(x, list):         # constant => unchanged
             return x
-        elif x[0] is symbol.DEFUN:                 # (defun sym (lambda args body))
+        elif x[0] is DEFUN:                 # (defun sym (lambda args body))
             return self.__defun(x, macro_env)
-        elif x[0] is symbol.DEFMACRO:              # (defmacro sym (lambda args body))
+        elif x[0] is DEFMACRO:              # (defmacro sym (lambda args body))
             return self.__defmacro(x, macro_env)
-        elif x[0] is symbol.LAMBDA:                # (lambda (var) body)
+        elif x[0] is LAMBDA:                # (lambda (var) body)
             return self.__lambda(x, macro_env)
-        elif x[0] is symbol.QUASIQUOTE:            # `x => (quasiquote x)
+        elif x[0] is QUASIQUOTE:            # `x => (quasiquote x)
             return self.__quasiquote(x)
-        elif x[0] is symbol.QUOTE:                 # Special form: quote, (quote exp)
+        elif x[0] is QUOTE:                 # Special form: quote, (quote exp)
             return self.__quote(x)
-        elif x[0] is symbol.IF:                    # Special form: if, (if test-form then-form else-form)
+        elif x[0] is IF:                    # Special form: if, (if test-form then-form else-form)
             return self.__if(x, macro_env)
-        elif x[0] is symbol.SETQ:                  # Special form: setq, (setq var val)
+        elif x[0] is SETQ:                  # Special form: setq, (setq var val)
             return self.__setq(x)
-        elif x[0] is symbol.PROGN:                 # Special form: progn, (progn exp+)
+        elif x[0] is PROGN:                 # Special form: progn, (progn exp+)
             return self.__progn(x, macro_env)
-        elif x[0] is symbol.FUNCTION:              # Special form: function, (function func)
+        elif x[0] is FUNCTION:              # Special form: function, (function func)
             return self.__function(x, macro_env)
-        elif x[0] is symbol.MACROLET:              # Special form: macrolet, (macrolet ((macro var exp)) body)
+        elif x[0] is MACROLET:              # Special form: macrolet, (macrolet ((macro var exp)) body)
             return self.__macrolet(x, macro_env)
-        elif x[0] is symbol.BLOCK:                 # Special form: block, (block name)
+        elif x[0] is BLOCK:                 # Special form: block, (block name)
             return self.__block(x, macro_env)
-        elif x[0] is symbol.RETURN_FROM:           # Special form: return-from, (block name (return-from name))
+        elif x[0] is RETURN_FROM:           # Special form: return-from, (block name (return-from name))
             return self.__return_from(x, macro_env)
-        elif x[0] is symbol.CATCH:                 # Special form: catch, (catch 'tag)
+        elif x[0] is CATCH:                 # Special form: catch, (catch 'tag)
             return self.__catch(x, macro_env)
-        elif x[0] is symbol.THROW:                 # Special form: throw, (catch 'tag (throw 'tag retval))
+        elif x[0] is THROW:                 # Special form: throw, (catch 'tag (throw 'tag retval))
             return self.__throw(x, macro_env)
-        elif isinstance(x[0], symbol.Symbol) and x[0] in macro_env:
-                                                   # (m arg...) => macroexpand if m isinstance macro
+        elif isinstance(x[0], Symbol) and x[0] in macro_env:
+                                            # (m arg...) => macroexpand if m isinstance macro
             return self.__expand_macro(x, macro_env)
         else:
             return self.__expand_recur(x, macro_env)
@@ -124,9 +124,9 @@ class Expander(object):
             pairs = x[1:]
             if len(pairs) % 2 == 1: # (setq a 1 b) => (setq a 1 b nil)
                 pairs.append(False)
-            x = [symbol.SETQ]
+            x = [SETQ]
             for var, exp in zip(*[iter(pairs)] * 2):
-                require(x, isinstance(var, symbol.Symbol), msg="can set! only a symbol")
+                require(x, isinstance(var, Symbol), msg="can set! only a symbol")
                 x = x + [var, exp]
             return x
 
@@ -157,7 +157,7 @@ class Expander(object):
             A series of forms.
         """
         require(x, len(x) == 2)
-        require(x, isinstance(x[1], symbol.Symbol), "an argument must be symbol")
+        require(x, isinstance(x[1], Symbol), "an argument must be symbol")
         return x
 
     def __macrolet(self, x, macro_env):
@@ -178,7 +178,7 @@ class Expander(object):
         for binding in bindings:
             name, exp = binding[0], binding[1:]
 
-            exp = [symbol.LAMBDA] + exp
+            exp = [LAMBDA] + exp
             exp = self.expand(exp, macro_env)
 
             proc = self.evaluator.eval(exp)
@@ -189,7 +189,7 @@ class Expander(object):
             except LookupError:
                 local_macro_env[name] = proc
 
-        x = [symbol.PROGN] + body
+        x = [PROGN] + body
         return self.expand(x, local_macro_env)
 
     def __block(self, x, macro_env):
@@ -202,7 +202,7 @@ class Expander(object):
         Returns:
             A series of forms and new macro bindings.
         """
-        require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
+        require(x, len(x) >= 2 and isinstance(x[1], Symbol), "block name must be symbol")
         if len(x) == 2: # (block empty) => nil
             return False
         else:
@@ -217,7 +217,7 @@ class Expander(object):
         Returns:
             A series of forms and new macro bindings.
         """
-        require(x, len(x) >= 2 and isinstance(x[1], symbol.Symbol), "block name must be symbol")
+        require(x, len(x) >= 2 and isinstance(x[1], Symbol), "block name must be symbol")
 
         # if there is no exp, nil appended.
         if len(x) == 2:
@@ -284,18 +284,18 @@ class Expander(object):
             Abstract syntax tree expanded quasiquote.
         """
         if not func._consp(x):
-            return [symbol.QUOTE, x]
+            return [QUOTE, x]
 
-        require(x, x[0] is not symbol.UNQUOTE_SPLICING, "can't splice here")
+        require(x, x[0] is not UNQUOTE_SPLICING, "can't splice here")
 
-        if x[0] is symbol.UNQUOTE:
+        if x[0] is UNQUOTE:
             require(x, len(x) == 2)
             return x[1]
-        elif func._consp(x[0]) and x[0][0] is symbol.UNQUOTE_SPLICING:
+        elif func._consp(x[0]) and x[0][0] is UNQUOTE_SPLICING:
             require(x[0], len(x[0]) == 2)
-            return [symbol.APPEND, x[0][1], self.__quasiquote_recur(x[1:])]
+            return [APPEND, x[0][1], self.__quasiquote_recur(x[1:])]
         else:
-            return [symbol.CONS, self.__quasiquote_recur(x[0]), self.__quasiquote_recur(x[1:])]
+            return [CONS, self.__quasiquote_recur(x[0]), self.__quasiquote_recur(x[1:])]
 
     def __defun(self, x, macro_env):
         """Expand a series of forms for defun.
@@ -312,8 +312,8 @@ class Expander(object):
             if func._null(args): # (def name nil body) => (def name [] body)
                 args = []
             # Implicit BLOCK.
-            body = [[symbol.BLOCK, name] + body]
-            return self.expand([defun, name, [symbol.LAMBDA, args] + body], macro_env)
+            body = [[BLOCK, name] + body]
+            return self.expand([defun, name, [LAMBDA, args] + body], macro_env)
         else:
             require(x, len(x) == 3) # (defun non-var/list exp) => Error
             defun, name, exp = x[0], x[1], x[2]
@@ -334,7 +334,7 @@ class Expander(object):
             defun, name, args, body = x[0], x[1], x[2], x[3:]
             if func._null(args): # (def name nil body) => (def name [] body)
                 args = []
-            return self.__defmacro([defun, name, [symbol.LAMBDA, args] + body], macro_env)
+            return self.__defmacro([defun, name, [LAMBDA, args] + body], macro_env)
         else:
             require(x, len(x) == 3) # (defun non-var/list exp) => Error
             _def, name, exp = x[0], x[1], x[2]
@@ -346,7 +346,7 @@ class Expander(object):
                 macro_env.find(name)[name] = proc
             except LookupError:
                 macro_env[name] = proc
-            return [symbol.QUOTE, name] # quote is needed for eval and print
+            return [QUOTE, name] # quote is needed for eval and print
 
     def __lambda(self, x, macro_env):
         """Make instance of Procedure that is lambda expression.
@@ -360,19 +360,19 @@ class Expander(object):
         """
         require(x, len(x) >= 3)
         vars, body = x[1], x[2:]
-        require(x, (isinstance(vars, list) and all(isinstance(v, symbol.Symbol) for v in vars))
-                      or isinstance(vars, symbol.Symbol), "illegal lambda argument list")
+        require(x, (isinstance(vars, list) and all(isinstance(v, Symbol) for v in vars))
+                      or isinstance(vars, Symbol), "illegal lambda argument list")
 
         # Set expression in lambda.
         # There is BLOCK in body, this lambda is defined by defun,
         # or there is one expression in body.
-        if len(body) == 1 or body[0][0] is symbol.BLOCK:
+        if len(body) == 1 or body[0][0] is BLOCK:
             exp = body[0]
         else:
             # Implicit progn for some body.
-            exp = [symbol.PROGN] + body
+            exp = [PROGN] + body
 
-        return [symbol.LAMBDA, vars, self.expand(exp, macro_env)]
+        return [LAMBDA, vars, self.expand(exp, macro_env)]
 
     def __expand_macro(self, x, macro_env):
         """Expand macro.

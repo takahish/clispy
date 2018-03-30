@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import unittest
-from clispy import symbol
+from clispy.symbol import *
 from clispy import env
 from clispy import func
 from clispy import eval
@@ -42,22 +42,12 @@ class UnitTestCase(unittest.TestCase):
     def test_expand(self):
         expand = lambda x: self.expander.expand(x)
 
-        QUOTE = symbol.QUOTE
-        IF = symbol.IF
-        DEFUN = symbol.DEFUN
-        PROGN = symbol.PROGN
-        BLOCK = symbol.BLOCK
-        LAMBDA = symbol.LAMBDA
-        DEFMACRO = symbol.DEFMACRO
-        QUASIQUOTE = symbol.QUASIQUOTE
-        UNQUOTE = symbol.UNQUOTE
-
-        FUNC = symbol.Symbol('FUNC')
-        X = symbol.Symbol('X')
-        Y = symbol.Symbol('Y')
-        ADD = symbol.Symbol('+')
-        MUL = symbol.Symbol('*')
-        MACRO = symbol.Symbol('MACRO')
+        FUNC = Symbol('FUNC')
+        X = Symbol('X')
+        Y = Symbol('Y')
+        ADD = Symbol('+')
+        MUL = Symbol('*')
+        MACRO = Symbol('MACRO')
 
         # constant => unchanged
         self.assertEqual(expand(3), 3)
@@ -94,9 +84,8 @@ class UnitTestCase(unittest.TestCase):
     ########## Special forms ##########
 
     def test__quote(self):
-        QUOTE = symbol.QUOTE
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
+        A = Symbol('A')
+        B = Symbol('B')
 
         x = [QUOTE, A]
         exp = self.expander._Expander__quote(x)
@@ -106,9 +95,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__quote, x)
 
     def test__if(self):
-        IF = symbol.IF
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
+        A = Symbol('A')
+        B = Symbol('B')
 
         x = [IF, True, A, B]
         exp = self.expander._Expander__if(x, self.global_macro_env)
@@ -125,10 +113,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__if, x, self.global_macro_env)
 
     def test__setq(self):
-        SETQ = symbol.SETQ
-        A = symbol.Symbol('A')
-        B = symbol.Symbol('B')
-        ADD = symbol.Symbol('+')
+        A = Symbol('A')
+        B = Symbol('B')
+        ADD = Symbol('+')
 
         x = [SETQ]
         exp = self.expander._Expander__setq(x)
@@ -142,9 +129,6 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(SyntaxError, "can set! only a symbol", self.expander._Expander__setq, x)
 
     def test__progn(self):
-        PROGN = symbol.PROGN
-        SETQ = symbol.SETQ
-
         x = [PROGN]
         exp = self.expander._Expander__progn(x, self.global_macro_env)
         self.assertFalse(exp)
@@ -154,8 +138,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(exp, [PROGN, False])
 
     def test__function(self):
-        FUNCTION = symbol.FUNCTION
-        FUNC = symbol.Symbol('FUNC')
+        FUNC = Symbol('FUNC')
 
         x = [FUNCTION, FUNC]
         exp = self.expander._Expander__function(x, self.global_macro_env)
@@ -165,14 +148,10 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(SyntaxError, "an argument must be symbol", self.expander._Expander__function, x, self.global_macro_env)
 
     def test__macrolet(self):
-        MACROLET = symbol.MACROLET
-        QUASIQUOTE = symbol.QUASIQUOTE
-        UNQUOTE = symbol.UNQUOTE
-        PROGN = symbol.PROGN
-        MACRO = symbol.Symbol('MACRO')
-        X = symbol.Symbol('X')
-        Y = symbol.Symbol('Y')
-        ADD = symbol.Symbol('ADD')
+        MACRO = Symbol('MACRO')
+        X = Symbol('X')
+        Y = Symbol('Y')
+        ADD = Symbol('ADD')
 
         x = [MACROLET, [[MACRO, [X, Y], [QUASIQUOTE, [ADD, [UNQUOTE, X], [UNQUOTE, Y]]]]], [MACRO, 10, 20]]
         exp = self.expander._Expander__macrolet(x, self.global_macro_env)
@@ -181,8 +160,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertFalse(MACRO in self.global_func_env)
 
     def test__blocl(self):
-        BLOCK = symbol.BLOCK
-        NAME = symbol.Symbol('NAME')
+        NAME = Symbol('NAME')
 
         x = [BLOCK]
         self.assertRaisesRegex(SyntaxError, "block name must be symbol", self.expander._Expander__block, x, self.global_macro_env)
@@ -194,9 +172,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(self.expander._Expander__block(x, self.global_macro_env), False)
 
     def test__return_from(self):
-        RETURN_FROM = symbol.RETURN_FROM
-        NAME = symbol.Symbol('NAME')
-        ADD = symbol.Symbol('+')
+        NAME = Symbol('NAME')
+        ADD = Symbol('+')
 
         x = [RETURN_FROM]
         self.assertRaisesRegex(SyntaxError, "block name must be symbol", self.expander._Expander__return_from, x,self.global_macro_env)
@@ -212,9 +189,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(x, [RETURN_FROM, NAME, False])
 
     def test__catch(self):
-        CATCH = symbol.CATCH
-        QUOTE = symbol.QUOTE
-        TAG = symbol.Symbol('TAG')
+        TAG = Symbol('TAG')
 
         x = [CATCH]
         self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__catch, x, self.global_macro_env)
@@ -223,9 +198,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(self.expander._Expander__catch(x, self.global_macro_env), False)
 
     def test__throw(self):
-        THROW = symbol.THROW
-        QUOTE = symbol.QUOTE
-        TAG = symbol.Symbol('TAG')
+        TAG = Symbol('TAG')
 
         x = [THROW]
         self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__throw, x, self.global_macro_env)
@@ -241,14 +214,8 @@ class UnitTestCase(unittest.TestCase):
     ########## Helper methods ##########
 
     def test__quasiquote(self):
-        QUASIQUOTE = symbol.QUASIQUOTE
-        QUOTE = symbol.QUOTE
-        UNQUOTE = symbol.UNQUOTE
-        UNQUOTE_SPLICING = symbol.UNQUOTE_SPLICING
-        CONS = symbol.CONS
-        APPEND = symbol.APPEND
-        S = symbol.Symbol('S')
-        ADD = symbol.Symbol('+')
+        S = Symbol('S')
+        ADD = Symbol('+')
 
         x = [QUASIQUOTE, S]
         self.assertEqual(self.expander._Expander__quasiquote(x), [QUOTE, S])
@@ -261,13 +228,8 @@ class UnitTestCase(unittest.TestCase):
                          [APPEND, [1, 2], [CONS, [QUOTE, 3], [QUOTE, []]]])
 
     def test__quasiquote_recur(self):
-        QUOTE = symbol.QUOTE
-        UNQUOTE = symbol.UNQUOTE
-        UNQUOTE_SPLICING = symbol.UNQUOTE_SPLICING
-        CONS = symbol.CONS
-        APPEND = symbol.APPEND
-        S = symbol.Symbol('S')
-        ADD = symbol.Symbol('+')
+        S = Symbol('S')
+        ADD = Symbol('+')
 
         x = S
         self.assertEqual(self.expander._Expander__quasiquote_recur(x), [QUOTE, S])
@@ -280,25 +242,19 @@ class UnitTestCase(unittest.TestCase):
                          [APPEND, [1, 2], [CONS, [QUOTE, 3], [QUOTE, []]]])
 
     def test__defun(self):
-        DEFUN = symbol.DEFUN
-        LAMBDA = symbol.LAMBDA
-        BLOCK = symbol.BLOCK
-        FUNC = symbol.Symbol('FUNC')
-        X = symbol.Symbol('X')
-        MUL = symbol.Symbol('*')
+        FUNC = Symbol('FUNC')
+        X = Symbol('X')
+        MUL = Symbol('*')
 
         x = [DEFUN, FUNC, [X], [MUL, X, X]]
         val = self.expander._Expander__defun(x, self.global_macro_env)
         self.assertEqual(val, [DEFUN, FUNC, [LAMBDA, [X], [BLOCK, FUNC, [MUL, X, X]]]])
 
     def test__defmacro(self):
-        QUASIQUOTE = symbol.QUASIQUOTE
-        UNQUOTE = symbol.UNQUOTE
-        DEFMACRO = symbol.DEFMACRO
-        MACRO = symbol.Symbol('MACRO')
-        X = symbol.Symbol('X')
-        Y = symbol.Symbol('Y')
-        ADD = symbol.Symbol('+')
+        MACRO = Symbol('MACRO')
+        X = Symbol('X')
+        Y = Symbol('Y')
+        ADD = Symbol('+')
 
         x = [DEFMACRO, MACRO, [X, Y], [QUASIQUOTE, [ADD, [UNQUOTE, X], [UNQUOTE, Y]]]]
         exp = self.expander._Expander__defmacro(x, self.global_macro_env)
@@ -309,11 +265,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertTrue(callable(self.global_macro_env.find(sym)[sym]))
 
     def test__lambda(self):
-        LAMBDA = symbol.LAMBDA
-        X = symbol.Symbol('X')
-        MUL = symbol.Symbol('*')
-        ADD = symbol.Symbol('+')
-        PROGN = symbol.PROGN
+        X = Symbol('X')
+        MUL = Symbol('*')
+        ADD = Symbol('+')
 
         x = [LAMBDA, [X], [MUL, X, X]]
         val = self.expander._Expander__lambda(x, self.global_macro_env)
@@ -324,13 +278,10 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(val, [LAMBDA, [X], [PROGN, [MUL, X, X], [ADD, X, X]]])
 
     def test__expand_macro(self):
-        QUASIQUOTE = symbol.QUASIQUOTE
-        UNQUOTE = symbol.UNQUOTE
-        DEFMACRO = symbol.DEFMACRO
-        MACRO = symbol.Symbol('MACRO')
-        X = symbol.Symbol('X')
-        Y = symbol.Symbol('Y')
-        ADD = symbol.Symbol('+')
+        MACRO = Symbol('MACRO')
+        X = Symbol('X')
+        Y = Symbol('Y')
+        ADD = Symbol('+')
 
         x = [DEFMACRO, MACRO, [X, Y], [QUASIQUOTE, [ADD, [UNQUOTE, X], [UNQUOTE, Y]]]]
         self.expander._Expander__defmacro(x, self.global_macro_env)
@@ -340,16 +291,11 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(exp, ['+', 10, 20]) # (macro 10 20) => (+ 10 20)
 
     def test__expand_recur(self):
-        QUASIQUOTE = symbol.QUASIQUOTE
-        UNQUOTE = symbol.UNQUOTE
-        DEFMACRO = symbol.DEFMACRO
-        LAMBDA = symbol.LAMBDA
-        PROGN = symbol.PROGN
-        MACRO = symbol.Symbol('MACRO')
-        X = symbol.Symbol('X')
-        Y = symbol.Symbol('Y')
-        ADD = symbol.Symbol('+')
-        MUL = symbol.Symbol('*')
+        MACRO = Symbol('MACRO')
+        X = Symbol('X')
+        Y = Symbol('Y')
+        ADD = Symbol('+')
+        MUL = Symbol('*')
 
         x = [DEFMACRO, MACRO, [X, Y], [QUASIQUOTE, [ADD, [UNQUOTE, X], [UNQUOTE, Y]]]]
         self.expander._Expander__defmacro(x, self.global_macro_env)

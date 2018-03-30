@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import unittest
-from clispy import symbol
+from clispy.symbol import *
 from clispy import env
 
 
@@ -33,7 +33,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(args, [1, [2, 3, 4, 5]])
 
     def testEnvironment(self):
-        param = symbol.Symbol('a')
+        param = Symbol('a')
         args = [2, 3, 4]
         test_env = env._Env(param, args)
         self.assertEqual(test_env[param], args)

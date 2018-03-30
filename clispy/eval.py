@@ -13,9 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
+from clispy.symbol import *
 from clispy import cons
 from clispy import env
-from clispy import symbol
 from clispy.utils import callcc
 
 
@@ -49,7 +49,7 @@ class Procedure(object):
         self.func_env = func_env
 
     def __call__(self, *args):
-        """Make _Procedure to be callable
+        """Make _Procedure to be callable.
         """
         return self.evaluator.eval(
             self.exps,
@@ -85,43 +85,43 @@ class Evaluator(object):
             func_env = self.global_func_env
 
         while True:
-            if isinstance(x, symbol.Symbol):          # variable reference
+            if isinstance(x, Symbol):          # variable reference
                 return self.__refer(x, var_env)
-            elif not isinstance(x, list):             # constant literal
+            elif not isinstance(x, list):      # constant literal
                 return x
-            elif x[0] is symbol.DEFUN:                # (defun sym (lambda args body))
+            elif x[0] is DEFUN:                # (defun sym (lambda args body))
                 return self.__defun(x, var_env, func_env)
-            elif x[0] is symbol.LAMBDA:               # (lambda (var) body)
+            elif x[0] is LAMBDA:               # (lambda (var) body)
                 return self.__lambda(x, var_env, func_env)
-            elif x[0] is symbol.QUOTE:                # Special form: quote, (quote exp)
+            elif x[0] is QUOTE:                # Special form: quote, (quote exp)
                 return self.__quote(x)
-            elif x[0] is symbol.IF:                   # Special form: if, (if test-form then-form else-form)
+            elif x[0] is IF:                   # Special form: if, (if test-form then-form else-form)
                 x = self.__if(x, var_env, func_env)
-            elif x[0] is symbol.SETQ:                 # Special form: setq, (setq var exp)
+            elif x[0] is SETQ:                 # Special form: setq, (setq var exp)
                 return self.__setq(x, var_env, func_env)
-            elif x[0] is symbol.PROGN:                # Special form: progn, (progn exp+)
+            elif x[0] is PROGN:                # Special form: progn, (progn exp+)
                 x = self.__progn(x, var_env, func_env)
-            elif x[0] is symbol.FUNCTION:             # Special form: function, (function func)
+            elif x[0] is FUNCTION:             # Special form: function, (function func)
                 x = self.__function(x, var_env, func_env)
-            elif x[0] is symbol.LET:                  # Special form: let, (let ((var val)) body)
+            elif x[0] is LET:                  # Special form: let, (let ((var val)) body)
                 x, var_env = self.__let(x, var_env, func_env)
-            elif x[0] is symbol.LET_ASTER:            # Special form: let*, (let* ((var val)) body)
+            elif x[0] is LET_ASTER:            # Special form: let*, (let* ((var val)) body)
                 x, var_env = self.__let_aster(x, var_env, func_env)
-            elif x[0] is symbol.FLET:                 # Special form: flet, (flet ((func var exp)) body)
+            elif x[0] is FLET:                 # Special form: flet, (flet ((func var exp)) body)
                 x, func_env = self.__flet(x, var_env, func_env)
-            elif x[0] is symbol.LABELS:               # Special form: labels, (labels ((func var exp)) body)
+            elif x[0] is LABELS:               # Special form: labels, (labels ((func var exp)) body)
                 x, func_env = self.__labels(x, var_env, func_env)
-            elif x[0] is symbol.BLOCK:                # Special form: block, (block name)
+            elif x[0] is BLOCK:                # Special form: block, (block name)
                 x = self.__block(x, var_env, func_env)
-            elif x[0] is symbol.RETURN_FROM:          # Special form: return-from, (block name (return-from name))
+            elif x[0] is RETURN_FROM:          # Special form: return-from, (block name (return-from name))
                 return self.__return_from(x, var_env, func_env)
-            elif x[0] is symbol.TAGBODY:              # Special form: tagbody, (tagbody tag)
+            elif x[0] is TAGBODY:              # Special form: tagbody, (tagbody tag)
                 return self.__tagbody(x, var_env, func_env)
-            elif x[0] is symbol.GO:                   # Special form: go, (tagbody tag (go tag))
+            elif x[0] is GO:                   # Special form: go, (tagbody tag (go tag))
                 return self.__go(x, var_env)
-            elif x[0] is symbol.CATCH:                # Special form: catch, (catch 'tag)
+            elif x[0] is CATCH:                # Special form: catch, (catch 'tag)
                 x = self.__catch(x, var_env, func_env)
-            elif x[0] is symbol.THROW:                # Special form: throw, (catch 'tag (throw 'tag retval))
+            elif x[0] is THROW:                # Special form: throw, (catch 'tag (throw 'tag retval))
                 return self.__throw(x, var_env, func_env)
             else:
                 return self.__execute(x, var_env, func_env)
@@ -138,7 +138,7 @@ class Evaluator(object):
         Returns:
             An expression.
         """
-        _, exp = x # x[0] is symbol.
+        _, exp = x
         if isinstance(exp, list): # List literal is converted to cons cell.
             return self.__cons(exp)
         return exp
@@ -156,7 +156,7 @@ class Evaluator(object):
         Returns:
             A series of forms
         """
-        (_, test_form, then_form, else_form) = x # x[0] is symbol.
+        (_, test_form, then_form, else_form) = x
         x = (then_form if self.eval(test_form, var_env, func_env) else else_form)
         return x
 
@@ -208,8 +208,8 @@ class Evaluator(object):
         Returns:
             A callable object.
         """
-        (_, exp) = x # x[0] is symbol.
-        if isinstance(exp, list) and exp[0] is symbol.LAMBDA:
+        (_, exp) = x
+        if isinstance(exp, list) and exp[0] is LAMBDA:
             x = self.__lambda(exp, var_env, func_env)
         else:
             x = func_env.find(exp)[exp]
@@ -237,7 +237,7 @@ class Evaluator(object):
         # The bindings are in parallel.
         var_env = env.VarEnv(vars, vals, var_env)
 
-        x = [symbol.PROGN] + body
+        x = [PROGN] + body
         return x, var_env
 
     def __let_aster(self, x, var_env, func_env):
@@ -259,7 +259,7 @@ class Evaluator(object):
             # The bindings are in sequential.
             var_env = env.VarEnv([var], [val], var_env)
 
-        x = [symbol.PROGN] + body
+        x = [PROGN] + body
         return x, var_env
 
     def __flet(self, x, var_env, func_env):
@@ -280,12 +280,12 @@ class Evaluator(object):
         local_func_env = env.FuncEnv([], [], func_env)
         for binding in bindings:
             func, exp = binding[0], binding[1:]
-            exp = [symbol.LAMBDA] + exp
+            exp = [LAMBDA] + exp
 
             # The scope of the name bindings encompasses only the body.
             local_func_env[func] = self.eval(exp, var_env, func_env)
 
-        x = [symbol.PROGN] + body
+        x = [PROGN] + body
         return x, local_func_env
 
     def __labels(self, x, var_env, func_env):
@@ -306,12 +306,12 @@ class Evaluator(object):
         local_func_env = env.FuncEnv([], [], func_env)
         for binding in bindings:
             func, exp = binding[0], binding[1:]
-            exp = [symbol.LAMBDA] + exp
+            exp = [LAMBDA] + exp
             # The scope of the name bindings encompasses the function definitions
             # themselves as well as the body.
             local_func_env[func] = self.eval(exp, var_env, local_func_env)
 
-        x = [symbol.PROGN] + body
+        x = [PROGN] + body
         return x, local_func_env
 
     def __block(self, x, var_env, func_env):
@@ -332,7 +332,7 @@ class Evaluator(object):
         # throw is param of lambda in call/cc.
         throw = [name]
         # An implicit progn.
-        exp = [symbol.PROGN] + exp
+        exp = [PROGN] + exp
 
         # call/cc is used to control.
         x = callcc(Procedure(self, throw, exp, var_env, func_env))
@@ -384,16 +384,16 @@ class Evaluator(object):
             exp = register[pointer]
 
             # exp is tag.
-            if isinstance(exp, symbol.Symbol):
+            if isinstance(exp, Symbol):
                 pointer = pointer + 1
                 exp = register[pointer]
 
             # NIL is param of lambda in call/cc.
             # NIL is converted to False implicitly in parse, so it never collide.
-            x = callcc(Procedure(self, [symbol.NIL], exp, var_env, func_env))
+            x = callcc(Procedure(self, [NIL], exp, var_env, func_env))
 
             # exp is (go tag), then pointer is jumped to tag.
-            if isinstance(x, symbol.Symbol) and x in register:
+            if isinstance(x, Symbol) and x in register:
                 pointer = register.index(x)
                 continue
 
@@ -419,7 +419,7 @@ class Evaluator(object):
 
         # NIL is param of lambda and have throw function as value in call/cc.
         # NIL is converted to False implicitly in parse, so it never collide.
-        x = var_env.find(symbol.NIL)[symbol.NIL](tag)
+        x = var_env.find(NIL)[NIL](tag)
         return x
 
     def __catch(self, x, var_env, func_env):
@@ -439,7 +439,7 @@ class Evaluator(object):
 
         tag = self.eval(tag, var_env, func_env)
         # implicit progn.
-        exp = [symbol.PROGN] + exp
+        exp = [PROGN] + exp
 
         # catch differs from block in that catch tags have dynamic scope.
         try:
@@ -482,9 +482,9 @@ class Evaluator(object):
         Returns:
             cons cell (Cons or DottedPair).
         """
-        if len(lst) > 2 and lst[-2] == symbol.DOT:
+        if len(lst) > 2 and lst[-2] == DOT:
             if lst[-1] is not False:
-                lst.remove(symbol.DOT)
+                lst.remove(DOT)
                 return cons.DottedPair(lst)
             else:
                 return lst[:-2]
@@ -510,7 +510,7 @@ class Evaluator(object):
             x: Abstract syntax tree of lisp, consisted of python list.
 
         Returns:
-            Assigned symbol.
+            Assigned symbol
         """
         (_, sym, exp) = x # x is (defun sym (lambda args body))
         func_env[sym] = self.eval(exp, var_env, func_env)
@@ -525,7 +525,7 @@ class Evaluator(object):
         Returns:
             A procedure.
         """
-        (_, params, exp) = x # x[0] is symbol.
+        (_, params, exp) = x
         return Procedure(self, params, exp, var_env, func_env)
 
     def __execute(self, x, var_env, func_env):
@@ -539,9 +539,9 @@ class Evaluator(object):
         Returns:
             An executed value
         """
-        if isinstance(x[0], symbol.Symbol):
+        if isinstance(x[0], Symbol):
             proc = func_env.find(x[0])[x[0]]
-        elif isinstance(x[0], list) and x[0][0] is symbol.LAMBDA:
+        elif isinstance(x[0], list) and x[0][0] is LAMBDA:
             proc = self.eval(x[0], var_env, func_env)
         exps = [self.eval(exp, var_env, func_env) for exp in x[1:]]
         return proc(*exps)

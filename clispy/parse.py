@@ -15,7 +15,7 @@
 
 import re
 import io
-from clispy import symbol
+from clispy.symbol import *
 
 
 class _InPort(object):
@@ -36,7 +36,7 @@ class _InPort(object):
             if self.line == '':
                 self.line = self.file.readline()
             if self.line == '':
-                return symbol.EOF_OBJECT
+                return EOF_OBJECT
             token, self.line = re.match(_InPort.__tokenizer, self.line).groups()
             if token != '' and not token.startswith(';'):
                 return token
@@ -67,7 +67,7 @@ def _convert_to_atom(token):
             try:
                 return complex(token.replace('i', 'j', 1))
             except ValueError:
-                return symbol.symbol_table[token]
+                return symbol_table[token]
 
 def _read_ahead(token, inport):
     """Helper function of read.
@@ -89,9 +89,9 @@ def _read_ahead(token, inport):
                 L.append(_read_ahead(token, inport))
     elif ')' == token:
         raise SyntaxError('unexpected )')
-    elif token in symbol.QUOTES:
-        return [symbol.QUOTES[token], _read(inport)]
-    elif token is symbol.EOF_OBJECT:
+    elif token in QUOTES:
+        return [QUOTES[token], _read(inport)]
+    elif token is EOF_OBJECT:
         raise SyntaxError('unexpected EOF in list')
     else:
         return _convert_to_atom(token)
@@ -107,7 +107,7 @@ def _read(inport):
     """
     # body of _read
     token1 = inport.next_token()
-    return symbol.EOF_OBJECT if token1 is symbol.EOF_OBJECT else _read_ahead(token1, inport)
+    return EOF_OBJECT if token1 is EOF_OBJECT else _read_ahead(token1, inport)
 
 def parse(inport):
     """Parse a program: read and expand/error-check it.
@@ -135,4 +135,4 @@ def _readchar(inport):
         char, inport.line = inport.line[0], inport.line[1:]
         return char
     else:
-        return inport.file.read(1) or symbol.EOF_OBJECT
+        return inport.file.read(1) or EOF_OBJECT

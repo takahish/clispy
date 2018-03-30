@@ -15,8 +15,8 @@
 
 import unittest
 import io
+from clispy.symbol import *
 from clispy import parse
-from clispy import symbol
 
 
 class UnitTestCase(unittest.TestCase):
@@ -34,8 +34,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(inport.next_token(), ')')
 
         # #<eof-object>
-        self.assertIsInstance(inport.next_token(), symbol.Symbol)
-        self.assertEqual(inport.next_token(), symbol.EOF_OBJECT)
+        self.assertIsInstance(inport.next_token(), Symbol)
+        self.assertEqual(inport.next_token(), EOF_OBJECT)
 
     def test_atom(self):
         self.assertTrue(parse._convert_to_atom('t'))
@@ -48,7 +48,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(parse._convert_to_atom('2.3'), 2.3)
         self.assertIsInstance(parse._convert_to_atom('2+3i'), complex)
         self.assertEqual(parse._convert_to_atom('2+3i'), 2 + 3j)
-        self.assertIsInstance(parse._convert_to_atom('sym'), symbol.Symbol)
+        self.assertIsInstance(parse._convert_to_atom('sym'), Symbol)
         
     def test_read_ahead(self):
         # success to tokenize
@@ -59,12 +59,12 @@ class UnitTestCase(unittest.TestCase):
         # quote
         inport = parse._InPort(io.StringIO("'(+ 2 3)"))
         token = inport.next_token()
-        self.assertEqual(parse._read_ahead(token, inport), [symbol.QUOTE, ['+', 2, 3]])
+        self.assertEqual(parse._read_ahead(token, inport), [QUOTE, ['+', 2, 3]])
 
         # atom
         inport = parse._InPort(io.StringIO('+'))
         token = inport.next_token()
-        self.assertEqual(parse._read_ahead(token, inport), symbol.Symbol('+'))
+        self.assertEqual(parse._read_ahead(token, inport), Symbol('+'))
 
         # fail to tokenize
         inport = parse._InPort(io.StringIO(')'))
@@ -80,8 +80,8 @@ class UnitTestCase(unittest.TestCase):
         # test only EOF
         inport = parse._InPort(io.StringIO(''))
         eof = parse._read(inport)
-        self.assertIsInstance(eof, symbol.Symbol)
-        self.assertEqual(eof, symbol.EOF_OBJECT)
+        self.assertIsInstance(eof, Symbol)
+        self.assertEqual(eof, EOF_OBJECT)
 
     def test_parse(self):
         inport = '(+ 2 3)'
@@ -93,5 +93,5 @@ class UnitTestCase(unittest.TestCase):
     def test_readchar(self):
         inport = parse._InPort(io.StringIO('a'))
         self.assertEqual(parse._readchar(inport), 'a')
-        self.assertEqual(parse._readchar(inport), symbol.EOF_OBJECT)
+        self.assertEqual(parse._readchar(inport), EOF_OBJECT)
 

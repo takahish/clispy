@@ -14,54 +14,54 @@
 # ==============================================================================
 
 import unittest
-from clispy import symbol
+from clispy.symbol import *
 
 
 class UnitTestCase(unittest.TestCase):
     def testSymbolTable(self):
-        self.assertIsInstance(symbol.symbol_table['quote'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['if'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['setq'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['defun'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['lambda'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['progn'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['defmacro'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['function'], symbol.Symbol)
+        self.assertIsInstance(symbol_table['quote'], Symbol)
+        self.assertIsInstance(symbol_table['if'], Symbol)
+        self.assertIsInstance(symbol_table['setq'], Symbol)
+        self.assertIsInstance(symbol_table['defun'], Symbol)
+        self.assertIsInstance(symbol_table['lambda'], Symbol)
+        self.assertIsInstance(symbol_table['progn'], Symbol)
+        self.assertIsInstance(symbol_table['defmacro'], Symbol)
+        self.assertIsInstance(symbol_table['function'], Symbol)
 
-        self.assertIsInstance(symbol.symbol_table['cons'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['.'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['append'], symbol.Symbol)
+        self.assertIsInstance(symbol_table['cons'], Symbol)
+        self.assertIsInstance(symbol_table['.'], Symbol)
+        self.assertIsInstance(symbol_table['append'], Symbol)
 
-        self.assertIsInstance(symbol.symbol_table['quasiquote'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['unquote'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['unquote-splicing'], symbol.Symbol)
-        self.assertIsInstance(symbol.symbol_table['sharp-quote'], symbol.Symbol)
+        self.assertIsInstance(symbol_table['quasiquote'], Symbol)
+        self.assertIsInstance(symbol_table['unquote'], Symbol)
+        self.assertIsInstance(symbol_table['unquote-splicing'], Symbol)
+        self.assertIsInstance(symbol_table['sharp-quote'], Symbol)
 
     def testVariables(self):
-        self.assertIsInstance(symbol.QUOTE, symbol.Symbol)
-        self.assertIsInstance(symbol.IF, symbol.Symbol)
-        self.assertIsInstance(symbol.SETQ, symbol.Symbol)
-        self.assertIsInstance(symbol.DEFUN, symbol.Symbol)
-        self.assertIsInstance(symbol.LAMBDA, symbol.Symbol)
-        self.assertIsInstance(symbol.PROGN, symbol.Symbol)
-        self.assertIsInstance(symbol.DEFMACRO, symbol.Symbol)
-        self.assertIsInstance(symbol.FUNCTION, symbol.Symbol)
+        self.assertIsInstance(QUOTE, Symbol)
+        self.assertIsInstance(IF, Symbol)
+        self.assertIsInstance(SETQ, Symbol)
+        self.assertIsInstance(DEFUN, Symbol)
+        self.assertIsInstance(LAMBDA, Symbol)
+        self.assertIsInstance(PROGN, Symbol)
+        self.assertIsInstance(DEFMACRO, Symbol)
+        self.assertIsInstance(FUNCTION, Symbol)
 
-        self.assertIsInstance(symbol.CONS, symbol.Symbol)
-        self.assertIsInstance(symbol.DOT, symbol.Symbol)
-        self.assertIsInstance(symbol.APPEND, symbol.Symbol)
+        self.assertIsInstance(CONS, Symbol)
+        self.assertIsInstance(DOT, Symbol)
+        self.assertIsInstance(APPEND, Symbol)
 
-        self.assertIsInstance(symbol.QUASIQUOTE, symbol.Symbol)
-        self.assertIsInstance(symbol.UNQUOTE, symbol.Symbol)
-        self.assertIsInstance(symbol.UNQUOTE_SPLICING, symbol.Symbol)
-        self.assertIsInstance(symbol.SHARPQUOTE, symbol.Symbol)
+        self.assertIsInstance(QUASIQUOTE, Symbol)
+        self.assertIsInstance(UNQUOTE, Symbol)
+        self.assertIsInstance(UNQUOTE_SPLICING, Symbol)
+        self.assertIsInstance(SHARPQUOTE, Symbol)
 
     def testSyntacticSuger(self):
-        self.assertEqual(symbol.QUOTES["'"], symbol.QUOTE)
-        self.assertEqual(symbol.QUOTES["`"], symbol.QUASIQUOTE)
-        self.assertEqual(symbol.QUOTES[","], symbol.UNQUOTE)
-        self.assertEqual(symbol.QUOTES[",@"], symbol.UNQUOTE_SPLICING)
-        self.assertEqual(symbol.QUOTES["#'"], symbol.SHARPQUOTE)
+        self.assertEqual(QUOTES["'"], QUOTE)
+        self.assertEqual(QUOTES["`"], QUASIQUOTE)
+        self.assertEqual(QUOTES[","], UNQUOTE)
+        self.assertEqual(QUOTES[",@"], UNQUOTE_SPLICING)
+        self.assertEqual(QUOTES["#'"], SHARPQUOTE)
 
     def test_eof_object(self):
-        self.assertIsInstance(symbol.EOF_OBJECT, symbol.Symbol)
+        self.assertIsInstance(EOF_OBJECT, Symbol)

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy import symbol
+from clispy.symbol import *
 
 
 class _Env(dict):
@@ -24,7 +24,7 @@ class _Env(dict):
         """
         # Bind param list to corresponding args, or single param to list of args
         self.outer = outer
-        if isinstance(params, symbol.Symbol):
+        if isinstance(params, Symbol):
             self.update({params: list(args)})
         else:
             # bind rest parameters for lambda

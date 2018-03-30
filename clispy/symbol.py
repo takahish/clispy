@@ -44,28 +44,16 @@ class _SymbolTable():
 # Instance of _SymboleTable.
 symbol_table = _SymbolTable()
 
+# Symbol for boolean.
 NIL = symbol_table['nil']
 T = symbol_table['t']
 
-# Add some symbles to symbol_table.
-QUOTE    = symbol_table['quote']
-IF       = symbol_table['if']
-SETQ     = symbol_table['setq']
-DEFUN    = symbol_table['defun']
-LAMBDA   = symbol_table['lambda']
-PROGN    = symbol_table['progn']
-DEFMACRO = symbol_table['defmacro']
+# Symbol for special forms
+QUOTE = symbol_table['quote']
+IF = symbol_table['if']
+SETQ = symbol_table['setq']
+PROGN = symbol_table['progn']
 FUNCTION = symbol_table['function']
-
-CONS     = symbol_table['cons']
-DOT      = symbol_table['.']
-APPEND   = symbol_table['append']
-
-QUASIQUOTE       = symbol_table['quasiquote']
-UNQUOTE          = symbol_table['unquote']
-UNQUOTE_SPLICING = symbol_table['unquote-splicing']
-SHARPQUOTE       = symbol_table['function']
-
 LET = symbol_table['let']
 LET_ASTER = symbol_table['let*']
 FLET = symbol_table['flet']
@@ -73,16 +61,18 @@ LABELS = symbol_table['labels']
 MACROLET = symbol_table['macrolet']
 BLOCK = symbol_table['block']
 RETURN_FROM = symbol_table['return-from']
-TAGBODY = symbol_table['TAGBODY']
-GO = symbol_table['GO']
-CATCH = symbol_table['CATCH']
+TAGBODY = symbol_table['tagbody']
+GO = symbol_table['go']
+CATCH = symbol_table['catch']
 THROW = symbol_table['throw']
 
-# Note uninterned; can't be read
-EOF_OBJECT = symbol_table['#<eof-object>']
+# Symbol for quotes.
+QUASIQUOTE = symbol_table['quasiquote']
+UNQUOTE = symbol_table['unquote']
+UNQUOTE_SPLICING = symbol_table['unquote-splicing']
+SHARPQUOTE = symbol_table['function']
 
-
-# Symbol for syntactic sugar of quotes.
+# Symbol for syntactic sugar.
 QUOTES = {
     "'":  QUOTE,
     "`":  QUASIQUOTE,
@@ -90,3 +80,14 @@ QUOTES = {
     ",@": UNQUOTE_SPLICING,
     "#'": SHARPQUOTE
 }
+
+# Symbol for others
+DEFUN = symbol_table['defun']
+LAMBDA = symbol_table['lambda']
+DEFMACRO = symbol_table['defmacro']
+CONS = symbol_table['cons']
+DOT = symbol_table['.']
+APPEND = symbol_table['append']
+
+# Note uninterned; can't be read
+EOF_OBJECT = symbol_table['#<eof-object>']
