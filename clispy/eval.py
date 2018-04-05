@@ -19,45 +19,6 @@ from clispy.env import VarEnv, FuncEnv
 from clispy.utils import callcc
 
 
-class ControlError(Exception):
-    """Control error of eval is raised by special form throw.
-    """
-    def __init__(self, message, tag, retval):
-        """Inits ControlError with message, tag and return value.
-        """
-        super().__init__(message)
-        self.tag = tag
-        self.retval = retval
-
-
-class Procedure(object):
-    """A user-defined common lisp procedure.
-    And an instance localizes environment, when it is evaluated.
-    """
-    def __init__(self, evaluator, params, exps, var_env, func_env):
-        """Inits _Procedure with parameters, expression and environment.
-        """
-        # Evaluator.
-        self.evaluator = evaluator
-
-        # Parameters and Expressions.
-        self.params = params
-        self.exps = exps
-
-        # Environment.
-        self.var_env = var_env
-        self.func_env = func_env
-
-    def __call__(self, *args):
-        """Make _Procedure to be callable.
-        """
-        return self.evaluator.eval(
-            self.exps,
-            VarEnv(self.params, args, self.var_env),
-            FuncEnv([], [], self.func_env)
-        )
-
-
 class Evaluator(object):
     """Provide a method to evaluate abstract syntax tree.
     """
@@ -545,3 +506,42 @@ class Evaluator(object):
             proc = self.eval(x[0], var_env, func_env)
         exps = [self.eval(exp, var_env, func_env) for exp in x[1:]]
         return proc(*exps)
+
+
+class Procedure(object):
+    """A user-defined common lisp procedure.
+    And an instance localizes environment, when it is evaluated.
+    """
+    def __init__(self, evaluator, params, exps, var_env, func_env):
+        """Inits _Procedure with parameters, expression and environment.
+        """
+        # Evaluator.
+        self.evaluator = evaluator
+
+        # Parameters and Expressions.
+        self.params = params
+        self.exps = exps
+
+        # Environment.
+        self.var_env = var_env
+        self.func_env = func_env
+
+    def __call__(self, *args):
+        """Make _Procedure to be callable.
+        """
+        return self.evaluator.eval(
+            self.exps,
+            VarEnv(self.params, args, self.var_env),
+            FuncEnv([], [], self.func_env)
+        )
+
+
+class ControlError(Exception):
+    """Control error of eval is raised by special form throw.
+    """
+    def __init__(self, message, tag, retval):
+        """Inits ControlError with message, tag and return value.
+        """
+        super().__init__(message)
+        self.tag = tag
+        self.retval = retval
