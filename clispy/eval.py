@@ -14,8 +14,8 @@
 # ==============================================================================
 
 from clispy.symbol import *
-from clispy import cons
-from clispy import env
+from clispy.cons import DottedPair
+from clispy.env import VarEnv, FuncEnv
 from clispy.utils import callcc
 
 
@@ -53,8 +53,8 @@ class Procedure(object):
         """
         return self.evaluator.eval(
             self.exps,
-            env.VarEnv(self.params, args, self.var_env),
-            env.FuncEnv([], [], self.func_env)
+            VarEnv(self.params, args, self.var_env),
+            FuncEnv([], [], self.func_env)
         )
 
 
@@ -235,7 +235,7 @@ class Evaluator(object):
             vals.append(self.eval(exp, var_env, func_env))
 
         # The bindings are in parallel.
-        var_env = env.VarEnv(vars, vals, var_env)
+        var_env = VarEnv(vars, vals, var_env)
 
         x = [PROGN] + body
         return x, var_env
@@ -257,7 +257,7 @@ class Evaluator(object):
         for var, exp in bindings:
             val = self.eval(exp, var_env, func_env)
             # The bindings are in sequential.
-            var_env = env.VarEnv([var], [val], var_env)
+            var_env = VarEnv([var], [val], var_env)
 
         x = [PROGN] + body
         return x, var_env
@@ -277,7 +277,7 @@ class Evaluator(object):
         """
         bindings, body = x[1], x[2:]
 
-        local_func_env = env.FuncEnv([], [], func_env)
+        local_func_env = FuncEnv([], [], func_env)
         for binding in bindings:
             func, exp = binding[0], binding[1:]
             exp = [LAMBDA] + exp
@@ -303,7 +303,7 @@ class Evaluator(object):
         """
         bindings, body = x[1], x[2:]
 
-        local_func_env = env.FuncEnv([], [], func_env)
+        local_func_env = FuncEnv([], [], func_env)
         for binding in bindings:
             func, exp = binding[0], binding[1:]
             exp = [LAMBDA] + exp
@@ -485,7 +485,7 @@ class Evaluator(object):
         if len(lst) > 2 and lst[-2] == DOT:
             if lst[-1] is not False:
                 lst.remove(DOT)
-                return cons.DottedPair(lst)
+                return DottedPair(lst)
             else:
                 return lst[:-2]
         else:

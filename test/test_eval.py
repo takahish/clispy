@@ -15,23 +15,23 @@
 
 import unittest
 from clispy.symbol import *
-from clispy import cons
-from clispy import env
-from clispy import eval as eval_module
-from clispy import func
+from clispy.cons import Cons, DottedPair
+from clispy.env import VarEnv, FuncEnv
+from clispy.func import BuiltInFunction
+from clispy.eval import Evaluator, Procedure, ControlError
 
 
 class UnitTestCase(unittest.TestCase):
     def setUp(self):
         # Inits global variable environment.
-        self.global_var_env = env.VarEnv()
+        self.global_var_env = VarEnv()
 
         # Inits global function einvironment.
-        self.global_func_env = env.FuncEnv()
-        self.global_func_env.update(func.BuiltInFunction())
+        self.global_func_env = FuncEnv()
+        self.global_func_env.update(BuiltInFunction())
 
         # Make instance of Evaluator.
-        self.evaluator = eval_module.Evaluator(self.global_var_env, self.global_func_env)
+        self.evaluator = Evaluator(self.global_var_env, self.global_func_env)
 
     def test_eval(self):
         eval_ = lambda x: self.evaluator.eval(x)
@@ -63,7 +63,7 @@ class UnitTestCase(unittest.TestCase):
         X = Symbol('X')
         eval_([DEFUN, FUNC, [LAMBDA, [X], [MUL, X, X]]])
         self.assertRaisesRegex(LookupError, "FUNC", eval_, FUNC)
-        self.assertIsInstance(self.global_func_env['FUNC'], eval_module.Procedure)
+        self.assertIsInstance(self.global_func_env['FUNC'], Procedure)
 
         # (progn exp+)
         A = Symbol('A')
@@ -76,7 +76,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(result, 5)
 
         # (function func)
-        self.assertIsInstance(eval_([FUNCTION, FUNC]), eval_module.Procedure)
+        self.assertIsInstance(eval_([FUNCTION, FUNC]), Procedure)
 
         # others
         # Procedure defined by defun.
@@ -93,7 +93,7 @@ class UnitTestCase(unittest.TestCase):
         # List literal is converted to cons cell.
         exp = self.evaluator._Evaluator__quote([QUOTE, [1, 2, 3]])
         self.assertEqual(exp, [1, 2, 3])
-        self.assertIsInstance(exp, cons.Cons)
+        self.assertIsInstance(exp, Cons)
 
         # Constant literal
         exp = self.evaluator._Evaluator__quote([QUOTE, A])
@@ -107,7 +107,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(self.evaluator._Evaluator__if(x, self.global_var_env, self.global_func_env), 4)
 
     def test__setq(self):
-        var_env = env.VarEnv([], [], self.global_var_env)
+        var_env = VarEnv([], [], self.global_var_env)
 
         A = Symbol('A')
         B = Symbol('B')
@@ -123,7 +123,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(LookupError, "C", self.evaluator._Evaluator__refer, C, var_env)
 
     def test__progn(self):
-        var_env = env.VarEnv([], [], self.global_var_env)
+        var_env = VarEnv([], [], self.global_var_env)
 
         A = Symbol('A')
         B = Symbol('B')
@@ -149,7 +149,7 @@ class UnitTestCase(unittest.TestCase):
 
         x = [FUNCTION, [LAMBDA, [X], [MUL, X, X]]]
         p = self.evaluator._Evaluator__function(x, self.global_var_env, self.global_func_env)
-        self.assertIsInstance(p, eval_module.Procedure)
+        self.assertIsInstance(p, Procedure)
 
         x = [FUNCTION, ADD]
         f = self.evaluator._Evaluator__function(x, self.global_var_env, self.global_func_env)
@@ -169,7 +169,7 @@ class UnitTestCase(unittest.TestCase):
         x, var_env = self.evaluator._Evaluator__let(x, self.global_var_env, self.global_func_env)
 
         self.assertEqual(x, [PROGN, [ADD, A, B]])
-        self.assertIsInstance(var_env, env.VarEnv)
+        self.assertIsInstance(var_env, VarEnv)
 
         # The bindings are in parallel.
         self.assertEqual(var_env, {'A': 1, 'B': 2})
@@ -185,7 +185,7 @@ class UnitTestCase(unittest.TestCase):
         x, var_env = self.evaluator._Evaluator__let_aster(x, self.global_var_env, self.global_func_env)
 
         self.assertEqual(x, [PROGN, [ADD, A, B]])
-        self.assertIsInstance(var_env, env.VarEnv)
+        self.assertIsInstance(var_env, VarEnv)
 
         # The bindings are in sequential.
         self.assertEqual(var_env, {'B': 1})
@@ -203,7 +203,7 @@ class UnitTestCase(unittest.TestCase):
         x, func_env = self.evaluator._Evaluator__flet(x, self.global_var_env, self.global_func_env)
 
         self.assertEqual(x, [PROGN, [ADD, [FUNC, 2], [FUNC, 2]]])
-        self.assertIsInstance(func_env, env.FuncEnv)
+        self.assertIsInstance(func_env, FuncEnv)
 
         # The scope of the name bindings encompasses only the body.
         self.assertEqual(func_env[FUNC].func_env, self.global_func_env)
@@ -220,7 +220,7 @@ class UnitTestCase(unittest.TestCase):
         x, func_env = self.evaluator._Evaluator__labels(x, self.global_var_env, self.global_func_env)
 
         self.assertEqual(x, [PROGN, [ADD, [FUNC, 2], [FUNC, 2]]])
-        self.assertIsInstance(func_env, env.FuncEnv)
+        self.assertIsInstance(func_env, FuncEnv)
 
         # The scope of the name bindings encompasses the function definitions
         # themselves as well as the body.
@@ -231,7 +231,7 @@ class UnitTestCase(unittest.TestCase):
         NAME = Symbol('NAME')
         X = Symbol('X')
 
-        var_env = env.VarEnv([X], [False], self.global_var_env)
+        var_env = VarEnv([X], [False], self.global_var_env)
         x = [BLOCK, NAME, [SETQ, X, 10], [SETQ, X, 20]]
         x = self.evaluator._Evaluator__block(x, var_env, self.global_func_env)
 
@@ -242,7 +242,7 @@ class UnitTestCase(unittest.TestCase):
         NAME = Symbol('NAME')
         X = Symbol('X')
 
-        var_env = env.VarEnv([X], [False], self.global_var_env)
+        var_env = VarEnv([X], [False], self.global_var_env)
         x = [BLOCK, NAME, [SETQ, X, 10], [RETURN_FROM, NAME, False], [SETQ, X, 20]]
         x = self.evaluator._Evaluator__block(x, var_env, self.global_func_env)
 
@@ -254,7 +254,7 @@ class UnitTestCase(unittest.TestCase):
         END = Symbol('END')
         X = Symbol('X')
 
-        var_env = env.VarEnv([X], [10], self.global_var_env)
+        var_env = VarEnv([X], [10], self.global_var_env)
         x = [TAGBODY, START, [SETQ, X, 20], END]
         x = self.evaluator._Evaluator__tagbody(x, var_env, self.global_func_env)
 
@@ -266,7 +266,7 @@ class UnitTestCase(unittest.TestCase):
         END = Symbol('END')
         X = Symbol('X')
 
-        var_env = env.VarEnv([X], [10], self.global_var_env)
+        var_env = VarEnv([X], [10], self.global_var_env)
         x = [TAGBODY, START, [GO, END], [SETQ, X, 20], END]
         x = self.evaluator._Evaluator__tagbody(x, var_env, self.global_func_env)
 
@@ -287,7 +287,7 @@ class UnitTestCase(unittest.TestCase):
         DUMMY_TAG_2 = Symbol('DUMMY-TAG-2')
 
         x = [THROW, [QUOTE, DUMMY_TAG_1], 10]
-        self.assertRaisesRegex(eval_module.ControlError, "attempt to throw to the nonexistent tag "+DUMMY_TAG_1,
+        self.assertRaisesRegex(ControlError, "attempt to throw to the nonexistent tag "+DUMMY_TAG_1,
                                self.evaluator._Evaluator__throw, x, self.global_var_env, self.global_func_env)
 
         x = [CATCH, [QUOTE, DUMMY_TAG_1], [THROW, [QUOTE, DUMMY_TAG_1], 10], 20]
@@ -313,15 +313,15 @@ class UnitTestCase(unittest.TestCase):
         # __cons is private method in Evaluator.
 
         # cons
-        self.assertIsInstance(self.evaluator._Evaluator__cons([A, B, C]), cons.Cons)
+        self.assertIsInstance(self.evaluator._Evaluator__cons([A, B, C]), Cons)
         self.assertEqual(self.evaluator._Evaluator__cons([A, B, C]), ['A', 'B', 'C'])
 
         # dotted pair
-        self.assertIsInstance(self.evaluator._Evaluator__cons([A, DOT, B]), cons.DottedPair)
+        self.assertIsInstance(self.evaluator._Evaluator__cons([A, DOT, B]), DottedPair)
         self.assertEqual(self.evaluator._Evaluator__cons([A, DOT, B]), ['A', 'B'])
 
         # dotted pair with nil
-        self.assertIsInstance(self.evaluator._Evaluator__cons([A, DOT, False]), cons.Cons)
+        self.assertIsInstance(self.evaluator._Evaluator__cons([A, DOT, False]), Cons)
         self.assertEqual(self.evaluator._Evaluator__cons([A, DOT, False]), ['A'])
 
     def test__refer(self):
@@ -330,7 +330,7 @@ class UnitTestCase(unittest.TestCase):
         C = Symbol('C')
 
         # Set local values.
-        var_env = env.VarEnv([A, B], [10, 20], self.global_func_env)
+        var_env = VarEnv([A, B], [10, 20], self.global_func_env)
 
         self.assertEqual(self.evaluator._Evaluator__refer(A, var_env), 10)
         self.assertEqual(self.evaluator._Evaluator__refer(B, var_env), 20)
@@ -346,7 +346,7 @@ class UnitTestCase(unittest.TestCase):
         self.evaluator._Evaluator__defun(x, self.global_var_env, self.global_func_env)
 
         self.assertTrue(FUNC in self.global_func_env)
-        self.assertIsInstance(self.global_func_env[FUNC], eval_module.Procedure)
+        self.assertIsInstance(self.global_func_env[FUNC], Procedure)
 
     def test__lambda(self):
         MUL = Symbol('*')
@@ -354,7 +354,7 @@ class UnitTestCase(unittest.TestCase):
 
         x = [LAMBDA, [X], [MUL, X, X]]
         f = self.evaluator._Evaluator__lambda(x, self.global_var_env, self.global_func_env)
-        self.assertIsInstance(f, eval_module.Procedure)
+        self.assertIsInstance(f, Procedure)
 
     def test__execute(self):
         ADD = Symbol('+')

@@ -15,29 +15,29 @@
 
 import unittest
 from clispy.symbol import *
-from clispy import env
-from clispy import func
-from clispy import eval
-from clispy import expand
+from clispy.env import VarEnv, FuncEnv, MacroEnv
+from clispy.func import BuiltInFunction
+from clispy.eval import Evaluator, Procedure
+from clispy.expand import Expander
 
 
 class UnitTestCase(unittest.TestCase):
     def setUp(self):
         # Inits global variable environment.
-        self.global_var_env = env.VarEnv()
+        self.global_var_env = VarEnv()
 
         # Inits global function environment.
-        self.global_func_env = env.FuncEnv()
-        self.global_func_env.update(func.BuiltInFunction())
+        self.global_func_env = FuncEnv()
+        self.global_func_env.update(BuiltInFunction())
 
         # Make instance of Evaluator.
-        self.evaluator = eval.Evaluator(self.global_var_env, self.global_func_env)
+        self.evaluator = Evaluator(self.global_var_env, self.global_func_env)
 
         # Inits global macro environment.
-        self.global_macro_env = env.MacroEnv()
+        self.global_macro_env = MacroEnv()
 
         # Make instance of Expander.
-        self.expander = expand.Expander(self.evaluator, self.global_macro_env)
+        self.expander = Expander(self.evaluator, self.global_macro_env)
 
     def test_expand(self):
         expand = lambda x: self.expander.expand(x)
@@ -261,7 +261,7 @@ class UnitTestCase(unittest.TestCase):
         sym = exp[1] # exp is (quote macro)
 
         self.assertTrue(sym in self.global_macro_env)
-        self.assertIsInstance(self.global_macro_env.find(sym)[sym], eval.Procedure)
+        self.assertIsInstance(self.global_macro_env.find(sym)[sym], Procedure)
         self.assertTrue(callable(self.global_macro_env.find(sym)[sym]))
 
     def test__lambda(self):

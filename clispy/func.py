@@ -15,7 +15,7 @@
 
 import operator as op
 from functools import reduce
-from clispy import cons
+from clispy.cons import Cons, DottedPair
 
 
 class BuiltInFunction(dict):
@@ -71,7 +71,7 @@ def _consp(x):
     Returns:
         Boolean.
     """
-    if isinstance(x, cons.Cons) and len(x) > 0:
+    if isinstance(x, Cons) and len(x) > 0:
         return True
     return False
 
@@ -109,10 +109,10 @@ def _cons(x, lst):
     Returns:
         Cons or DottedPair.
     """
-    if isinstance(lst, cons.DottedPair):  # (cons 1 '(2 . 3)) => (1 2 . 3)
-        return cons.DottedPair([x] + lst)
+    if isinstance(lst, DottedPair):  # (cons 1 '(2 . 3)) => (1 2 . 3)
+        return DottedPair([x] + lst)
     if not _null(lst) and _atom(lst):     # (cons 1 2) => (1 . 2)
-        return cons.DottedPair([x, lst])
+        return DottedPair([x, lst])
     elif _null(lst):                      # (cons 1 nil) => (1)
         return [x]
     return [x] + lst                      # (cons 1 '(2)) => (1 2)
@@ -143,10 +143,10 @@ def _cdr(lst):
     """
     if _null(lst) or (_consp(lst) and len(lst) <= 1):         # (cdr nil) or (cdr '()) => NIL
         return False
-    elif isinstance(lst, cons.DottedPair) and len(lst) == 2: # (cdr '(1 . 2)) => 2
+    elif isinstance(lst, DottedPair) and len(lst) == 2: # (cdr '(1 . 2)) => 2
         return lst[1]
-    elif isinstance(lst, cons.DottedPair) and len(lst) > 2:  # (cdr '(1 2 . 3)) => (2 . 3)
-        return cons.DottedPair(lst[1:])
+    elif isinstance(lst, DottedPair) and len(lst) > 2:  # (cdr '(1 2 . 3)) => (2 . 3)
+        return DottedPair(lst[1:])
     elif _consp(lst) and len(lst) > 1:                        # (cdr '(1 2)) => (2)
         return lst[1:]
     raise TypeError("The value " + str(lst) + " is not LIST.")

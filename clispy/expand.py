@@ -14,9 +14,9 @@
 # ==============================================================================
 
 from clispy.symbol import *
-from clispy import env
+from clispy.env import MacroEnv
 from clispy.utils import require
-from clispy import func
+from clispy.func import _consp, _null
 
 
 class Expander(object):
@@ -173,7 +173,7 @@ class Expander(object):
 
         bindings, body = x[1], x[2:]
 
-        local_macro_env = env.MacroEnv([], [], macro_env)
+        local_macro_env = MacroEnv([], [], macro_env)
 
         for binding in bindings:
             name, exp = binding[0], binding[1:]
@@ -283,7 +283,7 @@ class Expander(object):
         Returns:
             Abstract syntax tree expanded quasiquote.
         """
-        if not func._consp(x):
+        if not _consp(x):
             return [QUOTE, x]
 
         require(x, x[0] is not UNQUOTE_SPLICING, "can't splice here")
@@ -291,7 +291,7 @@ class Expander(object):
         if x[0] is UNQUOTE:
             require(x, len(x) == 2)
             return x[1]
-        elif func._consp(x[0]) and x[0][0] is UNQUOTE_SPLICING:
+        elif _consp(x[0]) and x[0][0] is UNQUOTE_SPLICING:
             require(x[0], len(x[0]) == 2)
             return [APPEND, x[0][1], self.__quasiquote_recur(x[1:])]
         else:
@@ -309,7 +309,7 @@ class Expander(object):
         """
         if len(x) >= 4: # (defun name args body) => (defun name (lambda args body))
             defun, name, args, body = x[0], x[1], x[2], x[3:]
-            if func._null(args): # (def name nil body) => (def name [] body)
+            if _null(args): # (def name nil body) => (def name [] body)
                 args = []
             # Implicit BLOCK.
             body = [[BLOCK, name] + body]
@@ -332,7 +332,7 @@ class Expander(object):
         """
         if len(x) >= 4: # (defun name args body) => (defun name (lambda args body))
             defun, name, args, body = x[0], x[1], x[2], x[3:]
-            if func._null(args): # (def name nil body) => (def name [] body)
+            if _null(args): # (def name nil body) => (def name [] body)
                 args = []
             return self.__defmacro([defun, name, [LAMBDA, args] + body], macro_env)
         else:
