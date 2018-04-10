@@ -16,14 +16,17 @@
 import unittest
 import io
 from clispy.symbol import *
-from clispy import parse
+from clispy.parse import Parser, InPort
 
 
 class UnitTestCase(unittest.TestCase):
-    def testInPort(self):
-        inport = parse._InPort(io.StringIO('(list 2 3 "string")'))
+    def setUp(self):
+        self.parser = Parser()
 
-        self.assertIsInstance(inport, parse._InPort)
+    def testInPort(self):
+        inport = InPort(io.StringIO('(list 2 3 "string")'))
+
+        self.assertIsInstance(inport, InPort)
 
         # tokens
         self.assertEqual(inport.next_token(), '(')
@@ -38,60 +41,58 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(inport.next_token(), EOF_OBJECT)
 
     def test_atom(self):
-        self.assertTrue(parse._convert_to_atom('t'))
-        self.assertFalse(parse._convert_to_atom('nil'))
-        self.assertEqual(parse._convert_to_atom('"string"'), 'string')
+        self.assertTrue(self.parser._Parser__convert_to_atom('t'))
+        self.assertFalse(self.parser._Parser__convert_to_atom('nil'))
+        self.assertEqual(self.parser._Parser__convert_to_atom('"string"'), 'string')
 
-        self.assertIsInstance(parse._convert_to_atom('2'), int)
-        self.assertEqual(parse._convert_to_atom('2'), 2)
-        self.assertIsInstance(parse._convert_to_atom('2.3'), float)
-        self.assertEqual(parse._convert_to_atom('2.3'), 2.3)
-        self.assertIsInstance(parse._convert_to_atom('2+3i'), complex)
-        self.assertEqual(parse._convert_to_atom('2+3i'), 2 + 3j)
-        self.assertIsInstance(parse._convert_to_atom('sym'), Symbol)
+        self.assertIsInstance(self.parser._Parser__convert_to_atom('2'), int)
+        self.assertEqual(self.parser._Parser__convert_to_atom('2'), 2)
+        self.assertIsInstance(self.parser._Parser__convert_to_atom('2.3'), float)
+        self.assertEqual(self.parser._Parser__convert_to_atom('2.3'), 2.3)
+        self.assertIsInstance(self.parser._Parser__convert_to_atom('sym'), Symbol)
         
     def test_read_ahead(self):
         # success to tokenize
-        inport = parse._InPort(io.StringIO('(list 2 3 "string")'))
+        inport = InPort(io.StringIO('(list 2 3 "string")'))
         token = inport.next_token()
-        self.assertEqual(parse._read_ahead(token, inport), ['LIST', 2, 3, "string"])
+        self.assertEqual(self.parser._Parser__read_ahead(token, inport), ['LIST', 2, 3, "string"])
 
         # quote
-        inport = parse._InPort(io.StringIO("'(+ 2 3)"))
+        inport = InPort(io.StringIO("'(+ 2 3)"))
         token = inport.next_token()
-        self.assertEqual(parse._read_ahead(token, inport), [QUOTE, ['+', 2, 3]])
+        self.assertEqual(self.parser._Parser__read_ahead(token, inport), [QUOTE, ['+', 2, 3]])
 
         # atom
-        inport = parse._InPort(io.StringIO('+'))
+        inport = InPort(io.StringIO('+'))
         token = inport.next_token()
-        self.assertEqual(parse._read_ahead(token, inport), Symbol('+'))
+        self.assertEqual(self.parser._Parser__read_ahead(token, inport), Symbol('+'))
 
         # fail to tokenize
-        inport = parse._InPort(io.StringIO(')'))
+        inport = InPort(io.StringIO(')'))
         token = inport.next_token()
-        self.assertRaisesRegex(SyntaxError, "unexpected \)", parse._read_ahead, token, inport)
+        self.assertRaisesRegex(SyntaxError, "unexpected \)", self.parser._Parser__read_ahead, token, inport)
 
         # fail to tokenize
-        inport = parse._InPort(io.StringIO('(+ 2 3'))
+        inport = InPort(io.StringIO('(+ 2 3'))
         token = inport.next_token()
-        self.assertRaisesRegex(SyntaxError, "unexpected EOF in list", parse._read_ahead, token, inport)
+        self.assertRaisesRegex(SyntaxError, "unexpected EOF in list", self.parser._Parser__read_ahead, token, inport)
 
     def test_read(self):
         # test only EOF
-        inport = parse._InPort(io.StringIO(''))
-        eof = parse._read(inport)
+        inport = InPort(io.StringIO(''))
+        eof = self.parser._Parser__read(inport)
         self.assertIsInstance(eof, Symbol)
         self.assertEqual(eof, EOF_OBJECT)
 
     def test_parse(self):
         inport = '(+ 2 3)'
-        self.assertEqual(parse.parse(inport), ['+', 2, 3])
+        self.assertEqual(self.parser.parse(inport), ['+', 2, 3])
 
-        inport = parse._InPort(io.StringIO('(+ 2 3)'))
-        self.assertEqual(parse.parse(inport), ['+', 2, 3])
+        inport = InPort(io.StringIO('(+ 2 3)'))
+        self.assertEqual(self.parser.parse(inport), ['+', 2, 3])
 
     def test_readchar(self):
-        inport = parse._InPort(io.StringIO('a'))
-        self.assertEqual(parse._readchar(inport), 'a')
-        self.assertEqual(parse._readchar(inport), EOF_OBJECT)
+        inport = InPort(io.StringIO('a'))
+        self.assertEqual(self.parser._Parser__readchar(inport), 'a')
+        self.assertEqual(self.parser._Parser__readchar(inport), EOF_OBJECT)
 
