@@ -157,7 +157,8 @@ class Expander(object):
             A series of forms.
         """
         require(x, len(x) == 2)
-        require(x, isinstance(x[1], Symbol), "an argument must be symbol")
+        require(x, (isinstance(x[1], list) and x[1][0] is LAMBDA) or isinstance(x[1], Symbol),
+                "an argument must be symbol")
         return x
 
     def __macrolet(self, x, macro_env):

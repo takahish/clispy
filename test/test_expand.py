@@ -138,11 +138,19 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(exp, [PROGN, False])
 
     def test__function(self):
-        FUNC = Symbol('FUNC')
+        X = Symbol('X')
+        MUL = Symbol('*')
 
-        x = [FUNCTION, FUNC]
+        x = [FUNCTION, MUL]
         exp = self.expander._Expander__function(x, self.global_macro_env)
-        self.assertEqual(exp, [FUNCTION, FUNC])
+        self.assertEqual(exp, [FUNCTION, MUL])
+
+        x = [FUNCTION, [LAMBDA, [X], [MUL, X, X]]]
+        exp = self.expander._Expander__function(x, self.global_macro_env)
+        self.assertEqual(exp, [FUNCTION, [LAMBDA, [X], [MUL, X, X]]])
+
+        x = [FUNCTION, [MUL, X, X]]
+        self.assertRaisesRegex(SyntaxError, "an argument must be symbol", self.expander._Expander__function, x, self.global_macro_env)
 
         x = [FUNCTION, 10]
         self.assertRaisesRegex(SyntaxError, "an argument must be symbol", self.expander._Expander__function, x, self.global_macro_env)
