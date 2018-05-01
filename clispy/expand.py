@@ -63,6 +63,10 @@ class Expander(object):
             return self.__progn(x, macro_env)
         elif x[0] is FUNCTION:              # Special form: function, (function func)
             return self.__function(x, macro_env)
+        elif x[0] is FLET:                  # Special form: flet, (flet ((func var exp)) body)
+            return self.__flet(x, macro_env)
+        elif x[0] is LABELS:                # Special form: labels, (labels ((func var exp)) body)
+            return self.__labels(x, macro_env)
         elif x[0] is MACROLET:              # Special form: macrolet, (macrolet ((macro var exp)) body)
             return self.__macrolet(x, macro_env)
         elif x[0] is BLOCK:                 # Special form: block, (block name)
@@ -160,6 +164,54 @@ class Expander(object):
         require(x, (isinstance(x[1], list) and x[1][0] is LAMBDA) or isinstance(x[1], Symbol),
                 "an argument must be symbol")
         return x
+
+    def __flet(self, x, macro_env):
+        """flet defines locally named functions and execute a series of forms with
+        these definition bindings.
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Variable environment.
+
+        Returns:
+            A series of forms.
+        """
+        bindings, body = x[1], x[2]
+
+        for i, binding in enumerate(bindings):
+            require(x, isinstance(binding, list) and len(binding) >= 3)
+            require(x, isinstance(binding[0], Symbol), "illegal function name")
+
+            if _null(binding[1]):
+                binding[1] = []
+
+            bindings[i] = binding
+
+        return [FLET, bindings, self.expand(body, macro_env)]
+
+    def __labels(self, x, macro_env):
+        """labels is equivalent to flet except that the scope the defined function
+        names for labels
+
+        Args:
+            x: Abstract syntax tree of lisp, consisted of python list.
+            macro_env: Variable environment.
+
+        Returns:
+            A series of forms.
+        """
+        bindings, body = x[1], x[2]
+
+        for i, binding in enumerate(bindings):
+            require(x, isinstance(binding, list) and len(binding) == 3)
+            require(x, isinstance(binding[0], Symbol), "illegal function name")
+
+            if _null(binding[1]):
+                binding[1] = []
+
+            bindings[i] = binding
+
+        return [LABELS, bindings, self.expand(body, macro_env)]
 
     def __macrolet(self, x, macro_env):
         """macrolet establishes local macro definitions, using the same format used by defmacro.

@@ -155,6 +155,42 @@ class UnitTestCase(unittest.TestCase):
         x = [FUNCTION, 10]
         self.assertRaisesRegex(SyntaxError, "an argument must be symbol", self.expander._Expander__function, x, self.global_macro_env)
 
+    def test__flet(self):
+        FUNC = Symbol('FUNC')
+        X = Symbol('X')
+        MUL = Symbol('*')
+
+        x = [FLET, [FUNC], [FUNC, 3]]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__flet, x, self.global_macro_env)
+
+        x = [FLET, [[FUNC, [X]]], [FUNC, 3]]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__flet, x, self.global_macro_env)
+
+        x = [FLET, [["FUNC", [X], [MUL, X, X]]], [FUNC, 3]]
+        self.assertRaisesRegex(SyntaxError, "illegal function name", self.expander._Expander__flet, x, self.global_macro_env)
+
+        x = [FLET, [[FUNC, False, False]], [FUNC]]
+        x = self.expander._Expander__flet(x, self.global_macro_env)
+        self.assertEqual(x, [FLET, [[FUNC, [], False]], [FUNC]])
+
+    def test__lables(self):
+        FUNC = Symbol('FUNC')
+        X = Symbol('X')
+        MUL = Symbol('*')
+
+        x = [LABELS, [FUNC], [FUNC, 3]]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__labels, x, self.global_macro_env)
+
+        x = [LABELS, [[FUNC, [X]]], [FUNC, 3]]
+        self.assertRaisesRegex(SyntaxError, "wrong length", self.expander._Expander__labels, x, self.global_macro_env)
+
+        x = [LABELS, [["FUNC", [X], [MUL, X, X]]], [FUNC, 3]]
+        self.assertRaisesRegex(SyntaxError, "illegal function name", self.expander._Expander__labels, x, self.global_macro_env)
+
+        x = [LABELS, [[FUNC, False, False]], [FUNC]]
+        x = self.expander._Expander__labels(x, self.global_macro_env)
+        self.assertEqual(x, [LABELS, [[FUNC, [], False]], [FUNC]])
+
     def test__macrolet(self):
         MACRO = Symbol('MACRO')
         X = Symbol('X')
