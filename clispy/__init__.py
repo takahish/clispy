@@ -13,4 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.console import repl
+from clispy.executor import Executor
+
+def repl():
+    executor = Executor()
+    executor.load("lisp")
+    executor.console()
