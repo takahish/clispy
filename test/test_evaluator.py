@@ -16,18 +16,18 @@
 import unittest
 from clispy.symbol import *
 from clispy.cons import Cons, DottedPair
-from clispy.env import VarEnv, FuncEnv
-from clispy.func import BuiltInFunction
-from clispy.eval import Evaluator, Procedure, ControlError
+from clispy.environment import VariableEnvironment, FunctionEnvironment
+from clispy.functions import BuiltInFunction
+from clispy.evaluator import Evaluator, Procedure, ControlError
 
 
 class UnitTestCase(unittest.TestCase):
     def setUp(self):
         # Inits global variable environment.
-        self.global_var_env = VarEnv()
+        self.global_var_env = VariableEnvironment()
 
         # Inits global function einvironment.
-        self.global_func_env = FuncEnv()
+        self.global_func_env = FunctionEnvironment()
         self.global_func_env.update(BuiltInFunction())
 
         # Make instance of Evaluator.
@@ -107,7 +107,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(self.evaluator._Evaluator__if(x, self.global_var_env, self.global_func_env), 4)
 
     def test__setq(self):
-        var_env = VarEnv([], [], self.global_var_env)
+        var_env = VariableEnvironment([], [], self.global_var_env)
 
         A = Symbol('A')
         B = Symbol('B')
@@ -123,7 +123,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(LookupError, "C", self.evaluator._Evaluator__refer, C, var_env)
 
     def test__progn(self):
-        var_env = VarEnv([], [], self.global_var_env)
+        var_env = VariableEnvironment([], [], self.global_var_env)
 
         A = Symbol('A')
         B = Symbol('B')
@@ -169,7 +169,7 @@ class UnitTestCase(unittest.TestCase):
         x, var_env = self.evaluator._Evaluator__let(x, self.global_var_env, self.global_func_env)
 
         self.assertEqual(x, [PROGN, [ADD, A, B]])
-        self.assertIsInstance(var_env, VarEnv)
+        self.assertIsInstance(var_env, VariableEnvironment)
 
         # The bindings are in parallel.
         self.assertEqual(var_env, {'A': 1, 'B': 2})
@@ -185,7 +185,7 @@ class UnitTestCase(unittest.TestCase):
         x, var_env = self.evaluator._Evaluator__let_aster(x, self.global_var_env, self.global_func_env)
 
         self.assertEqual(x, [PROGN, [ADD, A, B]])
-        self.assertIsInstance(var_env, VarEnv)
+        self.assertIsInstance(var_env, VariableEnvironment)
 
         # The bindings are in sequential.
         self.assertEqual(var_env, {'B': 1})
@@ -203,7 +203,7 @@ class UnitTestCase(unittest.TestCase):
         x, func_env = self.evaluator._Evaluator__flet(x, self.global_var_env, self.global_func_env)
 
         self.assertEqual(x, [PROGN, [ADD, [FUNC, 2], [FUNC, 2]]])
-        self.assertIsInstance(func_env, FuncEnv)
+        self.assertIsInstance(func_env, FunctionEnvironment)
 
         # The scope of the name bindings encompasses only the body.
         self.assertEqual(func_env[FUNC].func_env, self.global_func_env)
@@ -220,7 +220,7 @@ class UnitTestCase(unittest.TestCase):
         x, func_env = self.evaluator._Evaluator__labels(x, self.global_var_env, self.global_func_env)
 
         self.assertEqual(x, [PROGN, [ADD, [FUNC, 2], [FUNC, 2]]])
-        self.assertIsInstance(func_env, FuncEnv)
+        self.assertIsInstance(func_env, FunctionEnvironment)
 
         # The scope of the name bindings encompasses the function definitions
         # themselves as well as the body.
@@ -231,7 +231,7 @@ class UnitTestCase(unittest.TestCase):
         NAME = Symbol('NAME')
         X = Symbol('X')
 
-        var_env = VarEnv([X], [False], self.global_var_env)
+        var_env = VariableEnvironment([X], [False], self.global_var_env)
         x = [BLOCK, NAME, [SETQ, X, 10], [SETQ, X, 20]]
         x = self.evaluator._Evaluator__block(x, var_env, self.global_func_env)
 
@@ -242,7 +242,7 @@ class UnitTestCase(unittest.TestCase):
         NAME = Symbol('NAME')
         X = Symbol('X')
 
-        var_env = VarEnv([X], [False], self.global_var_env)
+        var_env = VariableEnvironment([X], [False], self.global_var_env)
         x = [BLOCK, NAME, [SETQ, X, 10], [RETURN_FROM, NAME, False], [SETQ, X, 20]]
         x = self.evaluator._Evaluator__block(x, var_env, self.global_func_env)
 
@@ -254,7 +254,7 @@ class UnitTestCase(unittest.TestCase):
         END = Symbol('END')
         X = Symbol('X')
 
-        var_env = VarEnv([X], [10], self.global_var_env)
+        var_env = VariableEnvironment([X], [10], self.global_var_env)
         x = [TAGBODY, START, [SETQ, X, 20], END]
         x = self.evaluator._Evaluator__tagbody(x, var_env, self.global_func_env)
 
@@ -266,7 +266,7 @@ class UnitTestCase(unittest.TestCase):
         END = Symbol('END')
         X = Symbol('X')
 
-        var_env = VarEnv([X], [10], self.global_var_env)
+        var_env = VariableEnvironment([X], [10], self.global_var_env)
         x = [TAGBODY, START, [GO, END], [SETQ, X, 20], END]
         x = self.evaluator._Evaluator__tagbody(x, var_env, self.global_func_env)
 
@@ -330,7 +330,7 @@ class UnitTestCase(unittest.TestCase):
         C = Symbol('C')
 
         # Set local values.
-        var_env = VarEnv([A, B], [10, 20], self.global_func_env)
+        var_env = VariableEnvironment([A, B], [10, 20], self.global_func_env)
 
         self.assertEqual(self.evaluator._Evaluator__refer(A, var_env), 10)
         self.assertEqual(self.evaluator._Evaluator__refer(B, var_env), 20)

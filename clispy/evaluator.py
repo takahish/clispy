@@ -15,8 +15,8 @@
 
 from clispy.symbol import *
 from clispy.cons import DottedPair
-from clispy.env import VarEnv, FuncEnv
-from clispy.utils import callcc
+from clispy.environment import VariableEnvironment, FunctionEnvironment
+from clispy.utilities import callcc
 
 
 class Evaluator(object):
@@ -196,7 +196,7 @@ class Evaluator(object):
             vals.append(self.eval(exp, var_env, func_env))
 
         # The bindings are in parallel.
-        var_env = VarEnv(vars, vals, var_env)
+        var_env = VariableEnvironment(vars, vals, var_env)
 
         x = [PROGN] + body
         return x, var_env
@@ -218,7 +218,7 @@ class Evaluator(object):
         for var, exp in bindings:
             val = self.eval(exp, var_env, func_env)
             # The bindings are in sequential.
-            var_env = VarEnv([var], [val], var_env)
+            var_env = VariableEnvironment([var], [val], var_env)
 
         x = [PROGN] + body
         return x, var_env
@@ -238,7 +238,7 @@ class Evaluator(object):
         """
         bindings, body = x[1], x[2:]
 
-        local_func_env = FuncEnv([], [], func_env)
+        local_func_env = FunctionEnvironment([], [], func_env)
         for binding in bindings:
             func, exp = binding[0], binding[1:]
             exp = [LAMBDA] + exp
@@ -264,7 +264,7 @@ class Evaluator(object):
         """
         bindings, body = x[1], x[2:]
 
-        local_func_env = FuncEnv([], [], func_env)
+        local_func_env = FunctionEnvironment([], [], func_env)
         for binding in bindings:
             func, exp = binding[0], binding[1:]
             exp = [LAMBDA] + exp
@@ -531,8 +531,8 @@ class Procedure(object):
         """
         return self.evaluator.eval(
             self.exps,
-            VarEnv(self.params, args, self.var_env),
-            FuncEnv([], [], self.func_env)
+            VariableEnvironment(self.params, args, self.var_env),
+            FunctionEnvironment([], [], self.func_env)
         )
 
 

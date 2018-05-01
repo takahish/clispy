@@ -14,9 +14,9 @@
 # ==============================================================================
 
 from clispy.symbol import *
-from clispy.env import MacroEnv
-from clispy.utils import require
-from clispy.func import _consp, _null
+from clispy.environment import MacroEnvironment
+from clispy.utilities import require
+from clispy.functions import _consp, _null
 
 
 class Expander(object):
@@ -226,7 +226,7 @@ class Expander(object):
 
         bindings, body = x[1], x[2:]
 
-        local_macro_env = MacroEnv([], [], macro_env)
+        local_macro_env = MacroEnvironment([], [], macro_env)
 
         for binding in bindings:
             name, exp = binding[0], binding[1:]

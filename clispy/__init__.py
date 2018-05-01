@@ -13,4 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.repl import repl
+from clispy.console import repl

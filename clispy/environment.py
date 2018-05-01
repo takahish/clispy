@@ -16,7 +16,7 @@
 from clispy.symbol import *
 
 
-class _Env(dict):
+class _Environment(dict):
     """An environment is a dict of {'var': val} pairs with an outer _Env.
     """
     def __init__(self, params=(), args=(), outer=None):
@@ -28,7 +28,7 @@ class _Env(dict):
             self.update({params: list(args)})
         else:
             # bind rest parameters for lambda
-            params, args = _Env._parse_rest_argument(params, args)
+            params, args = _Environment._parse_rest_argument(params, args)
             if len(args) != len(params):
                 raise TypeError('expected %s, given %s, ' % (params, args))
             self.update(zip(params, args))
@@ -73,17 +73,17 @@ class _Env(dict):
             args = args[:rest_index] + [args[rest_index:]]
         return params, args
 
-class VarEnv(_Env):
+class VariableEnvironment(_Environment):
     """Environment for variable.
     """
     pass
 
-class FuncEnv(_Env):
+class FunctionEnvironment(_Environment):
     """Environment for function.
     """
     pass
 
-class MacroEnv(_Env):
+class MacroEnvironment(_Environment):
     """Environment for Macro.
     """
     pass

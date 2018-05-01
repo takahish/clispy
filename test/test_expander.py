@@ -15,26 +15,26 @@
 
 import unittest
 from clispy.symbol import *
-from clispy.env import VarEnv, FuncEnv, MacroEnv
-from clispy.func import BuiltInFunction
-from clispy.eval import Evaluator, Procedure
-from clispy.expand import Expander
+from clispy.environment import VariableEnvironment, FunctionEnvironment, MacroEnvironment
+from clispy.functions import BuiltInFunction
+from clispy.evaluator import Evaluator, Procedure
+from clispy.expander import Expander
 
 
 class UnitTestCase(unittest.TestCase):
     def setUp(self):
         # Inits global variable environment.
-        self.global_var_env = VarEnv()
+        self.global_var_env = VariableEnvironment()
 
         # Inits global function environment.
-        self.global_func_env = FuncEnv()
+        self.global_func_env = FunctionEnvironment()
         self.global_func_env.update(BuiltInFunction())
 
         # Make instance of Evaluator.
         self.evaluator = Evaluator(self.global_var_env, self.global_func_env)
 
         # Inits global macro environment.
-        self.global_macro_env = MacroEnv()
+        self.global_macro_env = MacroEnvironment()
 
         # Make instance of Expander.
         self.expander = Expander(self.evaluator, self.global_macro_env)

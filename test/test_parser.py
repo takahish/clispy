@@ -16,7 +16,7 @@
 import unittest
 import io
 from clispy.symbol import *
-from clispy.parse import Parser, InPort
+from clispy.parser import Parser, InPort
 
 
 class UnitTestCase(unittest.TestCase):

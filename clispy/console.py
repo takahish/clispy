@@ -15,12 +15,12 @@
 
 import sys
 from clispy.symbol import *
-from clispy.env import VarEnv, FuncEnv, MacroEnv
-from clispy.eval import Evaluator
-from clispy.expand import Expander
-from clispy.func import BuiltInFunction
-from clispy.parse import Parser, InPort
-from clispy.utils import to_string
+from clispy.environment import VariableEnvironment, FunctionEnvironment, MacroEnvironment
+from clispy.evaluator import Evaluator
+from clispy.expander import Expander
+from clispy.functions import BuiltInFunction
+from clispy.parser import Parser, InPort
+from clispy.utilities import to_string
 
 
 def repl(prompt='clispy> ', inport=InPort(sys.stdin), out=sys.stdout):
@@ -35,17 +35,17 @@ def repl(prompt='clispy> ', inport=InPort(sys.stdin), out=sys.stdout):
     sys.stderr.flush() # flush buffer explicitly
 
     # Global variable environment.
-    global_var_env = VarEnv()
+    global_var_env = VariableEnvironment()
 
     # Global function environment.
-    global_func_env = FuncEnv()
+    global_func_env = FunctionEnvironment()
     global_func_env.update(BuiltInFunction())
 
     # Make instance of Evaluator.
     evaluator = Evaluator(global_var_env, global_func_env)
 
     # Global macro environment.
-    global_macro_env = MacroEnv()
+    global_macro_env = MacroEnvironment()
 
     # Make instance of Expander.
     expander = Expander(evaluator, global_macro_env)
@@ -58,12 +58,20 @@ def repl(prompt='clispy> ', inport=InPort(sys.stdin), out=sys.stdout):
             if prompt:
                 sys.stderr.write(prompt)
                 sys.stderr.flush() # flush buffer explicitly
-            x = expander.expand(parser.parse(inport))
-            if x is EOF_OBJECT:
+
+            # Parse inport.
+            token = parser.parse(inport)
+            if token is EOF_OBJECT:
                 print(file=out)
                 return
+
+            # Expand token.
+            x = expander.expand(token)
+
+            # Evaluate expression.
             val = evaluator.eval(x)
             if val is not None and out:
                 print(to_string(val), file=out)
+
         except Exception as e:
             print('%s: %s' % (type(e).__name__, e))
