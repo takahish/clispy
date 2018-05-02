@@ -85,18 +85,21 @@ class Executor(object):
             except Exception as e:
                 print('%s: %s' % (type(e).__name__, e))
 
-    def load(self, directory_path):
+    def initialize(self, directory):
         """Load bootstrap common lisp files.
 
         Args:
-            directory_path: Path of directory that contain common lisp files.
+            directory: Path of directory that contain common lisp files.
         """
-        if directory_path[-1] != "/":
-            directory_path = directory_path + "/"
+        if directory[-1] != "/":
+            directory = directory + "/"
 
-        file_path = directory_path + '*.lisp'
-        files = glob.glob(file_path)
+        self.load_file(directory + 'init.lisp')
 
-        for file in files:
-            with open(file) as f:
-                self.console(prompt=None, inport=InPort(f), out=None)
+        other_files = glob.glob(directory + '*.lisp')
+        for file in other_files:
+            self.load_file(file)
+
+    def load_file(self, file):
+        with open(file) as f:
+            self.console(prompt=None, inport=InPort(f), out=None)

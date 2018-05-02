@@ -17,5 +17,5 @@ from clispy.executor import Executor
 
 def repl():
     executor = Executor()
-    executor.load("lisp")
+    executor.initialize("lisp")
     executor.console()
