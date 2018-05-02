@@ -362,16 +362,13 @@ class Expander(object):
         """
         if len(x) >= 4: # (defun name args body) => (defun name (lambda args body))
             defun, name, args, body = x[0], x[1], x[2], x[3:]
-            if _null(args): # (def name nil body) => (def name [] body)
-                args = []
             # Implicit BLOCK.
             body = [[BLOCK, name] + body]
             return self.expand([defun, name, [LAMBDA, args] + body], macro_env)
         else:
             require(x, len(x) == 3) # (defun non-var/list exp) => Error
             defun, name, exp = x[0], x[1], x[2]
-            exp = self.expand(exp, macro_env)
-            return [defun, name, exp]
+            return [defun, name, self.expand(exp, macro_env)]
 
     def __defmacro(self, x, macro_env):
         """Expand a series of forms for defmacro.
@@ -385,20 +382,20 @@ class Expander(object):
         """
         if len(x) >= 4: # (defun name args body) => (defun name (lambda args body))
             defun, name, args, body = x[0], x[1], x[2], x[3:]
-            if _null(args): # (def name nil body) => (def name [] body)
-                args = []
             return self.__defmacro([defun, name, [LAMBDA, args] + body], macro_env)
         else:
             require(x, len(x) == 3) # (defun non-var/list exp) => Error
-            _def, name, exp = x[0], x[1], x[2]
+            _, name, exp = x[0], x[1], x[2]
             exp = self.expand(x[2], macro_env)
 
             proc = self.evaluator.eval(exp)
             require(x, callable(proc), "macro must be a purocedure")
+
             try:
                 macro_env.find(name)[name] = proc
             except LookupError:
                 macro_env[name] = proc
+
             return [QUOTE, name] # quote is needed for eval and print
 
     def __lambda(self, x, macro_env):
@@ -412,7 +409,11 @@ class Expander(object):
             A procedure.
         """
         require(x, len(x) >= 3)
+
         vars, body = x[1], x[2:]
+        if _null(vars):  # (def name nil body) => (def name [] body)
+            vars = []
+
         require(x, (isinstance(vars, list) and all(isinstance(v, Symbol) for v in vars))
                       or isinstance(vars, Symbol), "illegal lambda argument list")
 

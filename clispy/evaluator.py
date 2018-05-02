@@ -73,7 +73,7 @@ class Evaluator(object):
             elif x[0] is LABELS:               # Special form: labels, (labels ((func var exp)) body)
                 x, func_env = self.__labels(x, var_env, func_env)
             elif x[0] is BLOCK:                # Special form: block, (block name)
-                return self.__block(x, var_env, func_env)
+                x = self.__block(x, var_env, func_env)
             elif x[0] is RETURN_FROM:          # Special form: return-from, (block name (return-from name))
                 return self.__return_from(x, var_env, func_env)
             elif x[0] is TAGBODY:              # Special form: tagbody, (tagbody tag)
