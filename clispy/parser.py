@@ -57,7 +57,12 @@ class Parser(object):
             try:
                 return float(token)
             except ValueError:
-                return symbol_table[token]
+                try:
+                    return symbol_table[token.upper()]
+                except LookupError:
+                    token = token.upper()
+                    symbol_table[token] = Symbol(token)
+                    return symbol_table[token]
 
     def __read_ahead(self, token, inport):
         """Helper function of read.
