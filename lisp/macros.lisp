@@ -18,5 +18,5 @@
        (progn ,@body)))
 
 (defmacro unless (test-form &rest body)
-  `(if ,(not test-form)
+  `(if (not ,test-form)
        (progn ,@body)))
