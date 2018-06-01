@@ -59,7 +59,7 @@ class Parser(object):
             except ValueError:
                 try:
                     return symbol_table[token.upper()]
-                except LookupError:
+                except KeyError:
                     token = token.upper()
                     symbol_table[token] = Symbol(token)
                     return symbol_table[token]

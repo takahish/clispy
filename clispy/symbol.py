@@ -24,33 +24,44 @@ class SymbolTable():
     """Find or create unique Symbol entry for str s in symbol table.
     """
     def __init__(self):
-        """Inits SymbolTable.
+        """Initialize SymbolTable.
         """
         self.__table = {}
 
-    def __getitem__(self, symbol):
+    @property
+    def table(self):
+        return self.__table
+
+    def __getitem__(self, name):
         """Get a symbol from table.
 
         Args:
-            symbol: String.
+            name: String.
 
         Returns:
             Symbol object.
         """
-        if symbol not in self.__table:
-            raise LookupError(str(symbol) + " is not existed in symbol table")
-        return self.__table[symbol]
+        if name not in self.__table:
+            raise KeyError(name + " is not existed in symbol table")
+        return self.__table[name]
 
-    def __setitem__(self, symbol, symbol_object):
+    def __setitem__(self, name, symbol_object):
         """Set a symbol into table.
 
         Args:
-            symbol: String.
+            name: String.
             symbol_object: Symbol.
         """
+        if name in self.__table:
+            raise SymbolError(name + " is already existed in symbol table")
+
         if not isinstance(symbol_object, Symbol):
             raise SymbolError(str(symbol_object) + " must be clispy.symbol.Symbol")
-        self.__table[symbol] = symbol_object
+
+        self.__table[name] = symbol_object
+
+    def update(self, symbol_dict):
+        self.__table.update(symbol_dict)
 
 
 class SymbolError(Exception):

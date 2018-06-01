@@ -21,7 +21,7 @@ class UnitTestCase(unittest.TestCase):
     def setUp(self):
         self.symbol_table = SymbolTable()
 
-    def testSymbo(self):
+    def testSymbol(self):
         symbol = Symbol('TEST')
         self.assertIsInstance(symbol, Symbol)
         self.assertIsInstance(symbol, str)
@@ -30,12 +30,16 @@ class UnitTestCase(unittest.TestCase):
     def testSymbolTable(self):
         self.assertIsInstance(self.symbol_table, SymbolTable)
 
-        with self.assertRaisesRegex(LookupError, "TEST is not existed in symbol table"):
+        with self.assertRaisesRegex(KeyError, "TEST is not existed in symbol table"):
             self.symbol_table['TEST']
 
         with self.assertRaisesRegex(SymbolError, "12345 must be clispy.symbol.Symbol"):
             self.symbol_table['TEST'] = 12345
 
         self.symbol_table['TEST'] = Symbol('TEST')
+
+        with self.assertRaisesRegex(SymbolError, "TEST is already existed in symbol table"):
+            self.symbol_table['TEST'] = Symbol('ANOTHER_TEST')
+
         self.assertIsInstance(self.symbol_table['TEST'], Symbol)
         self.assertEqual(self.symbol_table['TEST'], Symbol('TEST'))
