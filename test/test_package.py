@@ -34,6 +34,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(self.package_table, PackageTable)
 
         self.assertIsInstance(self.package_table['COMMON-LISP-USER'], Package)
+        self.assertIsInstance(self.package_table['KEYWORD'], Package)
         self.assertIsInstance(self.package_table['SYSTEM'], Package)
         self.assertIsInstance(self.package_table['PYTHON'], Package)
 
