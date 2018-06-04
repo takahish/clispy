@@ -22,12 +22,22 @@ class Symbol(T):
     variables and functions.
     """
     def __init__(self, value):
+        """Initialize Symbol.
+
+        Args:
+             value: String. It could be converted into uppercase.
+        """
         if not isinstance(value, str):
             raise TypeError("The value " + str(value) + " is not of type str")
         self.__value = value.upper()
 
     @property
     def value(self):
+        """Getter for self.__value.
+
+        Returns:
+             String as symbol.
+        """
         return self.__value
 
     def __repr__(self):

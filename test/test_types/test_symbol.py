@@ -22,6 +22,7 @@ class UnitTestCase(unittest.TestCase):
         s = Symbol('symbol')
         self.assertIsInstance(s, T)
         self.assertEqual(s.value, 'SYMBOL')
+        self.assertRaisesRegex(TypeError, "The value 100 is not of type str", Symbol, 100)
 
     def testKeyword(self):
         k = Keyword(':keyword')
@@ -29,3 +30,4 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(k, Symbol)
         self.assertIsInstance(k, Keyword)
         self.assertEqual(k.value, ':KEYWORD')
+        self.assertRaisesRegex(TypeError, "The value 100 is not of type str", Keyword, 100)
