@@ -18,4 +18,14 @@ class T(object):
     """The set of all object. The type T is a supertype of every type,
     including itself. Every object is of type T.
     """
-    pass
+    def __init__(self, value):
+        """Initialize T.
+        """
+        # self._value is protected.
+        self._value = value
+
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self._value

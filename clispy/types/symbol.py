@@ -29,19 +29,14 @@ class Symbol(T):
         """
         if not isinstance(value, str):
             raise TypeError("The value " + str(value) + " is not of type str")
-        self.__value = value.upper()
 
-    @property
-    def value(self):
-        """Getter for self.__value.
-
-        Returns:
-             String as symbol.
-        """
-        return self.__value
+        # self._value is protected.
+        self._value = value.upper()
 
     def __repr__(self):
-        return self.__value
+        """The official string representation.
+        """
+        return self.value
 
 
 class Keyword(Symbol):
