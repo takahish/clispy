@@ -135,7 +135,7 @@ THROW = symbol_table['THROW']
 QUASIQUOTE = symbol_table['QUASIQUOTE']
 UNQUOTE = symbol_table['UNQUOTE']
 UNQUOTE_SPLICING = symbol_table['UNQUOTE-SPLICING']
-SHARPQUOTE = symbol_table['SHARPQUOTE']
+SHARPQUOTE = symbol_table['FUNCTION']
 
 # Symbol for syntactic sugar.
 QUOTES = {
