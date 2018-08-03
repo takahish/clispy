@@ -31,7 +31,13 @@ class Symbol(T):
             raise TypeError("The value " + str(value) + " is not of type str")
 
         # self._value is protected.
-        self._value = value.upper()
+        self.__value = value.upper()
+
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value
 
     def __repr__(self):
         """The official string representation.

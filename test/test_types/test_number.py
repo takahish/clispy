@@ -19,28 +19,25 @@ from clispy.types.number import *
 
 class UnitTestCase(unittest.TestCase):
     def testNumber(self):
-        n = Number('NUMBER')
+        n = Number()
         self.assertIsInstance(n, T)
         self.assertIsInstance(n, Number)
-        self.assertEqual(n.value, 'NUMBER')
 
     def testNumberCheck(self):
         self.assertRaisesRegex(TypeError, "The value True is not of type clispy.types.Number", Number.check_type, True)
 
     def testReal(self):
-        r = Real('REAL')
+        r = Real()
         self.assertIsInstance(r, T)
         self.assertIsInstance(r, Number)
         self.assertIsInstance(r, Real)
-        self.assertEqual(r.value, 'REAL')
 
     def testRational(self):
-        r = Rational('RATIONAL')
+        r = Rational()
         self.assertIsInstance(r, T)
         self.assertIsInstance(r, Number)
         self.assertIsInstance(r, Real)
         self.assertIsInstance(r, Rational)
-        self.assertEqual(r.value, 'RATIONAL')
 
     def testInteger(self):
         i = Integer(100)

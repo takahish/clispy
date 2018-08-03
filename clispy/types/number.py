@@ -99,12 +99,18 @@ class Integer(Rational):
             value: Int. It could be converted into np.int.
         """
         # self._value is protected.
-        self._value = np.int(value)
+        self.__value = np.int(value)
+
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value
 
     def __repr__(self):
         """The official string representation.
         """
-        return str(self.value)
+        return self.value
 
     def __add__(self, other):
         """Hook of self + other.
@@ -152,7 +158,13 @@ class Fixnum(Integer):
             value: Int. It could be converted into np.int16.
         """
         # self._value is protected.
-        self._value = np.int16(value)
+        self.__value = np.int16(value)
+
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value
 
 
 class Bignum(Integer):
@@ -165,7 +177,13 @@ class Bignum(Integer):
             value: Int. It could be converted into np.int.
         """
         # self._value is protected.
-        self._value = np.int(value)
+        self.__value = np.int(value)
+
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value
 
 
 class Ratio(Rational):
@@ -199,12 +217,18 @@ class Ratio(Rational):
             denominator: Int.
         """
         # self._value is protected.
-        self._value = Fraction(ratio)
+        self.__value = Fraction(ratio)
+
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value
 
     def __repr__(self):
         """The official string representation.
         """
-        return str(self.value.numerator) + "/" + str(self.value.denominator)
+        return self.value
 
     def __add__(self, other):
         """Hook of self + other.
@@ -249,12 +273,18 @@ class Float(Real):
             value: Float.
         """
         # self._value is protected.
-        self._value = np.float(value)
+        self.__value = np.float(value)
+
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value
 
     def __repr__(self):
         """The official string representation.
         """
-        return str(self.value)
+        return self.value
 
     def __add__(self, other):
         """Hook of self + other.
@@ -298,7 +328,13 @@ class ShortFloat(Float):
             value: Float.
         """
         # self._value is protected.
-        self._value = np.float16(value)
+        self.__value = np.float16(value)
+
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value
 
 
 class SingleFloat(Float):
@@ -314,8 +350,13 @@ class SingleFloat(Float):
             value: Float.
         """
         # self._value is protected.
-        self._value = np.float32(value)
+        self.__value = np.float32(value)
 
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value
 
 class DoubleFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -330,8 +371,13 @@ class DoubleFloat(Float):
             value: Float.
         """
         # self._value is protected.
-        self._value = np.float64(value)
+        self.__value = np.float64(value)
 
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value
 
 class LongFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -346,4 +392,10 @@ class LongFloat(Float):
             value: Float.
         """
         # self._value is protected.
-        self._value = np.float128(value)
+        self.__value = np.float128(value)
+
+    @property
+    def value(self):
+        """Getter for self._value.
+        """
+        return self.__value

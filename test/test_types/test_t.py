@@ -19,5 +19,5 @@ from clispy.types.t import *
 
 class UnitTestCase(unittest.TestCase):
     def testT(self):
-        t = T(True)
+        t = T()
         self.assertIsInstance(t, T)
