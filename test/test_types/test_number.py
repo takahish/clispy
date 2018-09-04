@@ -23,9 +23,6 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(n, T)
         self.assertIsInstance(n, Number)
 
-    def testNumberCheck(self):
-        self.assertRaisesRegex(TypeError, "The value True is not of type clispy.types.Number", Number.check_type, True)
-
     def testReal(self):
         r = Real()
         self.assertIsInstance(r, T)
@@ -48,6 +45,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(i, Integer)
         self.assertIsInstance(i.value, np.int)
         self.assertEqual(i.value, np.int(100))
+        self.assertEqual(i.type_of(), '(INTEGER 0 2147483647)')
 
     def testFixnum(self):
         f = Fixnum(100)
@@ -59,6 +57,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Fixnum)
         self.assertIsInstance(f.value, np.int16)
         self.assertEqual(f.value, np.int16(100))
+        self.assertEqual(f.type_of(), 'FIXNUM')
 
     def testBignum(self):
         b = Bignum(100)
@@ -70,6 +69,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(b, Bignum)
         self.assertIsInstance(b.value, np.int)
         self.assertEqual(b.value, np.int(100))
+        self.assertEqual(b.type_of(), 'BIGNUM')
 
     def testRaito(self):
         r = Ratio('2/3')
@@ -79,6 +79,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(r, Rational)
         self.assertIsInstance(r, Ratio)
         self.assertEqual(r.value, Fraction(2, 3))
+        self.assertEqual(r.type_of(), 'RATIO')
 
     def testFloat(self):
         f = Float(100)
@@ -88,6 +89,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Float)
         self.assertIsInstance(f.value, np.float)
         self.assertEqual(f.value, np.float(100))
+        self.assertEqual(f.type_of(), 'FLOAT')
 
     def testShortFloat(self):
         f = ShortFloat(100)
@@ -98,6 +100,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, ShortFloat)
         self.assertIsInstance(f.value, np.float16)
         self.assertEqual(f.value, np.float16(100))
+        self.assertEqual(f.type_of(), 'SHORT-FLOAT')
 
     def testSingleFloat(self):
         f = SingleFloat(100)
@@ -108,6 +111,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, SingleFloat)
         self.assertIsInstance(f.value, np.float32)
         self.assertEqual(f.value, np.float32(100))
+        self.assertEqual(f.type_of(), 'SINGLE-FLOAT')
 
     def testDoubleFloat(self):
         f = DoubleFloat(100)
@@ -118,6 +122,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, DoubleFloat)
         self.assertIsInstance(f.value, np.float64)
         self.assertEqual(f.value, np.float64(100))
+        self.assertEqual(f.type_of(), 'DOUBLE-FLOAT')
 
     def testLongFloat(self):
         f = LongFloat(100)
@@ -128,6 +133,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, LongFloat)
         self.assertIsInstance(f.value, np.float128)
         self.assertEqual(f.value, np.float128(100))
+        self.assertEqual(f.type_of(), 'LONG-FLOAT')
 
     def testIntegerArithmetic(self):
         a = Integer(1)

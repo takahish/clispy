@@ -23,16 +23,6 @@ class Number(T):
     """The type Number contains objects which represent mathematical numbers.
     The types Real and Complex are disjoint subtypes of Number.
     """
-    @staticmethod
-    def check_type(obj):
-        """Check whether an object is an instance of Number.
-
-        Args:
-            obj: An object.
-        """
-        if not isinstance(obj, Number):
-            raise TypeError("The value " + str(obj) + " is not of type clispy.types.Number")
-
     def __eq__(self, other):
         """Hook of self == other.
         """
@@ -70,6 +60,16 @@ class Number(T):
         Number.check_type(other)
         return operator(self.value, other.value)
 
+    @staticmethod
+    def check_type(obj):
+        """Check whether an object is an instance of Number.
+
+        Args:
+            obj: An object.
+        """
+        if not isinstance(obj, Number):
+            raise TypeError("The value " + str(obj) + " is not of type clispy.types.Number")
+
 
 class Real(Number):
     """The type Real includes all numbers represent mathematical real numbers,
@@ -98,19 +98,18 @@ class Integer(Rational):
         Args:
             value: Int. It could be converted into np.int.
         """
-        # self._value is protected.
         self.__value = np.int(value)
 
     @property
     def value(self):
-        """Getter for self._value.
+        """Getter for self.__value.
         """
         return self.__value
 
     def __repr__(self):
         """The official string representation.
         """
-        return self.value
+        return str(self.value)
 
     def __add__(self, other):
         """Hook of self + other.
@@ -147,6 +146,21 @@ class Integer(Rational):
             skeleton = type(other)
             return skeleton(operator(self.value, other.value))
 
+    def __int__(self):
+        """Hook of int(self).
+        """
+        return np.int(self.value)
+
+    def __float__(self):
+        """Hook of float(self).
+        """
+        return np.float(self.value)
+
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return '(INTEGER 0 2147483647)'
+
 
 class Fixnum(Integer):
     """Exactly which integers are fixnums is implementation-defined.
@@ -157,14 +171,18 @@ class Fixnum(Integer):
         Args:
             value: Int. It could be converted into np.int16.
         """
-        # self._value is protected.
         self.__value = np.int16(value)
 
     @property
     def value(self):
-        """Getter for self._value.
+        """Getter for self.__value.
         """
         return self.__value
+
+    def type_of(self):
+        """Retrun a type specifier.
+        """
+        return 'FIXNUM'
 
 
 class Bignum(Integer):
@@ -176,14 +194,18 @@ class Bignum(Integer):
         Args:
             value: Int. It could be converted into np.int.
         """
-        # self._value is protected.
         self.__value = np.int(value)
 
     @property
     def value(self):
-        """Getter for self._value.
+        """Getter for self.__value.
         """
         return self.__value
+
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return 'BIGNUM'
 
 
 class Ratio(Rational):
@@ -216,19 +238,18 @@ class Ratio(Rational):
             numerator: Int.
             denominator: Int.
         """
-        # self._value is protected.
         self.__value = Fraction(ratio)
 
     @property
     def value(self):
-        """Getter for self._value.
+        """Getter for self.__value.
         """
         return self.__value
 
     def __repr__(self):
         """The official string representation.
         """
-        return self.value
+        return str(self.value)
 
     def __add__(self, other):
         """Hook of self + other.
@@ -262,6 +283,21 @@ class Ratio(Rational):
             fraction = operator(self.value, other.value)
             return Ratio(str(fraction))
 
+    def __int__(self):
+        """Hook of int(self).
+        """
+        return np.int(self.value)
+
+    def __float__(self):
+        """Hook of float(self).
+        """
+        return np.float(self.value)
+
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return 'RATIO'
+
 
 class Float(Real):
     """A float is a mathematical rational (but not a Common Lisp Rational).
@@ -272,19 +308,18 @@ class Float(Real):
         Args:
             value: Float.
         """
-        # self._value is protected.
         self.__value = np.float(value)
 
     @property
     def value(self):
-        """Getter for self._value.
+        """Getter for self.__value.
         """
         return self.__value
 
     def __repr__(self):
         """The official string representation.
         """
-        return self.value
+        return str(self.value)
 
     def __add__(self, other):
         """Hook of self + other.
@@ -314,6 +349,20 @@ class Float(Real):
         skeleton = type(self)
         return skeleton(operator(self.value, other.value))
 
+    def __int__(self):
+        """Hook of int(self).
+        """
+        return np.int(self.value)
+
+    def __float__(self):
+        """Hook of float(self).
+        """
+        return np.float(self.value)
+
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return 'FLOAT'
 
 class ShortFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -327,14 +376,18 @@ class ShortFloat(Float):
         Args:
             value: Float.
         """
-        # self._value is protected.
         self.__value = np.float16(value)
 
     @property
     def value(self):
-        """Getter for self._value.
+        """Getter for self.__value.
         """
         return self.__value
+
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return 'SHORT-FLOAT'
 
 
 class SingleFloat(Float):
@@ -349,14 +402,19 @@ class SingleFloat(Float):
         Args:
             value: Float.
         """
-        # self._value is protected.
         self.__value = np.float32(value)
 
     @property
     def value(self):
-        """Getter for self._value.
+        """Getter for self.__value.
         """
         return self.__value
+
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return 'SINGLE-FLOAT'
+
 
 class DoubleFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -370,14 +428,19 @@ class DoubleFloat(Float):
         Args:
             value: Float.
         """
-        # self._value is protected.
         self.__value = np.float64(value)
 
     @property
     def value(self):
-        """Getter for self._value.
+        """Getter for self.__value.
         """
         return self.__value
+
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return 'DOUBLE-FLOAT'
+
 
 class LongFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -391,11 +454,15 @@ class LongFloat(Float):
         Args:
             value: Float.
         """
-        # self._value is protected.
         self.__value = np.float128(value)
 
     @property
     def value(self):
-        """Getter for self._value.
+        """Getter for self.__value.
         """
         return self.__value
+
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return 'LONG-FLOAT'
