@@ -44,6 +44,7 @@ def to_string(x):
     else:
         return str(x)
 
+
 def require(x, predicate, msg="wrong length"):
     """Signal a syntax error if predicate is false.
 
@@ -54,6 +55,7 @@ def require(x, predicate, msg="wrong length"):
     """
     if not predicate:
         raise SyntaxError(to_string(x) + ': ' + msg)
+
 
 def callcc(proc):
     ball = RuntimeWarning("Sorry, can't continue this continuation any longer.")
@@ -69,3 +71,9 @@ def callcc(proc):
             return ball.retval
         else:
             raise w
+
+
+def override(func):
+    def wrapper(*args, **kwards):
+        return func(*args, **kwards)
+    return wrapper

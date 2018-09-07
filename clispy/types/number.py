@@ -16,7 +16,7 @@
 import operator as op
 from fractions import Fraction
 import numpy as np
-from clispy.types.t import T
+from clispy.types.base import T
 
 
 class Number(T):

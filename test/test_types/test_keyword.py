@@ -14,20 +14,31 @@
 # ==============================================================================
 
 import unittest
-from clispy.types.symbol import *
+from clispy.types.base import *
+from clispy.types.keyword import *
 
 
 class UnitTestCase(unittest.TestCase):
-    def testSymbol(self):
-        s = Symbol('symbol')
-        self.assertIsInstance(s, T)
-        self.assertEqual(s.value, 'SYMBOL')
-        self.assertRaisesRegex(TypeError, "The value 100 is not of type str", Symbol, 100)
+    def testKeywordObjectRegistry(self):
+        k1 = Keyword('keyword_1')
+        k2 = Keyword('keyword_2')
+        k3 = Keyword('keyword_1')
+
+        self.assertTrue(k1 is k3)
+        self.assertFalse(k1 is k2)
 
     def testKeyword(self):
         k = Keyword(':keyword')
+
         self.assertIsInstance(k, T)
         self.assertIsInstance(k, Symbol)
         self.assertIsInstance(k, Keyword)
         self.assertEqual(k.value, ':KEYWORD')
         self.assertRaisesRegex(TypeError, "The value 100 is not of type str", Keyword, 100)
+
+    def testKeywordTypeOf(self):
+        k_t = Keyword(':keyword').type_of()
+
+        self.assertIsInstance(k_t, Symbol)
+        self.assertEqual(k_t.value, 'KEYWORD')
+

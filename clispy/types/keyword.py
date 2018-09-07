@@ -13,36 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.types.t import T
-
-
-class Symbol(T):
-    """Symbols are used for their object identity to name various entities
-    in Common Lisp, including (but not limited to) linguistic such as
-    variables and functions.
-    """
-    def __init__(self, value):
-        """Initialize Symbol.
-
-        Args:
-             value: String. It could be converted into uppercase.
-        """
-        if not isinstance(value, str):
-            raise TypeError("The value " + str(value) + " is not of type str")
-
-        # self._value is protected.
-        self.__value = value.upper()
-
-    @property
-    def value(self):
-        """Getter for self._value.
-        """
-        return self.__value
-
-    def __repr__(self):
-        """The official string representation.
-        """
-        return self.value
+from clispy.types.base import SymbolObject, Symbol
+from clispy.utilities import override
 
 
 class Keyword(Symbol):
@@ -53,4 +25,14 @@ class Keyword(Symbol):
         2. It causes the symbol to become an external symbol of the KEYWORD package.
         3. It causes the symbol to become a constant variable.
     """
-    pass
+    def __new__(cls, *args, **kwargs):
+        """Initialize Keyword. If an instance of Keyword is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        return SymbolObject.get_instance(cls, *args)
+
+    @override
+    def type_of(self):
+        """Retrun a type specifier.
+        """
+        return Symbol('KEYWORD')
