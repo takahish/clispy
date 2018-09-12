@@ -37,7 +37,7 @@ class LispObject(type):
         """Initialize LispObject. If an instance of LispObject is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
-        seed = (str(cls) + '_' + str(args)).encode('utf-8')
+        seed = ('_'.join([str(cls), str(args[0]), str(id(args[0]))])).encode('utf-8')
         object_key = sha1(seed).hexdigest()
 
         if object_key in cls.object_registry:
@@ -58,10 +58,10 @@ class T(object, metaclass=LispObject):
         """
         return LispObject.get_instance(cls, True)
 
-    def __init__(self):
+    def __init__(self, value=True):
         """Initialize an instance of T.
         """
-        self.__value = True
+        self.__value = value
 
     @property
     def value(self):
@@ -90,10 +90,16 @@ class Nil(T):
         """
         return LispObject.get_instance(cls, False)
 
-    def __init__(self):
+    def __init__(self, value=False):
         """Initialize Nil.
         """
-        self.__value = False
+        self.__value = value
+
+    @property
+    def value(self):
+        """Getter for self.__value.
+        """
+        return self.__value
 
     def __repr__(self):
         """The official string representation.

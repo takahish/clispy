@@ -28,6 +28,7 @@ class UnitTestCase(unittest.TestCase):
         t = T()
 
         self.assertIsInstance(t, T)
+        self.assertEqual(t.value, True)
 
     def testTTypeOf(self):
         t_t = T().type_of()
@@ -46,6 +47,7 @@ class UnitTestCase(unittest.TestCase):
 
         self.assertIsInstance(n, T)
         self.assertIsInstance(n, Nil)
+        self.assertEqual(n.value, False)
 
     def testNilTypeOf(self):
         n_t = Nil().type_of()
