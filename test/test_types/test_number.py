@@ -18,26 +18,74 @@ from clispy.types.number import *
 
 
 class UnitTestCase(unittest.TestCase):
+    def testNumberObjectRegistry(self):
+        n1 = Number()
+        n2 = Number()
+
+        self.assertTrue(n1 is n2)
+
     def testNumber(self):
         n = Number()
+
         self.assertIsInstance(n, T)
         self.assertIsInstance(n, Number)
 
+    def testNumberTypeOf(self):
+        n_t = Number().type_of()
+
+        self.assertIsInstance(n_t, Symbol)
+        self.assertEqual(n_t.value, 'NUMBER')
+
+    def testRealObjectRegistry(self):
+        r1 = Real()
+        r2 = Real()
+
+        self.assertTrue(r1 is r2)
+
     def testReal(self):
         r = Real()
+
         self.assertIsInstance(r, T)
         self.assertIsInstance(r, Number)
         self.assertIsInstance(r, Real)
 
+    def testRealType(self):
+        r_t = Real().type_of()
+
+        self.assertIsInstance(r_t, Symbol)
+        self.assertEqual(r_t.value, 'REAL')
+
+    def testRationalObjectRegistry(self):
+        r1 = Rational()
+        r2 = Rational()
+
+        self.assertTrue(r1 is r2)
+
     def testRational(self):
         r = Rational()
+
         self.assertIsInstance(r, T)
         self.assertIsInstance(r, Number)
         self.assertIsInstance(r, Real)
         self.assertIsInstance(r, Rational)
 
+    def testRationalType(self):
+        r_t = Rational().type_of()
+
+        self.assertIsInstance(r_t, Symbol)
+        self.assertEqual(r_t.value, 'RATIONAL')
+
+    def testIntegerObjectRegistry(self):
+        i1 = Integer(10)
+        i2 = Integer(10)
+        i3 = Integer(20)
+
+        self.assertTrue(i1 is i2)
+        self.assertFalse(i1 is i3)
+
     def testInteger(self):
         i = Integer(100)
+
         self.assertIsInstance(i, T)
         self.assertIsInstance(i, Number)
         self.assertIsInstance(i, Real)
@@ -45,10 +93,24 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(i, Integer)
         self.assertIsInstance(i.value, np.int)
         self.assertEqual(i.value, np.int(100))
-        self.assertEqual(i.type_of(), '(INTEGER 0 2147483647)')
+
+    def testIntegerType(self):
+        i_t = Integer(100).type_of()
+
+        self.assertIsInstance(i_t, Symbol)
+        self.assertEqual(i_t.value, 'INTEGER')
+
+    def testFixnumObjectRegistry(self):
+        f1 = Fixnum(10)
+        f2 = Fixnum(10)
+        f3 = Fixnum(20)
+
+        self.assertTrue(f1 is f2)
+        self.assertFalse(f1 is f3)
 
     def testFixnum(self):
         f = Fixnum(100)
+
         self.assertIsInstance(f, T)
         self.assertIsInstance(f, Number)
         self.assertIsInstance(f, Real)
@@ -57,10 +119,24 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Fixnum)
         self.assertIsInstance(f.value, np.int16)
         self.assertEqual(f.value, np.int16(100))
-        self.assertEqual(f.type_of(), 'FIXNUM')
+
+    def testFixnumTypeOf(self):
+        f_t = Fixnum(100).type_of()
+
+        self.assertIsInstance(f_t, Symbol)
+        self.assertEqual(f_t.value, 'FIXNUM')
+
+    def testBignumObjectRegistry(self):
+        b1 = Bignum(10)
+        b2 = Bignum(10)
+        b3 = Bignum(20)
+
+        self.assertTrue(b1 is b2)
+        self.assertFalse(b1 is b3)
 
     def testBignum(self):
         b = Bignum(100)
+
         self.assertIsInstance(b, T)
         self.assertIsInstance(b, Number)
         self.assertIsInstance(b, Real)
@@ -69,30 +145,72 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(b, Bignum)
         self.assertIsInstance(b.value, np.int)
         self.assertEqual(b.value, np.int(100))
-        self.assertEqual(b.type_of(), 'BIGNUM')
+
+    def testBignumTypeOf(self):
+        b_t = Bignum(100).type_of()
+
+        self.assertIsInstance(b_t, Symbol)
+        self.assertEqual(b_t.value, 'BIGNUM')
+
+    def testRatioObjectRegistry(self):
+        r1 = Ratio('1/3')
+        r2 = Ratio('1/3')
+        r3 = Ratio('2/3')
+
+        self.assertTrue(r1 is r2)
+        self.assertFalse(r1 is r3)
 
     def testRaito(self):
         r = Ratio('2/3')
+
         self.assertIsInstance(r, T)
         self.assertIsInstance(r, Number)
         self.assertIsInstance(r, Real)
         self.assertIsInstance(r, Rational)
         self.assertIsInstance(r, Ratio)
         self.assertEqual(r.value, Fraction(2, 3))
-        self.assertEqual(r.type_of(), 'RATIO')
+
+    def testRatioTypeOf(self):
+        r_t = Ratio('2/3').type_of()
+
+        self.assertIsInstance(r_t, Symbol)
+        self.assertEqual(r_t.value, 'RATIO')
+
+    def testFloatObjectRegistry(self):
+        f1 = Float(10)
+        f2 = Float(10)
+        f3 = Float(20)
+
+        self.assertTrue(f1 is f2)
+        self.assertFalse(f1 is f3)
 
     def testFloat(self):
         f = Float(100)
+
         self.assertIsInstance(f, T)
         self.assertIsInstance(f, Number)
         self.assertIsInstance(f, Real)
         self.assertIsInstance(f, Float)
         self.assertIsInstance(f.value, np.float)
         self.assertEqual(f.value, np.float(100))
-        self.assertEqual(f.type_of(), 'FLOAT')
+
+    def testFloatTypeOf(self):
+        f_t = Float(100).type_of()
+
+        self.assertIsInstance(f_t, Symbol)
+        self.assertEqual(f_t.value, 'FLOAT')
+
+    def testShortFloatObjectRegistry(self):
+        f1 = ShortFloat(10)
+        f2 = ShortFloat(10)
+        f3 = ShortFloat(20)
+
+        self.assertTrue(f1 is f2)
+        self.assertFalse(f1 is f3)
 
     def testShortFloat(self):
         f = ShortFloat(100)
+
         self.assertIsInstance(f, T)
         self.assertIsInstance(f, Number)
         self.assertIsInstance(f, Real)
@@ -100,10 +218,24 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, ShortFloat)
         self.assertIsInstance(f.value, np.float16)
         self.assertEqual(f.value, np.float16(100))
-        self.assertEqual(f.type_of(), 'SHORT-FLOAT')
+
+    def testShortFloatTypeOf(self):
+        f_t = ShortFloat(100).type_of()
+
+        self.assertIsInstance(f_t, Symbol)
+        self.assertEqual(f_t.value, 'SHORT-FLOAT')
+
+    def testSingleFloatObjectRegistry(self):
+        f1 = SingleFloat(10)
+        f2 = SingleFloat(10)
+        f3 = SingleFloat(20)
+
+        self.assertTrue(f1 is f2)
+        self.assertFalse(f1 is f3)
 
     def testSingleFloat(self):
         f = SingleFloat(100)
+
         self.assertIsInstance(f, T)
         self.assertIsInstance(f, Number)
         self.assertIsInstance(f, Real)
@@ -111,10 +243,24 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, SingleFloat)
         self.assertIsInstance(f.value, np.float32)
         self.assertEqual(f.value, np.float32(100))
-        self.assertEqual(f.type_of(), 'SINGLE-FLOAT')
+
+    def testSingleFloatTypeOf(self):
+        f_t = SingleFloat(100).type_of()
+
+        self.assertIsInstance(f_t, Symbol)
+        self.assertEqual(f_t.value, 'SINGLE-FLOAT')
+
+    def testDoubleFloatObjectRegistry(self):
+        f1 = DoubleFloat(10)
+        f2 = DoubleFloat(10)
+        f3 = DoubleFloat(20)
+
+        self.assertTrue(f1 is f2)
+        self.assertFalse(f1 is f3)
 
     def testDoubleFloat(self):
         f = DoubleFloat(100)
+
         self.assertIsInstance(f, T)
         self.assertIsInstance(f, Number)
         self.assertIsInstance(f, Real)
@@ -122,10 +268,24 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, DoubleFloat)
         self.assertIsInstance(f.value, np.float64)
         self.assertEqual(f.value, np.float64(100))
-        self.assertEqual(f.type_of(), 'DOUBLE-FLOAT')
+
+    def testDoubleFloatTypeOf(self):
+        f_t = DoubleFloat(100).type_of()
+
+        self.assertIsInstance(f_t, Symbol)
+        self.assertEqual(f_t.value, 'DOUBLE-FLOAT')
+
+    def testLongFloatObjectRegistry(self):
+        f1 = LongFloat(10)
+        f2 = LongFloat(10)
+        f3 = LongFloat(20)
+
+        self.assertTrue(f1 is f2)
+        self.assertFalse(f1 is f3)
 
     def testLongFloat(self):
         f = LongFloat(100)
+
         self.assertIsInstance(f, T)
         self.assertIsInstance(f, Number)
         self.assertIsInstance(f, Real)
@@ -133,7 +293,12 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, LongFloat)
         self.assertIsInstance(f.value, np.float128)
         self.assertEqual(f.value, np.float128(100))
-        self.assertEqual(f.type_of(), 'LONG-FLOAT')
+
+    def testLongFloatTypeOf(self):
+        f_t = LongFloat(100).type_of()
+
+        self.assertIsInstance(f_t, Symbol)
+        self.assertEqual(f_t.value, 'LONG-FLOAT')
 
     def testIntegerArithmetic(self):
         a = Integer(1)

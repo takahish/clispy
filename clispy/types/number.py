@@ -16,7 +16,8 @@
 import operator as op
 from fractions import Fraction
 import numpy as np
-from clispy.types.base import T
+from clispy.types.base import LispObject, T, Symbol
+from clispy.utilities import override
 
 
 class Number(T):
@@ -70,6 +71,12 @@ class Number(T):
         if not isinstance(obj, Number):
             raise TypeError("The value " + str(obj) + " is not of type clispy.types.Number")
 
+    @override
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return Symbol('NUMBER')
+
 
 class Real(Number):
     """The type Real includes all numbers represent mathematical real numbers,
@@ -78,20 +85,34 @@ class Real(Number):
     ordered using the <, >, <=, and >= functions.
     The types Rational and Float are disjoint subtypes of type Real
     """
-    pass
+    @override
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return Symbol('REAL')
 
 
 class Rational(Real):
     """The canonical representation of a rational is as an Integer if its
     value is integral, and otherwise as a Ratio.
     """
-    pass
+    @override
+    def type_of(self):
+        """Return a type specifier.
+        """
+        return Symbol('RATIONAL')
 
 
 class Integer(Rational):
     """An integer is a mathematical integer. There is no limit on the
     magnitude of an integer.
     """
+    def __new__(cls, *args, **kwargs):
+        """Initialize Integer. If an instance of Integer is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        return LispObject.get_instance(cls, *args)
+
     def __init__(self, value):
         """Initialize Integer. A value is converted into np.int.
 
@@ -156,15 +177,22 @@ class Integer(Rational):
         """
         return np.float(self.value)
 
+    @override
     def type_of(self):
         """Return a type specifier.
         """
-        return '(INTEGER 0 2147483647)'
+        return Symbol('INTEGER')
 
 
 class Fixnum(Integer):
     """Exactly which integers are fixnums is implementation-defined.
     """
+    def __new__(cls, *args, **kwargs):
+        """Initialize Fixnum. If an instance of Fixnum is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        return LispObject.get_instance(cls, *args)
+
     def __init__(self, value):
         """Initialize Fixnum. A value is converted into np.int16.
 
@@ -179,15 +207,22 @@ class Fixnum(Integer):
         """
         return self.__value
 
+    @override
     def type_of(self):
         """Retrun a type specifier.
         """
-        return 'FIXNUM'
+        return Symbol('FIXNUM')
 
 
 class Bignum(Integer):
     """The type bignum is defined to be exactly (and integer (not fixnum)).
     """
+    def __new__(cls, *args, **kwargs):
+        """Initialize Bignum. If an instance of Bignum is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        return LispObject.get_instance(cls, *args)
+
     def __init__(self, value):
         """Initialize Bignum. A value is converted into np.int.
 
@@ -202,10 +237,11 @@ class Bignum(Integer):
         """
         return self.__value
 
+    @override
     def type_of(self):
         """Return a type specifier.
         """
-        return 'BIGNUM'
+        return Symbol('BIGNUM')
 
 
 class Ratio(Rational):
@@ -229,7 +265,7 @@ class Ratio(Rational):
             if numerator % denominator == 0:
                 return Integer(numerator // denominator)
             else:
-                return super().__new__(cls)
+                return LispObject.get_instance(cls, ratio)
 
     def __init__(self, ratio):
         """Initialize Ratio. A value is converted into Fraction.
@@ -293,15 +329,22 @@ class Ratio(Rational):
         """
         return np.float(self.value)
 
+    @override
     def type_of(self):
         """Return a type specifier.
         """
-        return 'RATIO'
+        return Symbol('RATIO')
 
 
 class Float(Real):
     """A float is a mathematical rational (but not a Common Lisp Rational).
     """
+    def __new__(cls, *args, **kwargs):
+        """Initialize Float. If an instance of Float is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        return LispObject.get_instance(cls, *args)
+
     def __init__(self, value):
         """Initialize Float. A value is converted into np.float.
 
@@ -359,10 +402,12 @@ class Float(Real):
         """
         return np.float(self.value)
 
+    @override
     def type_of(self):
         """Return a type specifier.
         """
-        return 'FLOAT'
+        return Symbol('FLOAT')
+
 
 class ShortFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -370,6 +415,12 @@ class ShortFloat(Float):
     and the type double-float. The precise definition of these categories is
     implementation-defined.
     """
+    def __new__(cls, *args, **kwargs):
+        """Initialize ShortFloat. If an instance of ShortFloat is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        return LispObject.get_instance(cls, *args)
+
     def __init__(self, value):
         """Initialize ShortFloat. A value is converted into np.float16.
 
@@ -384,10 +435,11 @@ class ShortFloat(Float):
         """
         return self.__value
 
+    @override
     def type_of(self):
         """Return a type specifier.
         """
-        return 'SHORT-FLOAT'
+        return Symbol('SHORT-FLOAT')
 
 
 class SingleFloat(Float):
@@ -396,6 +448,12 @@ class SingleFloat(Float):
     and the type double-float. The precise definition of these categories is
     implementation-defined.
     """
+    def __new__(cls, *args, **kwargs):
+        """Initialize SingleFloat. If an instance of SingleFloat is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        return LispObject.get_instance(cls, *args)
+
     def __init__(self, value):
         """Initialize SingleFloat. A value is converted into np.float32.
 
@@ -410,10 +468,11 @@ class SingleFloat(Float):
         """
         return self.__value
 
+    @override
     def type_of(self):
         """Return a type specifier.
         """
-        return 'SINGLE-FLOAT'
+        return Symbol('SINGLE-FLOAT')
 
 
 class DoubleFloat(Float):
@@ -422,6 +481,12 @@ class DoubleFloat(Float):
     and the type double-float. The precise definition of these categories is
     implementation-defined.
     """
+    def __new__(cls, *args, **kwargs):
+        """Initialize DoubleFloat. If an instance of DoubleFloat is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        return LispObject.get_instance(cls, *args)
+
     def __init__(self, value):
         """Initialize DoubleFloat. A value is converted into np.float64.
 
@@ -436,10 +501,11 @@ class DoubleFloat(Float):
         """
         return self.__value
 
+    @override
     def type_of(self):
         """Return a type specifier.
         """
-        return 'DOUBLE-FLOAT'
+        return Symbol('DOUBLE-FLOAT')
 
 
 class LongFloat(Float):
@@ -448,6 +514,12 @@ class LongFloat(Float):
     and the type double-float. The precise definition of these categories is
     implementation-defined.
     """
+    def __new__(cls, *args, **kwargs):
+        """Initialize DoubleFloat. If an instance of DoubleFloat is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        return LispObject.get_instance(cls, *args)
+
     def __init__(self, value):
         """Initialize DoubleFloat. A value is converted into np.float128.
 
@@ -462,7 +534,8 @@ class LongFloat(Float):
         """
         return self.__value
 
+    @override
     def type_of(self):
         """Return a type specifier.
         """
-        return 'LONG-FLOAT'
+        return Symbol('LONG-FLOAT')
