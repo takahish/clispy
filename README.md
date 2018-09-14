@@ -65,4 +65,4 @@ clispy> ^D
 [Apache License 2.0](https://github.com/takahish/clispy/blob/master/LICENSE)
 
 ## Acknowledgements
-I wish to thank [Peter Norvig](http://norvig.com/) and [lispy](http://norvig.com/lispy.html) and [lispy.py](http://norvig.com/lispy2.html). I also wish to thank sbcl and abcl for referencing how do they implement common lisp interpreter.
+I wish to thank [Peter Norvig](http://norvig.com/), [lispy](http://norvig.com/lispy.html) and [lispy.py](http://norvig.com/lispy2.html). I also wish to thank sbcl and abcl for referencing how do they implement common lisp interpreter.
