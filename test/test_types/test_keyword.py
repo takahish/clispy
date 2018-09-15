@@ -33,6 +33,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(k, T)
         self.assertIsInstance(k, Symbol)
         self.assertIsInstance(k, Keyword)
+        self.assertEqual(str(k), ':KEYWORD')
         self.assertEqual(k.value, ':KEYWORD')
         self.assertRaisesRegex(TypeError, "The value 100 is not of type str", Keyword, 100)
 

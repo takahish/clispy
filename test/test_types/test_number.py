@@ -29,6 +29,7 @@ class UnitTestCase(unittest.TestCase):
 
         self.assertIsInstance(n, T)
         self.assertIsInstance(n, Number)
+        self.assertEqual(str(n), 'T')
 
     def testNumberTypeOf(self):
         n_t = Number().type_of()
@@ -48,6 +49,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(r, T)
         self.assertIsInstance(r, Number)
         self.assertIsInstance(r, Real)
+        self.assertEqual(str(r), 'T')
 
     def testRealType(self):
         r_t = Real().type_of()
@@ -68,6 +70,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(r, Number)
         self.assertIsInstance(r, Real)
         self.assertIsInstance(r, Rational)
+        self.assertEqual(str(r), 'T')
 
     def testRationalType(self):
         r_t = Rational().type_of()
@@ -91,6 +94,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(i, Real)
         self.assertIsInstance(i, Rational)
         self.assertIsInstance(i, Integer)
+        self.assertEqual(str(i), '100')
         self.assertIsInstance(i.value, np.int)
         self.assertEqual(i.value, np.int(100))
 
@@ -117,6 +121,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Rational)
         self.assertIsInstance(f, Integer)
         self.assertIsInstance(f, Fixnum)
+        self.assertEqual(str(f), '100')
         self.assertIsInstance(f.value, np.int16)
         self.assertEqual(f.value, np.int16(100))
 
@@ -143,6 +148,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(b, Rational)
         self.assertIsInstance(b, Integer)
         self.assertIsInstance(b, Bignum)
+        self.assertEqual(str(b), '100')
         self.assertIsInstance(b.value, np.int)
         self.assertEqual(b.value, np.int(100))
 
@@ -168,6 +174,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(r, Real)
         self.assertIsInstance(r, Rational)
         self.assertIsInstance(r, Ratio)
+        self.assertEqual(str(r), '2/3')
         self.assertEqual(r.value, Fraction(2, 3))
 
     def testRatioTypeOf(self):
@@ -191,6 +198,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Number)
         self.assertIsInstance(f, Real)
         self.assertIsInstance(f, Float)
+        self.assertEqual(str(f), '100.0')
         self.assertIsInstance(f.value, np.float)
         self.assertEqual(f.value, np.float(100))
 
@@ -216,6 +224,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Real)
         self.assertIsInstance(f, Float)
         self.assertIsInstance(f, ShortFloat)
+        self.assertEqual(str(f), '100.0')
         self.assertIsInstance(f.value, np.float16)
         self.assertEqual(f.value, np.float16(100))
 
@@ -241,6 +250,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Real)
         self.assertIsInstance(f, Float)
         self.assertIsInstance(f, SingleFloat)
+        self.assertEqual(str(f), '100.0')
         self.assertIsInstance(f.value, np.float32)
         self.assertEqual(f.value, np.float32(100))
 
@@ -266,6 +276,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Real)
         self.assertIsInstance(f, Float)
         self.assertIsInstance(f, DoubleFloat)
+        self.assertEqual(str(f), '100.0')
         self.assertIsInstance(f.value, np.float64)
         self.assertEqual(f.value, np.float64(100))
 
@@ -291,6 +302,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Real)
         self.assertIsInstance(f, Float)
         self.assertIsInstance(f, LongFloat)
+        self.assertEqual(str(f), '100.0')
         self.assertIsInstance(f.value, np.float128)
         self.assertEqual(f.value, np.float128(100))
 

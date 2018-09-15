@@ -28,6 +28,7 @@ class UnitTestCase(unittest.TestCase):
         t = T()
 
         self.assertIsInstance(t, T)
+        self.assertEqual(str(t), 'T')
         self.assertEqual(t.value, True)
 
     def testTTypeOf(self):
@@ -47,6 +48,7 @@ class UnitTestCase(unittest.TestCase):
 
         self.assertIsInstance(n, T)
         self.assertIsInstance(n, Nil)
+        self.assertEqual(str(n), 'NIL')
         self.assertEqual(n.value, False)
 
     def testNilTypeOf(self):
@@ -68,6 +70,7 @@ class UnitTestCase(unittest.TestCase):
 
         self.assertIsInstance(s, T)
         self.assertIsInstance(s, Symbol)
+        self.assertEqual(str(s), 'SYMBOL')
         self.assertEqual(s.value, 'SYMBOL')
         self.assertRaisesRegex(TypeError, "The value 100 is not of type str", Symbol, 100)
 
