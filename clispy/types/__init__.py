@@ -16,3 +16,4 @@
 from clispy.types.base import *
 from clispy.types.keyword import *
 from clispy.types.number import *
+from clispy.types.sequence import *
