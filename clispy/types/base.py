@@ -16,7 +16,6 @@
 
 from hashlib import sha1
 from weakref import WeakValueDictionary
-from clispy.utilities import override
 
 
 class LispObject(type):
@@ -74,6 +73,7 @@ class T(object, metaclass=LispObject):
         """
         return 'T'
 
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -106,7 +106,7 @@ class Nil(T):
         """
         return 'NIL'
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -171,7 +171,7 @@ class Symbol(T, metaclass=SymbolObject):
         """
         return self.value
 
-    @override
+    @classmethod
     def type_of(self):
         """Returns a type specifier.
         """

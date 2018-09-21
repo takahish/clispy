@@ -14,7 +14,6 @@
 # ==============================================================================
 
 from clispy.types.base import SymbolObject, Symbol
-from clispy.utilities import override
 
 
 class Keyword(Symbol):
@@ -31,7 +30,7 @@ class Keyword(Symbol):
         """
         return SymbolObject.get_instance(cls, *args)
 
-    @override
+    @classmethod
     def type_of(self):
         """Retrun a type specifier.
         """

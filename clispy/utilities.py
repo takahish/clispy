@@ -71,9 +71,3 @@ def callcc(proc):
             return ball.retval
         else:
             raise w
-
-
-def override(func):
-    def wrapper(*args, **kwards):
-        return func(*args, **kwards)
-    return wrapper

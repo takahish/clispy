@@ -17,7 +17,6 @@ import operator as op
 from fractions import Fraction
 import numpy as np
 from clispy.types.base import LispObject, T, Symbol
-from clispy.utilities import override
 
 
 class Number(T):
@@ -71,7 +70,7 @@ class Number(T):
         if not isinstance(obj, Number):
             raise TypeError("The value " + str(obj) + " is not of type clispy.types.Number")
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -85,7 +84,7 @@ class Real(Number):
     ordered using the <, >, <=, and >= functions.
     The types Rational and Float are disjoint subtypes of type Real
     """
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -96,7 +95,7 @@ class Rational(Real):
     """The canonical representation of a rational is as an Integer if its
     value is integral, and otherwise as a Ratio.
     """
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -177,7 +176,7 @@ class Integer(Rational):
         """
         return np.float(self.value)
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -207,7 +206,7 @@ class Fixnum(Integer):
         """
         return self.__value
 
-    @override
+    @classmethod
     def type_of(self):
         """Retrun a type specifier.
         """
@@ -237,7 +236,7 @@ class Bignum(Integer):
         """
         return self.__value
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -329,7 +328,7 @@ class Ratio(Rational):
         """
         return np.float(self.value)
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -402,7 +401,7 @@ class Float(Real):
         """
         return np.float(self.value)
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -435,7 +434,7 @@ class ShortFloat(Float):
         """
         return self.__value
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -468,7 +467,7 @@ class SingleFloat(Float):
         """
         return self.__value
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -501,7 +500,7 @@ class DoubleFloat(Float):
         """
         return self.__value
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -534,7 +533,7 @@ class LongFloat(Float):
         """
         return self.__value
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """

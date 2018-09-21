@@ -15,7 +15,6 @@
 
 import sys
 from clispy.types.base import LispObject, T, Nil, Symbol
-from clispy.utilities import override
 
 
 class Sequence(T):
@@ -23,7 +22,7 @@ class Sequence(T):
     sequence.
     The type Vector and type List are disjoint of type sequence.
     """
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -35,7 +34,7 @@ class List(Sequence):
     element of the list, and the cdr of each cons is either the next link
     in the chain or a terminating atom.
     """
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -90,7 +89,7 @@ class Cons(List):
         else:
             return str(cons.car()) + ' ' + Cons.__repr_helper(cons.cdr())
 
-    @override
+    @classmethod
     def type_of(self):
         """Return a type specifier.
         """
@@ -153,7 +152,7 @@ class Null(Symbol, List):
         """
         return str(self.value)
 
-    @override
+    @classmethod
     def type_of(self):
         """Retrun a type specifier.
         """
