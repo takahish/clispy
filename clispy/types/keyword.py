@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.types.base import SymbolObject, Symbol
+from clispy.types.base import Symbol, SymbolObject
 
 
 class Keyword(Symbol):
@@ -28,10 +28,5 @@ class Keyword(Symbol):
         """Initialize Keyword. If an instance of Keyword is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'KEYWORD'
         return SymbolObject.get_instance(cls, *args)
-
-    @classmethod
-    def type_of(self):
-        """Retrun a type specifier.
-        """
-        return Symbol('KEYWORD')

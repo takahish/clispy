@@ -23,6 +23,13 @@ class Number(T):
     """The type Number contains objects which represent mathematical numbers.
     The types Real and Complex are disjoint subtypes of Number.
     """
+    def __new__(cls, *args, **kwargs):
+        """Initialize Number. If an instance of Number is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        cls.__name__ = 'NUMBER'
+        return LispObject.get_instance(cls, True)
+
     def __eq__(self, other):
         """Hook of self == other.
         """
@@ -70,12 +77,6 @@ class Number(T):
         if not isinstance(obj, Number):
             raise TypeError("The value " + str(obj) + " is not of type clispy.types.Number")
 
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('NUMBER')
-
 
 class Real(Number):
     """The type Real includes all numbers represent mathematical real numbers,
@@ -84,22 +85,24 @@ class Real(Number):
     ordered using the <, >, <=, and >= functions.
     The types Rational and Float are disjoint subtypes of type Real
     """
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
+    def __new__(cls, *args, **kwargs):
+        """Initialize Real. If an instance of Real is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
         """
-        return Symbol('REAL')
+        cls.__name__ = 'REAL'
+        return LispObject.get_instance(cls, True)
 
 
 class Rational(Real):
     """The canonical representation of a rational is as an Integer if its
     value is integral, and otherwise as a Ratio.
     """
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
+    def __new__(cls, *args, **kwargs):
+        """Initialize Rational. If an instance of Rational is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
         """
-        return Symbol('RATIONAL')
+        cls.__name__ = 'RATIONAL'
+        return LispObject.get_instance(cls, True)
 
 
 class Integer(Rational):
@@ -110,6 +113,7 @@ class Integer(Rational):
         """Initialize Integer. If an instance of Integer is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'INTEGER'
         return LispObject.get_instance(cls, *args)
 
     def __init__(self, value):
@@ -176,12 +180,6 @@ class Integer(Rational):
         """
         return np.float(self.value)
 
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('INTEGER')
-
 
 class Fixnum(Integer):
     """Exactly which integers are fixnums is implementation-defined.
@@ -190,6 +188,7 @@ class Fixnum(Integer):
         """Initialize Fixnum. If an instance of Fixnum is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'FIXNUM'
         return LispObject.get_instance(cls, *args)
 
     def __init__(self, value):
@@ -206,12 +205,6 @@ class Fixnum(Integer):
         """
         return self.__value
 
-    @classmethod
-    def type_of(self):
-        """Retrun a type specifier.
-        """
-        return Symbol('FIXNUM')
-
 
 class Bignum(Integer):
     """The type bignum is defined to be exactly (and integer (not fixnum)).
@@ -220,6 +213,7 @@ class Bignum(Integer):
         """Initialize Bignum. If an instance of Bignum is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'BIGNUM'
         return LispObject.get_instance(cls, *args)
 
     def __init__(self, value):
@@ -235,12 +229,6 @@ class Bignum(Integer):
         """Getter for self.__value.
         """
         return self.__value
-
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('BIGNUM')
 
 
 class Ratio(Rational):
@@ -264,6 +252,7 @@ class Ratio(Rational):
             if numerator % denominator == 0:
                 return Integer(numerator // denominator)
             else:
+                cls.__name__ = 'RATIO'
                 return LispObject.get_instance(cls, ratio)
 
     def __init__(self, ratio):
@@ -328,12 +317,6 @@ class Ratio(Rational):
         """
         return np.float(self.value)
 
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('RATIO')
-
 
 class Float(Real):
     """A float is a mathematical rational (but not a Common Lisp Rational).
@@ -342,6 +325,7 @@ class Float(Real):
         """Initialize Float. If an instance of Float is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'FLOAT'
         return LispObject.get_instance(cls, *args)
 
     def __init__(self, value):
@@ -401,12 +385,6 @@ class Float(Real):
         """
         return np.float(self.value)
 
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('FLOAT')
-
 
 class ShortFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -418,6 +396,7 @@ class ShortFloat(Float):
         """Initialize ShortFloat. If an instance of ShortFloat is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'SHORT-FLOAT'
         return LispObject.get_instance(cls, *args)
 
     def __init__(self, value):
@@ -434,12 +413,6 @@ class ShortFloat(Float):
         """
         return self.__value
 
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('SHORT-FLOAT')
-
 
 class SingleFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -451,6 +424,7 @@ class SingleFloat(Float):
         """Initialize SingleFloat. If an instance of SingleFloat is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'SINGLE-FLOAT'
         return LispObject.get_instance(cls, *args)
 
     def __init__(self, value):
@@ -467,12 +441,6 @@ class SingleFloat(Float):
         """
         return self.__value
 
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('SINGLE-FLOAT')
-
 
 class DoubleFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -484,6 +452,7 @@ class DoubleFloat(Float):
         """Initialize DoubleFloat. If an instance of DoubleFloat is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'DOUBLE-FLOAT'
         return LispObject.get_instance(cls, *args)
 
     def __init__(self, value):
@@ -500,12 +469,6 @@ class DoubleFloat(Float):
         """
         return self.__value
 
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('DOUBLE-FLOAT')
-
 
 class LongFloat(Float):
     """For the four defined subtypes of type float, it is true that intermediate
@@ -517,6 +480,7 @@ class LongFloat(Float):
         """Initialize DoubleFloat. If an instance of DoubleFloat is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'LONG-FLOAT'
         return LispObject.get_instance(cls, *args)
 
     def __init__(self, value):
@@ -532,9 +496,3 @@ class LongFloat(Float):
         """Getter for self.__value.
         """
         return self.__value
-
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('LONG-FLOAT')

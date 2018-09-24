@@ -22,11 +22,12 @@ class Sequence(T):
     sequence.
     The type Vector and type List are disjoint of type sequence.
     """
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
+    def __new__(cls, *args, **kwargs):
+        """Initialize Sequence. If an instance of Sequence is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
         """
-        return Symbol('SEQUENCE')
+        cls.__name__ = 'SEQUENCE'
+        return LispObject.get_instance(cls, True)
 
 
 class List(Sequence):
@@ -34,11 +35,12 @@ class List(Sequence):
     element of the list, and the cdr of each cons is either the next link
     in the chain or a terminating atom.
     """
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
+    def __new__(cls, *args, **kwargs):
+        """Initialize List. If an instance of List is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
         """
-        return Symbol('LIST')
+        cls.__name__ = 'LIST'
+        return LispObject.get_instance(cls, True)
 
 
 class Cons(List):
@@ -49,6 +51,7 @@ class Cons(List):
         """Initialize Cons. If an instance of Cons is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'CONS'
         return LispObject.get_instance(cls, *args)
 
     def __init__(self, car, cdr):
@@ -88,12 +91,6 @@ class Cons(List):
             return '. ' + str(cons)
         else:
             return str(cons.car()) + ' ' + Cons.__repr_helper(cons.cdr())
-
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('CONS')
 
     def car(self):
         """Return an object of car.
@@ -136,9 +133,12 @@ class Null(Symbol, List):
         """Initialize Null. If an instance of Null is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'NULL'
         return LispObject.get_instance(cls, False)
 
     def __init__(self, value=False):
+        """Initialize Null.
+        """
         self.__value = Nil(value)
 
     @property
@@ -151,12 +151,6 @@ class Null(Symbol, List):
         """The official string representation.
         """
         return str(self.value)
-
-    @classmethod
-    def type_of(self):
-        """Retrun a type specifier.
-        """
-        return Symbol('NULL')
 
     def car(self):
         """Return an object of car (itself).

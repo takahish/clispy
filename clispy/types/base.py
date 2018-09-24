@@ -21,18 +21,18 @@ from weakref import WeakValueDictionary
 class LispObject(type):
     """LispObject is MetaClass of all objects in clispy.
     """
-    def __new__(meta, name, bases, class_dict):
+    def __new__(mcs, name, bases, class_dict):
         """Initialize LispObject.
         """
-        cls = type.__new__(meta, name, bases, class_dict)
+        cls = type.__new__(mcs, name, bases, class_dict)
 
         # object_table manage own objects as weak reference for gc.
         cls.object_registry = WeakValueDictionary()
 
         return cls
 
-    @staticmethod
-    def get_instance(cls, *args, **kwargs):
+    @classmethod
+    def get_instance(mcs, cls, *args, **kwargs):
         """Initialize LispObject. If an instance of LispObject is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
@@ -46,6 +46,40 @@ class LispObject(type):
             cls.object_registry[object_key] = self
             return self
 
+    @classmethod
+    def class_of(mcs):
+        return mcs.__class__
+
+    @classmethod
+    def type_of(mcs):
+        return Symbol(mcs.__name__)
+
+
+class SymbolObject(LispObject):
+    """SymbolObject is MetaClass of symbol objects in clispy.
+    """
+    def __new__(mcs, name, bases, class_dict):
+        cls = type.__new__(mcs, name, bases, class_dict)
+
+        # object_table manage own objects as strong reference.
+        cls.object_registry = {}
+
+        return cls
+
+    @classmethod
+    def get_instance(mcs, cls, *args):
+        """Initialize SymbolObject. If an instance of SymbolObject is already existed
+        in object_table, return the instance. Otherwise, an instance is made.
+        """
+        object_key = str(args[0]).upper()  # object key is a value of an instance of Symbol.
+
+        if object_key in cls.object_registry:
+            return cls.object_registry[object_key]
+        else:
+            self = object.__new__(cls)
+            cls.object_registry[object_key] = self  # Set object into symbol table.
+            return self
+
 
 class T(object, metaclass=LispObject):
     """The set of all object. The type T is a supertype of every type,
@@ -55,6 +89,7 @@ class T(object, metaclass=LispObject):
         """Initialize T. If an instance of T is already existed in object_table,
         return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'BOOLEAN'
         return LispObject.get_instance(cls, True)
 
     def __init__(self, value=True):
@@ -74,10 +109,14 @@ class T(object, metaclass=LispObject):
         return 'T'
 
     @classmethod
-    def type_of(self):
+    def class_of(cls):
+        return cls.__class__
+
+    @classmethod
+    def type_of(cls):
         """Return a type specifier.
         """
-        return Symbol('BOOLEAN')
+        return Symbol(cls.__name__)
 
 
 class Nil(T):
@@ -88,6 +127,7 @@ class Nil(T):
         """Initialize Nil. If an instance of Nil is already existed in object_table,
         return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'NIL'
         return LispObject.get_instance(cls, False)
 
     def __init__(self, value=False):
@@ -106,38 +146,6 @@ class Nil(T):
         """
         return 'NIL'
 
-    @classmethod
-    def type_of(self):
-        """Return a type specifier.
-        """
-        return Symbol('NIL')
-
-
-class SymbolObject(LispObject):
-    """SymbolObject is MetaClass of symbol objects in clispy.
-    """
-    def __new__(meta, name, bases, class_dict):
-        cls = type.__new__(meta, name, bases, class_dict)
-
-        # object_table manage own objects as strong reference.
-        cls.object_registry = {}
-
-        return cls
-
-    @staticmethod
-    def get_instance(cls, *args):
-        """Initialize SymbolObject. If an instance of SymbolObject is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
-        """
-        object_key = str(args[0]).upper()  # object key is a value of an instance of Symbol.
-
-        if object_key in cls.object_registry:
-            return cls.object_registry[object_key]
-        else:
-            self = object.__new__(cls)
-            cls.object_registry[object_key] = self  # Set object into symbol table.
-            return self
-
 
 class Symbol(T, metaclass=SymbolObject):
     """Symbols are used for their object identity to name various entities
@@ -148,6 +156,7 @@ class Symbol(T, metaclass=SymbolObject):
         """Initialize Symbol. If an instance of Symbol is already existed
         in object_table, return the instance. Otherwise, an instance is made.
         """
+        cls.__name__ = 'SYMBOL'
         return SymbolObject.get_instance(cls, *args)
 
     def __init__(self, value):
@@ -170,9 +179,3 @@ class Symbol(T, metaclass=SymbolObject):
         """The official string representation.
         """
         return self.value
-
-    @classmethod
-    def type_of(self):
-        """Returns a type specifier.
-        """
-        return Symbol('SYMBOL')
