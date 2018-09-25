@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import unittest
+from clispy.types.base import Symbol
 from clispy.types.number import *
 
 

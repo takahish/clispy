@@ -14,7 +14,17 @@
 # ==============================================================================
 
 import sys
-from clispy.types.base import LispObject, T, Nil, Symbol
+from clispy.types.base import BuiltInClass, T, Nil, Symbol
+
+
+# ==============================================================================
+# Defines sequence classes.
+#
+#     Sequence
+#     List
+#     Cons
+#     Null
+# ==============================================================================
 
 
 class Sequence(T):
@@ -23,11 +33,10 @@ class Sequence(T):
     The type Vector and type List are disjoint of type sequence.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Sequence. If an instance of Sequence is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Sequence. If an instance of Sequence is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'SEQUENCE'
-        return LispObject.get_instance(cls, True)
+        return BuiltInClass.get_instance(cls, 'SEQUENCE', True)
 
 
 class List(Sequence):
@@ -36,11 +45,10 @@ class List(Sequence):
     in the chain or a terminating atom.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize List. If an instance of List is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates List. If an instance of List is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'LIST'
-        return LispObject.get_instance(cls, True)
+        return BuiltInClass.get_instance(cls, 'LIST', True)
 
 
 class Cons(List):
@@ -48,14 +56,13 @@ class Cons(List):
     Each component can be any object.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Cons. If an instance of Cons is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Cons. If an instance of Cons is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'CONS'
-        return LispObject.get_instance(cls, *args)
+        return BuiltInClass.get_instance(cls, 'CONS', *args)
 
     def __init__(self, car, cdr):
-        """Initialize Cons.
+        """Initializes Cons.
 
         Args:
             car: mix.
@@ -93,17 +100,17 @@ class Cons(List):
             return str(cons.car()) + ' ' + Cons.__repr_helper(cons.cdr())
 
     def car(self):
-        """Return an object of car.
+        """Returns an object of car.
         """
         return self.__car
 
     def cdr(self):
-        """Return an object of cdr.
+        """Returns an object of cdr.
         """
         return self.__cdr
 
     def tolist(self):
-        """Return a python list.
+        """Returns a python list.
         """
         return Cons.__tolist_helper(self, [])
 
@@ -130,14 +137,13 @@ class Null(Symbol, List):
     list and can also be notated ().
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Null. If an instance of Null is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Null. If an instance of Null is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'NULL'
-        return LispObject.get_instance(cls, False)
+        return BuiltInClass.get_instance(cls, 'NULL', False)
 
     def __init__(self, value=False):
-        """Initialize Null.
+        """Initializes Null.
         """
         self.__value = Nil(value)
 
@@ -153,11 +159,11 @@ class Null(Symbol, List):
         return str(self.value)
 
     def car(self):
-        """Return an object of car (itself).
+        """Returns an object of car (itself).
         """
         return self
 
     def cdr(self):
-        """Return an object of cdr (itself).
+        """Returns an object of cdr (itself).
         """
         return self

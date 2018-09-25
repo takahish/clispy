@@ -13,7 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.types.base import Symbol, SymbolObject
+from clispy.types.base import SymbolClass, Symbol
+
+
+# ==============================================================================
+# Defines keyword class.
+#
+#     Keyword
+# ==============================================================================
 
 
 class Keyword(Symbol):
@@ -25,8 +32,7 @@ class Keyword(Symbol):
         3. It causes the symbol to become a constant variable.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Keyword. If an instance of Keyword is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Keyword. If an instance of Keyword is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'KEYWORD'
-        return SymbolObject.get_instance(cls, *args)
+        return SymbolClass.get_instance(cls, 'KEYWORD', *args)

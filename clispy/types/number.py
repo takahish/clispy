@@ -16,7 +16,25 @@
 import operator as op
 from fractions import Fraction
 import numpy as np
-from clispy.types.base import LispObject, T, Symbol
+from clispy.types.base import BuiltInClass, T
+
+
+# ==============================================================================
+# Defines number classes.
+#
+#     Number
+#     Real
+#     Rational
+#     Integer
+#     Fixnum
+#     Bignum
+#     Ratio
+#     Float
+#     ShortFloat
+#     SingleFloat
+#     DoubleFloat
+#     LongFloat
+# ==============================================================================
 
 
 class Number(T):
@@ -24,11 +42,10 @@ class Number(T):
     The types Real and Complex are disjoint subtypes of Number.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Number. If an instance of Number is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Number. If an instance of Number is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'NUMBER'
-        return LispObject.get_instance(cls, True)
+        return BuiltInClass.get_instance(cls, 'NUMBER', True)
 
     def __eq__(self, other):
         """Hook of self == other.
@@ -86,11 +103,10 @@ class Real(Number):
     The types Rational and Float are disjoint subtypes of type Real
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Real. If an instance of Real is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Real. If an instance of Real is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'REAL'
-        return LispObject.get_instance(cls, True)
+        return BuiltInClass.get_instance(cls, 'REAL', True)
 
 
 class Rational(Real):
@@ -98,11 +114,10 @@ class Rational(Real):
     value is integral, and otherwise as a Ratio.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Rational. If an instance of Rational is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Rational. If an instance of Rational is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'RATIONAL'
-        return LispObject.get_instance(cls, True)
+        return BuiltInClass.get_instance(cls, 'RATIONAL', True)
 
 
 class Integer(Rational):
@@ -110,14 +125,13 @@ class Integer(Rational):
     magnitude of an integer.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Integer. If an instance of Integer is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Integer. If an instance of Integer is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'INTEGER'
-        return LispObject.get_instance(cls, *args)
+        return BuiltInClass.get_instance(cls, 'INTEGER', *args)
 
     def __init__(self, value):
-        """Initialize Integer. A value is converted into np.int.
+        """Initializes Integer. A value is converted into np.int.
 
         Args:
             value: Int. It could be converted into np.int.
@@ -185,14 +199,13 @@ class Fixnum(Integer):
     """Exactly which integers are fixnums is implementation-defined.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Fixnum. If an instance of Fixnum is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Fixnum. If an instance of Fixnum is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'FIXNUM'
-        return LispObject.get_instance(cls, *args)
+        return BuiltInClass.get_instance(cls, 'FIXNUM', *args)
 
     def __init__(self, value):
-        """Initialize Fixnum. A value is converted into np.int16.
+        """Initializes Fixnum. A value is converted into np.int16.
 
         Args:
             value: Int. It could be converted into np.int16.
@@ -210,14 +223,13 @@ class Bignum(Integer):
     """The type bignum is defined to be exactly (and integer (not fixnum)).
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Bignum. If an instance of Bignum is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Bignum. If an instance of Bignum is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'BIGNUM'
-        return LispObject.get_instance(cls, *args)
+        return BuiltInClass.get_instance(cls, 'BIGNUM', *args)
 
     def __init__(self, value):
-        """Initialize Bignum. A value is converted into np.int.
+        """Initializes Bignum. A value is converted into np.int.
 
         Args:
             value: Int. It could be converted into np.int.
@@ -237,7 +249,7 @@ class Ratio(Rational):
     of which the denominator is positive and greater than one.
     """
     def __new__(cls, ratio):
-        """Called to create a new instance of class cls.
+        """Calls to create a new instance of Ratio.
 
         Args:
             ratio: String
@@ -252,11 +264,10 @@ class Ratio(Rational):
             if numerator % denominator == 0:
                 return Integer(numerator // denominator)
             else:
-                cls.__name__ = 'RATIO'
-                return LispObject.get_instance(cls, ratio)
+                return BuiltInClass.get_instance(cls, 'RATIO', ratio)
 
     def __init__(self, ratio):
-        """Initialize Ratio. A value is converted into Fraction.
+        """Initializes Ratio. A value is converted into Fraction.
 
         Args:
             numerator: Int.
@@ -322,14 +333,13 @@ class Float(Real):
     """A float is a mathematical rational (but not a Common Lisp Rational).
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize Float. If an instance of Float is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates Float. If an instance of Float is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'FLOAT'
-        return LispObject.get_instance(cls, *args)
+        return BuiltInClass.get_instance(cls, 'FLOAT', *args)
 
     def __init__(self, value):
-        """Initialize Float. A value is converted into np.float.
+        """Initializes Float. A value is converted into np.float.
 
         Args:
             value: Float.
@@ -393,14 +403,13 @@ class ShortFloat(Float):
     implementation-defined.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize ShortFloat. If an instance of ShortFloat is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates ShortFloat. If an instance of ShortFloat is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'SHORT-FLOAT'
-        return LispObject.get_instance(cls, *args)
+        return BuiltInClass.get_instance(cls, 'SHORT-FLOAT', *args)
 
     def __init__(self, value):
-        """Initialize ShortFloat. A value is converted into np.float16.
+        """Initializes ShortFloat. A value is converted into np.float16.
 
         Args:
             value: Float.
@@ -421,14 +430,13 @@ class SingleFloat(Float):
     implementation-defined.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize SingleFloat. If an instance of SingleFloat is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates SingleFloat. If an instance of SingleFloat is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'SINGLE-FLOAT'
-        return LispObject.get_instance(cls, *args)
+        return BuiltInClass.get_instance(cls, 'SINGLE-FLOAT', *args)
 
     def __init__(self, value):
-        """Initialize SingleFloat. A value is converted into np.float32.
+        """Initializes SingleFloat. A value is converted into np.float32.
 
         Args:
             value: Float.
@@ -449,11 +457,10 @@ class DoubleFloat(Float):
     implementation-defined.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize DoubleFloat. If an instance of DoubleFloat is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates DoubleFloat. If an instance of DoubleFloat is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'DOUBLE-FLOAT'
-        return LispObject.get_instance(cls, *args)
+        return BuiltInClass.get_instance(cls, 'DOUBLE-FLOAT', *args)
 
     def __init__(self, value):
         """Initialize DoubleFloat. A value is converted into np.float64.
@@ -477,14 +484,13 @@ class LongFloat(Float):
     implementation-defined.
     """
     def __new__(cls, *args, **kwargs):
-        """Initialize DoubleFloat. If an instance of DoubleFloat is already existed
-        in object_table, return the instance. Otherwise, an instance is made.
+        """Instantiates DoubleFloat. If an instance of DoubleFloat is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        cls.__name__ = 'LONG-FLOAT'
-        return LispObject.get_instance(cls, *args)
+        return BuiltInClass.get_instance(cls, 'LONG-FLOAT', *args)
 
     def __init__(self, value):
-        """Initialize DoubleFloat. A value is converted into np.float128.
+        """Initializes DoubleFloat. A value is converted into np.float128.
 
         Args:
             value: Float.
