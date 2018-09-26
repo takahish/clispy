@@ -15,7 +15,7 @@
 
 from io import StringIO
 import unittest
-from clispy.types.sequence import *
+from clispy.type.sequence import *
 
 
 class UnitTestCase(unittest.TestCase):

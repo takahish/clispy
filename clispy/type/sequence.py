@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import sys
-from clispy.types.base import BuiltInClass, T, Nil, Symbol
+from clispy.type.basecls import BuiltInClass, T, Nil, Symbol
 
 
 # ==============================================================================

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.types.base import *
-from clispy.types.keyword import *
-from clispy.types.number import *
-from clispy.types.sequence import *
+from clispy.type.basecls import *
+from clispy.type.keyword import *
+from clispy.type.number import *
+from clispy.type.sequence import *

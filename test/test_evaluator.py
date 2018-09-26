@@ -17,7 +17,7 @@ import unittest
 from clispy.symbol import *
 from clispy.cons import Cons, DottedPair
 from clispy.environment import VariableEnvironment, FunctionEnvironment
-from clispy.functions import BuiltInFunction
+from clispy.function import BuiltInFunction
 from clispy.evaluator import Evaluator, Procedure, ControlError
 
 

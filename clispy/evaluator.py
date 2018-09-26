@@ -16,7 +16,7 @@
 from clispy.symbol import *
 from clispy.cons import DottedPair
 from clispy.environment import VariableEnvironment, FunctionEnvironment
-from clispy.utilities import callcc
+from clispy.utility import callcc
 
 
 class Evaluator(object):

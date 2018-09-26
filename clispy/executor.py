@@ -19,9 +19,9 @@ from clispy.symbol import *
 from clispy.environment import VariableEnvironment, FunctionEnvironment, MacroEnvironment
 from clispy.evaluator import Evaluator
 from clispy.expander import Expander
-from clispy.functions import BuiltInFunction
+from clispy.function import BuiltInFunction
 from clispy.parser import Parser, InPort
-from clispy.utilities import to_string
+from clispy.utility import to_string
 
 
 class Executor(object):

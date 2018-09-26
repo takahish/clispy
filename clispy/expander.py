@@ -15,8 +15,8 @@
 
 from clispy.symbol import *
 from clispy.environment import MacroEnvironment
-from clispy.utilities import require
-from clispy.functions import _consp, _null
+from clispy.utility import require
+from clispy.function import _consp, _null
 
 
 class Expander(object):

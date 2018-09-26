@@ -16,7 +16,7 @@
 import operator as op
 from fractions import Fraction
 import numpy as np
-from clispy.types.base import BuiltInClass, T
+from clispy.type.basecls import BuiltInClass, T
 
 
 # ==============================================================================
@@ -39,7 +39,7 @@ from clispy.types.base import BuiltInClass, T
 
 class Number(T):
     """The type Number contains objects which represent mathematical numbers.
-    The types Real and Complex are disjoint subtypes of Number.
+    The type Real and Complex are disjoint subtypes of Number.
     """
     def __new__(cls, *args, **kwargs):
         """Instantiates Number. If an instance of Number is already existed
@@ -92,7 +92,7 @@ class Number(T):
             obj: An object.
         """
         if not isinstance(obj, Number):
-            raise TypeError("The value " + str(obj) + " is not of type clispy.types.Number")
+            raise TypeError("The value " + str(obj) + " is not of type clispy.type.Number")
 
 
 class Real(Number):
@@ -100,7 +100,7 @@ class Real(Number):
     though there are mathematical real numbers (e.g., irrational numbers)
     that do not have an exact representation in Common Lisp. Only can be
     ordered using the <, >, <=, and >= functions.
-    The types Rational and Float are disjoint subtypes of type Real
+    The type Rational and Float are disjoint subtypes of type Real
     """
     def __new__(cls, *args, **kwargs):
         """Instantiates Real. If an instance of Real is already existed

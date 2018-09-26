@@ -14,8 +14,8 @@
 # ==============================================================================
 
 import unittest
-from clispy.types.base import Symbol
-from clispy.types.number import *
+from clispy.type.basecls import Symbol
+from clispy.type.number import *
 
 
 class UnitTestCase(unittest.TestCase):

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.types.base import SymbolClass, Symbol
+from clispy.type.basecls import SymbolClass, Symbol
 
 
 # ==============================================================================

@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import unittest
-from clispy.types.base import *
+from clispy.type.basecls import *
 
 
 class UnitTestCase(unittest.TestCase):

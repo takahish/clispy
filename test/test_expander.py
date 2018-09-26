@@ -16,7 +16,7 @@
 import unittest
 from clispy.symbol import *
 from clispy.environment import VariableEnvironment, FunctionEnvironment, MacroEnvironment
-from clispy.functions import BuiltInFunction
+from clispy.function import BuiltInFunction
 from clispy.evaluator import Evaluator, Procedure
 from clispy.expander import Expander
 

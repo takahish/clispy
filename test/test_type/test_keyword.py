@@ -14,8 +14,8 @@
 # ==============================================================================
 
 import unittest
-from clispy.types.base import *
-from clispy.types.keyword import *
+from clispy.type.basecls import *
+from clispy.type.keyword import *
 
 
 class UnitTestCase(unittest.TestCase):
