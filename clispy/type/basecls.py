@@ -62,7 +62,11 @@ class StandardObject(type):
         cls.__name__ = cls_name
 
         # Sets the seed and the object key for object_registry.
-        seed = ('_'.join([str(cls), str(args[0]), str(id(args[0]))])).encode('utf-8')
+        lst = []
+        for arg in args:
+            lst.extend([str(arg), str(id(arg))])
+
+        seed = '_'.join(lst).encode('utf-8')
         object_key = sha1(seed).hexdigest()
 
         # Gets a class object.

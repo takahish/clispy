@@ -59,7 +59,10 @@ class Cons(List):
         """Instantiates Cons. If an instance of Cons is already existed
         in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        return BuiltInClass.get_instance(cls, 'CONS', *args)
+        if len(args) == 1 and isinstance(args[0], list) and len(args[0]) == 0:
+            return Null()  # when Cons([]) is executed
+        else:
+            return BuiltInClass.get_instance(cls, 'CONS', *args)
 
     def __init__(self, car, cdr=None):
         """Initializes Cons.
@@ -68,8 +71,24 @@ class Cons(List):
             car: mix.
             cdr: Cons.
         """
-        self._car = car
-        self._cdr = cdr
+        if isinstance(car, list):
+            if len(car) == 0:   # when Cons([], `something`) is executed
+                self._car = Null()
+                self._cdr = cdr
+            elif len(car) > 0:  # when Cons([1, 2], `something`) is executed
+                if cdr is None:
+                    cons = Cons.__list_to_cons(car, Null())
+                    self._car = cons.car()
+                    self._cdr = cons.cdr()
+                else:
+                    cons = Cons.__list_to_cons(car, Null())
+                    self._car = cons
+                    self._cdr = cdr
+        else:
+            if cdr is None:
+                cdr = Null()
+            self._car = car
+            self._cdr = cdr
 
     def __repr__(self):
         """The official string representation.
@@ -78,7 +97,7 @@ class Cons(List):
 
     @property
     def value(self):
-        """Getter for self.__value, Lazy evaluation of self.__value.
+        """Getter for self._value, Lazy evaluation of self._value.
         """
         try:
             _ = self._value
@@ -101,7 +120,7 @@ class Cons(List):
     def tolist(self):
         """Returns a python list.
         """
-        return Cons.__tolist_helper(self, [])
+        return Cons.__cons_to_list(self, [])
 
     @staticmethod
     def __repr_helper(cons):
@@ -115,8 +134,15 @@ class Cons(List):
             return str(cons.car()) + ' ' + Cons.__repr_helper(cons.cdr())
 
     @staticmethod
-    def __tolist_helper(cons, acc):
+    def __cons_to_list(cons, acc):
         """Helper function for tolist.
+
+        Args:
+            cons: clispy.type.sequence.Cons
+            acc: list. an accumulator
+
+        Returns:
+            list
         """
         if isinstance(cons, Null):        # end of cons
             return acc
@@ -128,8 +154,27 @@ class Cons(List):
             if not isinstance(car, Cons):
                 acc.append(car)
             else:                         # when car is instance of Cons
-                acc.append(Cons.__tolist_helper(cons.car(), []))
-            return Cons.__tolist_helper(cons.cdr(), acc)
+                acc.append(Cons.__cons_to_list(cons.car(), []))
+            return Cons.__cons_to_list(cons.cdr(), acc)
+
+    @staticmethod
+    def __list_to_cons(lst, cons):
+        """Helper function for constructor.
+
+        Args:
+            lst: list
+            cons: clispy.type.sequence.Cons or clispy.type.sequence.Null
+
+        Returns:
+            clispy.type.sequence.Cons
+        """
+        if len(lst) == 0:                 # end of list
+            return cons
+        else:
+            if not isinstance(lst[-1], list):
+                return Cons.__list_to_cons(lst[:-1], Cons(lst[-1], cons))
+            else:                         # when an element is nested list
+                return Cons.__list_to_cons(lst[:-1], Cons(Cons.__list_to_cons(lst[-1], Null()), cons))
 
 
 class Null(Symbol, List):

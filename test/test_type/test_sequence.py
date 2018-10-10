@@ -94,6 +94,55 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(str(c2), '((2 1))')
         self.assertEqual(str(c3), '(3 2 1)')
 
+    def testConsConvertedFromList(self):
+        c1 = Cons([1, 2, 3])
+        c2 = Cons([1, [2, [3]]])
+        c3 = Cons([1])
+
+        self.assertIsInstance(c1, T)
+        self.assertIsInstance(c1, Sequence)
+        self.assertIsInstance(c1, List)
+        self.assertIsInstance(c2, Cons)
+
+        self.assertEqual(str(c1), '(1 2 3)')
+        self.assertEqual(str(c2), '(1 (2 (3)))')
+        self.assertEqual(str(c3), '(1)')
+
+    def testConsConvertedFromEmptyList(self):
+        c = Cons([])
+
+        self.assertIsInstance(c, T)
+        self.assertIsInstance(c, Sequence)
+        self.assertIsInstance(c, List)
+        self.assertIsInstance(c, Symbol)
+
+    def testConsConvertedFromAtom(self):
+        c = Cons(1)
+
+        self.assertIsInstance(c, T)
+        self.assertIsInstance(c, Sequence)
+        self.assertIsInstance(c, List)
+        self.assertIsInstance(c, Cons)
+        self.assertEqual(str(c), '(1)')
+
+    def testDottedListConvertedFromList(self):
+        c = Cons([1, 2], 3)
+
+        self.assertIsInstance(c, T)
+        self.assertIsInstance(c, Sequence)
+        self.assertIsInstance(c, List)
+        self.assertIsInstance(c, Cons)
+        self.assertEqual(str(c), '((1 2) . 3)')
+
+    def testDottedListConvertedFromEmptyList(self):
+        c = Cons([], 3)
+
+        self.assertIsInstance(c, T)
+        self.assertIsInstance(c, Sequence)
+        self.assertIsInstance(c, List)
+        self.assertIsInstance(c, Cons)
+        self.assertEqual(str(c), '(NIL . 3)')
+
     def testConsLazyEvaluation(self):
         c = Cons(1, Cons(2, Null()))
 
