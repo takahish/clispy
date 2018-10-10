@@ -77,8 +77,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertFalse(c1 is c3)
 
         # test nested Cons object equality
-        self.assertTrue(c1, c3._Cons__car)
-        self.assertTrue(c1, c4._Cons__cdr)
+        self.assertTrue(c1, c3._car)
+        self.assertTrue(c1, c4._cdr)
 
     def testCons(self):
         c1 = Cons(2, Cons(1, Null()))

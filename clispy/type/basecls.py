@@ -160,18 +160,18 @@ class T(object, metaclass=BuiltInClass):
     def __init__(self, value=True):
         """Initializes an instance of T.
         """
-        self.__value = value
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = value
 
     def __repr__(self):
         """The official string representation.
         """
         return 'T'
+
+    @property
+    def value(self):
+        """Getter for self.__value.
+        """
+        return self._value
 
     @classmethod
     def class_of(cls):
@@ -199,13 +199,7 @@ class Nil(T):
     def __init__(self, value=False):
         """Initializes Nil.
         """
-        self.__value = value
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = value
 
     def __repr__(self):
         """The official string representation.
@@ -232,13 +226,7 @@ class Symbol(T, metaclass=SymbolClass):
         """
         if not isinstance(value, str):
             raise TypeError("The value " + str(value) + " is not of type str")
-        self.__value = value.upper()
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = value.upper()
 
     def __repr__(self):
         """The official string representation.

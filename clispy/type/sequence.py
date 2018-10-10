@@ -61,32 +61,47 @@ class Cons(List):
         """
         return BuiltInClass.get_instance(cls, 'CONS', *args)
 
-    def __init__(self, car, cdr):
+    def __init__(self, car, cdr=None):
         """Initializes Cons.
 
         Args:
             car: mix.
             cdr: Cons.
         """
-        self.__car = car
-        self.__cdr = cdr
+        self._car = car
+        self._cdr = cdr
+
+    def __repr__(self):
+        """The official string representation.
+        """
+        return '(' + Cons.__repr_helper(self).strip() + ')'
 
     @property
     def value(self):
         """Getter for self.__value, Lazy evaluation of self.__value.
         """
         try:
-            _ = self.__value
+            _ = self._value
         except AttributeError:
             print("Info: lazy evaluation of an attribute", file=sys.stderr)
-            self.__value = self.tolist()
+            self._value = self.tolist()
         finally:
-            return self.__value
+            return self._value
 
-    def __repr__(self):
-        """The official string representation.
+    def car(self):
+        """Returns an object of car.
         """
-        return '(' + Cons.__repr_helper(self).strip() + ')'
+        return self._car
+
+    def cdr(self):
+        """Returns an object of cdr.
+        """
+        return self._cdr
+
+    def tolist(self):
+        """Returns a python list.
+        """
+        return Cons.__tolist_helper(self, [])
 
     @staticmethod
     def __repr_helper(cons):
@@ -98,21 +113,6 @@ class Cons(List):
             return '. ' + str(cons)
         else:
             return str(cons.car()) + ' ' + Cons.__repr_helper(cons.cdr())
-
-    def car(self):
-        """Returns an object of car.
-        """
-        return self.__car
-
-    def cdr(self):
-        """Returns an object of cdr.
-        """
-        return self.__cdr
-
-    def tolist(self):
-        """Returns a python list.
-        """
-        return Cons.__tolist_helper(self, [])
 
     @staticmethod
     def __tolist_helper(cons, acc):
@@ -145,13 +145,7 @@ class Null(Symbol, List):
     def __init__(self, value=False):
         """Initializes Null.
         """
-        self.__value = Nil(value)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = Nil(value)
 
     def __repr__(self):
         """The official string representation.

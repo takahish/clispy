@@ -47,20 +47,14 @@ class Array(T):
         """
         if not isinstance(value, np.ndarray):
             raise TypeError("The value " + str(value) + " must be numpy.ndarray")
-        self.__value = value
+        self._value = value
 
         # set a header for official string representation
-        dimension = len(self.__value.shape)
+        dimension = len(self._value.shape)
         if dimension == 1:
             self.__repr_head = '#'
         else:
             self.__repr_head = '#' + str(dimension) + 'A'
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
 
     def __repr__(self):
         """The official string representation.
@@ -91,13 +85,7 @@ class Vector(Array, Sequence):
             raise TypeError("the value " + str(value) + " must be numpy.ndarray")
         elif not len(value.shape) == 1:
             raise ValueError("The dimension of value must be one")
-        self.__value = value
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = value
 
     def __repr__(self):
         """The official string representation.
@@ -126,13 +114,7 @@ class String(Vector):
         """
         if not isinstance(value, str):
             raise TypeError("the value " + str(value) + " is not of type str")
-        self.__value = value
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = value
 
     def __repr__(self):
         """The official string representation.

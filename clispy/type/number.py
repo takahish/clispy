@@ -78,13 +78,6 @@ class Number(T):
         return Number.__compare(op.ge, self, other)
 
     @staticmethod
-    def __compare(operator, self, other):
-        """Compare two numbers.
-        """
-        Number.check_type(other)
-        return operator(self.value, other.value)
-
-    @staticmethod
     def check_type(obj):
         """Check whether an object is an instance of Number.
 
@@ -93,6 +86,13 @@ class Number(T):
         """
         if not isinstance(obj, Number):
             raise TypeError("The value " + str(obj) + " is not of type clispy.type.Number")
+
+    @staticmethod
+    def __compare(operator, self, other):
+        """Compare two numbers.
+        """
+        Number.check_type(other)
+        return operator(self.value, other.value)
 
 
 class Real(Number):
@@ -136,13 +136,7 @@ class Integer(Rational):
         Args:
             value: Int. It could be converted into np.int.
         """
-        self.__value = np.int(value)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = np.int(value)
 
     def __repr__(self):
         """The official string representation.
@@ -172,6 +166,16 @@ class Integer(Rational):
         else:
             return Integer.__calculate(op.truediv, self, other)
 
+    def __int__(self):
+        """Hook of int(self).
+        """
+        return np.int(self.value)
+
+    def __float__(self):
+        """Hook of float(self).
+        """
+        return np.float(self.value)
+
     @staticmethod
     def __calculate(operator, self, other):
         """Calculate arithmetic.
@@ -183,16 +187,6 @@ class Integer(Rational):
         else:
             skeleton = type(other)
             return skeleton(operator(self.value, other.value))
-
-    def __int__(self):
-        """Hook of int(self).
-        """
-        return np.int(self.value)
-
-    def __float__(self):
-        """Hook of float(self).
-        """
-        return np.float(self.value)
 
 
 class Fixnum(Integer):
@@ -210,13 +204,7 @@ class Fixnum(Integer):
         Args:
             value: Int. It could be converted into np.int16.
         """
-        self.__value = np.int16(value)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = np.int16(value)
 
 
 class Bignum(Integer):
@@ -234,13 +222,7 @@ class Bignum(Integer):
         Args:
             value: Int. It could be converted into np.int.
         """
-        self.__value = np.int(value)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = np.int(value)
 
 
 class Ratio(Rational):
@@ -273,13 +255,7 @@ class Ratio(Rational):
             numerator: Int.
             denominator: Int.
         """
-        self.__value = Fraction(ratio)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = Fraction(ratio)
 
     def __repr__(self):
         """The official string representation.
@@ -306,6 +282,16 @@ class Ratio(Rational):
         """
         return Ratio.__calculate(op.truediv, self, other)
 
+    def __int__(self):
+        """Hook of int(self).
+        """
+        return np.int(self.value)
+
+    def __float__(self):
+        """Hook of float(self).
+        """
+        return np.float(self.value)
+
     @staticmethod
     def __calculate(operator, self, other):
         """Calculate arithmetic.
@@ -317,16 +303,6 @@ class Ratio(Rational):
         else:
             fraction = operator(self.value, other.value)
             return Ratio(str(fraction))
-
-    def __int__(self):
-        """Hook of int(self).
-        """
-        return np.int(self.value)
-
-    def __float__(self):
-        """Hook of float(self).
-        """
-        return np.float(self.value)
 
 
 class Float(Real):
@@ -344,13 +320,7 @@ class Float(Real):
         Args:
             value: Float.
         """
-        self.__value = np.float(value)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = np.float(value)
 
     def __repr__(self):
         """The official string representation.
@@ -377,14 +347,6 @@ class Float(Real):
         """
         return Float.__calculate(op.truediv, self, other)
 
-    @staticmethod
-    def __calculate(operator, self, other):
-        """Calculate arithmetic.
-        """
-        Number.check_type(other)
-        skeleton = type(self)
-        return skeleton(operator(self.value, other.value))
-
     def __int__(self):
         """Hook of int(self).
         """
@@ -394,6 +356,14 @@ class Float(Real):
         """Hook of float(self).
         """
         return np.float(self.value)
+
+    @staticmethod
+    def __calculate(operator, self, other):
+        """Calculate arithmetic.
+        """
+        Number.check_type(other)
+        skeleton = type(self)
+        return skeleton(operator(self.value, other.value))
 
 
 class ShortFloat(Float):
@@ -414,13 +384,7 @@ class ShortFloat(Float):
         Args:
             value: Float.
         """
-        self.__value = np.float16(value)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = np.float16(value)
 
 
 class SingleFloat(Float):
@@ -441,13 +405,7 @@ class SingleFloat(Float):
         Args:
             value: Float.
         """
-        self.__value = np.float32(value)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = np.float32(value)
 
 
 class DoubleFloat(Float):
@@ -468,13 +426,7 @@ class DoubleFloat(Float):
         Args:
             value: Float.
         """
-        self.__value = np.float64(value)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = np.float64(value)
 
 
 class LongFloat(Float):
@@ -495,10 +447,4 @@ class LongFloat(Float):
         Args:
             value: Float.
         """
-        self.__value = np.float128(value)
-
-    @property
-    def value(self):
-        """Getter for self.__value.
-        """
-        return self.__value
+        self._value = np.float128(value)
