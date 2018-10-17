@@ -15,61 +15,67 @@
 
 import re
 import io
-from clispy.symbol import *
+from clispy.type import *
 
 
 class Parser(object):
     """Provide a method to parse input stream
     """
-    def parse(self, inport):
+    # End of file object as an indicator
+    eof_object = Symbol('#<EOF-OJBECT>')
+
+    # Quotes mapping to convert a character into Symbol
+    # TODO: to add reader macros as the same as quotes
+    quotes = {
+        "'": Symbol('QUOTE'),
+        "`": Symbol('QUASIQUOTE'),
+        ",": Symbol('UNQUOTE'),
+        ",@": Symbol('UNQUOTE-SPLICING'),
+        "#'": Symbol('SHARPQUOTE')
+    }
+
+    @classmethod
+    def parse(cls, in_port):
         """Parse a program: read and expand/error-check it.
 
         Args:
-            inport: _InPort object or string.
+            in_port: InPort object or string.
 
         Return:
             Quote expression or atom.
         """
-        if isinstance(inport, str):
-            inport = InPort(io.StringIO(inport))
-        return self.__read(inport)
+        if isinstance(in_port, str):
+            in_port = InPort(io.StringIO(in_port))
+        return Cons(cls._read(in_port))
 
-    def __convert_to_atom(self, token):
+    @classmethod
+    def _convert_to_atom(cls, token):
         """Numbers become numbers; t and nil are booleans; "..." string; otherwise Symbol.
 
         Args:
-            token: token extracted from inport.
+            token: token extracted from in_port.
 
         Returns:
             Int, Float or Symbol.
         """
-        if token == 't':
-            return True
-        elif token == 'nil':
-            return False
-        elif token[0] == '"':
-            encoded_str = token[1:-1].encode('unicode_escape')
-            return encoded_str.decode('unicode_escape')
-
         try:
-            return int(token)
+            return Integer(token)
         except ValueError:
             try:
-                return float(token)
+                return SingleFloat(token)
             except ValueError:
-                try:
-                    return symbol_table[token.upper()]
-                except KeyError:
-                    token = token.upper()
-                    symbol_table[token] = Symbol(token)
-                    return symbol_table[token]
+                if token[0] == '"':
+                    return String(token[1:-1])
+                else:
+                    return Symbol(token)
 
-    def __read_ahead(self, token, inport):
+    @classmethod
+    def _read_ahead(cls, token, in_port):
         """Helper function of read.
 
         Args:
             token: token extracted from inport.
-            inport: _InPort object.
+            in_port: _InPort object.
 
         Returns:
             Quote expression or atom.
@@ -77,21 +83,22 @@ class Parser(object):
         if '(' == token:
             L = []
             while True:
-                token = inport.next_token()
+                token = in_port.next_token()
                 if token == ')':
                     return L
                 else:
-                    L.append(self.__read_ahead(token, inport))
+                    L.append(cls._read_ahead(token, in_port))
         elif ')' == token:
             raise SyntaxError('unexpected )')
-        elif token in QUOTES:
-            return [QUOTES[token], self.__read(inport)]
-        elif token is EOF_OBJECT:
+        elif token in cls.quotes:
+            return [cls.quotes[token], cls._read(in_port)]
+        elif token is cls.eof_object:
             raise SyntaxError('unexpected EOF in list')
         else:
-            return self.__convert_to_atom(token)
+            return cls._convert_to_atom(token)
 
-    def __read(self, inport):
+    @classmethod
+    def _read(cls, inport):
         """Read scheme expression from an inport port.
 
         Args:
@@ -102,28 +109,13 @@ class Parser(object):
         """
         # body of _read
         token1 = inport.next_token()
-        return EOF_OBJECT if token1 is EOF_OBJECT else self.__read_ahead(token1, inport)
-
-    def __readchar(self, inport):
-        """Read the next character from an input port.
-
-        Args:
-            inport: _InPort object.
-
-        Returns:
-            Character.
-        """
-        if inport.line != '':
-            char, inport.line = inport.line[0], inport.line[1:]
-            return char
-        else:
-            return inport.file.read(1) or EOF_OBJECT
+        return cls.eof_object if token1 is cls.eof_object else cls._read_ahead(token1, inport)
 
 
 class InPort(object):
     """An input port. Retains a line of chars.
     """
-    __tokenizer = r"""\s*(,@|#'|[('`,)]|"(?:[\\].|[^\\"])*"|;.*|[^\s('"`,;)]*)(.*)"""
+    tokenizer = r"""\s*(,@|#'|[('`,)]|"(?:[\\].|[^\\"])*"|;.*|[^\s('"`,;)]*)(.*)"""
 
     def __init__(self, file):
         """Inits _InPort with file pointer.
@@ -138,7 +130,7 @@ class InPort(object):
             if self.line == '':
                 self.line = self.file.readline()
             if self.line == '':
-                return EOF_OBJECT
-            token, self.line = re.match(InPort.__tokenizer, self.line).groups()
+                return Parser.eof_object
+            token, self.line = re.match(InPort.tokenizer, self.line).groups()
             if token != '' and not token.startswith(';'):
                 return token

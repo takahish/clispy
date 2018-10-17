@@ -15,84 +15,167 @@
 
 import unittest
 import io
-from clispy.symbol import *
+import numpy as np
+from clispy.type import *
 from clispy.parser import Parser, InPort
 
 
 class UnitTestCase(unittest.TestCase):
-    def setUp(self):
-        self.parser = Parser()
-
     def testInPort(self):
-        inport = InPort(io.StringIO('(list 2 3 "string")'))
+        in_port = InPort(io.StringIO('(list 1 2.3 "string")'))
 
-        self.assertIsInstance(inport, InPort)
+        self.assertIsInstance(in_port, InPort)
 
         # tokens
-        self.assertEqual(inport.next_token(), '(')
-        self.assertEqual(inport.next_token(), 'list')
-        self.assertEqual(inport.next_token(), '2')
-        self.assertEqual(inport.next_token(), '3')
-        self.assertEqual(inport.next_token(), '"string"')
-        self.assertEqual(inport.next_token(), ')')
+        self.assertEqual(in_port.next_token(), '(')
+        self.assertEqual(in_port.next_token(), 'list')
+        self.assertEqual(in_port.next_token(), '1')
+        self.assertEqual(in_port.next_token(), '2.3')
+        self.assertEqual(in_port.next_token(), '"string"')
+        self.assertEqual(in_port.next_token(), ')')
 
         # #<eof-object>
-        self.assertIsInstance(inport.next_token(), Symbol)
-        self.assertEqual(inport.next_token(), EOF_OBJECT)
+        self.assertIsInstance(in_port.next_token(), Symbol)
+        self.assertTrue(in_port.next_token() is Symbol('#<EOF-OJBECT>'))
 
     def test_atom(self):
-        self.assertTrue(self.parser._Parser__convert_to_atom('t'))
-        self.assertFalse(self.parser._Parser__convert_to_atom('nil'))
-        self.assertEqual(self.parser._Parser__convert_to_atom('"string"'), 'string')
+        self.assertIsInstance(Parser._convert_to_atom('"string"'), String)
+        self.assertIsInstance(Parser._convert_to_atom('1'), Integer)
+        self.assertIsInstance(Parser._convert_to_atom('2.3'), SingleFloat)
+        self.assertIsInstance(Parser._convert_to_atom('symbol'), Symbol)
 
-        self.assertIsInstance(self.parser._Parser__convert_to_atom('2'), int)
-        self.assertEqual(self.parser._Parser__convert_to_atom('2'), 2)
-        self.assertIsInstance(self.parser._Parser__convert_to_atom('2.3'), float)
-        self.assertEqual(self.parser._Parser__convert_to_atom('2.3'), 2.3)
-        self.assertIsInstance(self.parser._Parser__convert_to_atom('sym'), Symbol)
-        
-    def test_read_ahead(self):
-        # success to tokenize
-        inport = InPort(io.StringIO('(list 2 3 "string")'))
-        token = inport.next_token()
-        self.assertEqual(self.parser._Parser__read_ahead(token, inport), ['LIST', 2, 3, "string"])
+        # check values
+        self.assertEqual(Parser._convert_to_atom('"string"').value, 'string')
+        self.assertEqual(Parser._convert_to_atom('1').value, np.int(1))
+        self.assertEqual(Parser._convert_to_atom('2.3').value, np.float32(2.3))
+        self.assertEqual(Parser._convert_to_atom('symbol').value, 'SYMBOL')
 
-        # quote
-        inport = InPort(io.StringIO("'(+ 2 3)"))
-        token = inport.next_token()
-        self.assertEqual(self.parser._Parser__read_ahead(token, inport), [QUOTE, ['+', 2, 3]])
-
-        # atom
+    def test_tokenize_atom(self):
         inport = InPort(io.StringIO('+'))
         token = inport.next_token()
-        self.assertEqual(self.parser._Parser__read_ahead(token, inport), Symbol('+'))
+        token_list = Parser._read_ahead(token, inport)
+        self.assertIsInstance(token_list, Symbol)
 
-        # fail to tokenize
-        inport = InPort(io.StringIO(')'))
-        token = inport.next_token()
-        self.assertRaisesRegex(SyntaxError, "unexpected \)", self.parser._Parser__read_ahead, token, inport)
+    def test_tokenize(self):
+        in_port = InPort(io.StringIO('(list 1 2.3 "string")'))
+        token = in_port.next_token()
+        token_list = Parser._read_ahead(token, in_port)
 
+        self.assertIsInstance(token_list[0], Symbol)
+        self.assertIsInstance(token_list[1], Integer)
+        self.assertIsInstance(token_list[2], SingleFloat)
+        self.assertIsInstance(token_list[3], String)
+
+    def test_tokenize_unexpected_closed_parentheses(self):
         # fail to tokenize
-        inport = InPort(io.StringIO('(+ 2 3'))
-        token = inport.next_token()
-        self.assertRaisesRegex(SyntaxError, "unexpected EOF in list", self.parser._Parser__read_ahead, token, inport)
+        in_port = InPort(io.StringIO(')'))
+        token = in_port.next_token()
+
+        self.assertRaisesRegex(SyntaxError, "unexpected \)", Parser._read_ahead, token, in_port)
+
+    def test_tokenize_unclosed_parentheses(self):
+        # fail to tokenize
+        in_port = InPort(io.StringIO('(+ 1 2.3'))
+        token = in_port.next_token()
+
+        self.assertRaisesRegex(SyntaxError, "unexpected EOF in list", Parser._read_ahead, token, in_port)
+
+    def test_tokenize_quote(self):
+        in_port = InPort(io.StringIO("'(+ 1 2.3)"))
+        token = in_port.next_token()
+        token_list = Parser._read_ahead(token, in_port)
+
+        # token_list must be [QUOTE, [+, 1, 2.3]]
+
+        self.assertIsInstance(token_list[0], Symbol)
+        self.assertTrue(token_list[0] is Symbol('QUOTE'))
+
+        self.assertIsInstance(token_list[1][0], Symbol)
+        self.assertIsInstance(token_list[1][1], Integer)
+        self.assertIsInstance(token_list[1][2], SingleFloat)
+
+    def test_tokenize_quasiquote(self):
+        in_port = InPort(io.StringIO("`(+ 1 2.3)"))
+        token = in_port.next_token()
+        token_list = Parser._read_ahead(token, in_port)
+
+        # token_list must be [QUASIQUOTE, [+, 1, 2.3]]
+
+        self.assertIsInstance(token_list[0], Symbol)
+        self.assertTrue(token_list[0] is Symbol('QUASIQUOTE'))
+
+        self.assertIsInstance(token_list[1][0], Symbol)
+        self.assertIsInstance(token_list[1][1], Integer)
+        self.assertIsInstance(token_list[1][2], SingleFloat)
+
+    def test_tokenize_unquote(self):
+        in_port = InPort(io.StringIO("`(+ 1 ,(- 2 3))"))
+        token = in_port.next_token()
+        token_list = Parser._read_ahead(token, in_port)
+
+        # token_list must be [QUASIQUOTE, [+, 1, [UNQUOTE, [-, 2, 3]]]]
+
+        self.assertIsInstance(token_list[0], Symbol)
+        self.assertTrue(token_list[0] is Symbol('QUASIQUOTE'))
+
+        self.assertIsInstance(token_list[1][0], Symbol)
+        self.assertIsInstance(token_list[1][1], Integer)
+
+        self.assertIsInstance(token_list[1][2][0], Symbol)
+        self.assertTrue(token_list[1][2][0] is Symbol('UNQUOTE'))
+
+        self.assertIsInstance(token_list[1][2][1][0], Symbol)
+        self.assertIsInstance(token_list[1][2][1][1], Integer)
+        self.assertIsInstance(token_list[1][2][1][2], Integer)
+
+    def test_tokenize_unquote_splicing(self):
+        in_port = InPort(io.StringIO("`(+ 1 ,@(- 2 3))"))
+        token = in_port.next_token()
+        token_list = Parser._read_ahead(token, in_port)
+
+        # token_list must be [QUASIQUOTE, [+, 1, [UNQUOTE-SPLICING, [-, 2, 3]]]]
+
+        self.assertIsInstance(token_list[0], Symbol)
+        self.assertTrue(token_list[0] is Symbol('QUASIQUOTE'))
+
+        self.assertIsInstance(token_list[1][0], Symbol)
+        self.assertIsInstance(token_list[1][1], Integer)
+
+        self.assertIsInstance(token_list[1][2][0], Symbol)
+        self.assertTrue(token_list[1][2][0] is Symbol('UNQUOTE-SPLICING'))
+
+        self.assertIsInstance(token_list[1][2][1][0], Symbol)
+        self.assertIsInstance(token_list[1][2][1][1], Integer)
+        self.assertIsInstance(token_list[1][2][1][2], Integer)
+
+    def test_tokenize_sharpquote(self):
+        in_port = InPort(io.StringIO("#'+"))
+        token = in_port.next_token()
+        token_list = Parser._read_ahead(token, in_port)
+
+        # token_list must be [SHARPQUOTE +]
+
+        self.assertIsInstance(token_list[0], Symbol)
+        self.assertTrue(token_list[0] is Symbol('SHARPQUOTE'))
+
+        self.assertIsInstance(token_list[1], Symbol)
 
     def test_read(self):
         # test only EOF
-        inport = InPort(io.StringIO(''))
-        eof = self.parser._Parser__read(inport)
+        in_port = InPort(io.StringIO(''))
+        eof = Parser._read(in_port)
+
         self.assertIsInstance(eof, Symbol)
-        self.assertEqual(eof, EOF_OBJECT)
+        self.assertEqual(eof, Parser.eof_object)
 
-    def test_parse(self):
-        inport = '(+ 2 3)'
-        self.assertEqual(self.parser.parse(inport), ['+', 2, 3])
+    def test_parse_from_string(self):
+        in_port = '(+ 1 2.3)'
+        cons = Parser.parse(in_port)
 
-        inport = InPort(io.StringIO('(+ 2 3)'))
-        self.assertEqual(self.parser.parse(inport), ['+', 2, 3])
+        self.assertIsInstance(cons, Cons)
 
-    def test_readchar(self):
-        inport = InPort(io.StringIO('a'))
-        self.assertEqual(self.parser._Parser__readchar(inport), 'a')
-        self.assertEqual(self.parser._Parser__readchar(inport), EOF_OBJECT)
+    def test_parse_from_stream(self):
+        in_port = InPort(io.StringIO('(+ 1 2.3)'))
+        cons = Parser.parse(in_port)
 
+        self.assertIsInstance(cons, Cons)
