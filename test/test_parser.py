@@ -179,3 +179,16 @@ class UnitTestCase(unittest.TestCase):
         cons = Parser.parse(in_port)
 
         self.assertIsInstance(cons, Cons)
+
+    def test_parse_atom(self):
+        in_port = '1'
+        atom = Parser.parse(in_port)
+
+        self.assertIsInstance(atom, Integer)
+
+    def test_parse_atom_eof(self):
+        in_port = ''
+        atom = Parser.parse(in_port)
+
+        self.assertIsInstance(atom, Symbol)
+        self.assertTrue(atom, Parser.eof_object)

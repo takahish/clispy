@@ -46,7 +46,12 @@ class Parser(object):
         """
         if isinstance(in_port, str):
             in_port = InPort(io.StringIO(in_port))
-        return Cons(cls._read(in_port))
+
+        token_list = cls._read(in_port)
+        if isinstance(token_list, list):
+            return Cons(token_list)
+        else:
+            return token_list
 
     @classmethod
     def _convert_to_atom(cls, token):
