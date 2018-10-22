@@ -154,8 +154,8 @@ class UnitTestCase(unittest.TestCase):
     def testConsSpecialMethod(self):
         c = Cons(1, Cons(2, Null()))
 
-        self.assertEqual(c.car(), 1)
-        self.assertEqual(c.cdr(), Cons(2, Null()))
+        self.assertEqual(c.car, 1)
+        self.assertEqual(c.cdr, Cons(2, Null()))
 
     def testConsTypeOf(self):
         c_t = Cons(1, Cons(2, Null())).type_of()
@@ -190,8 +190,8 @@ class UnitTestCase(unittest.TestCase):
     def testConsDottedListSpecialMethods(self):
         c = Cons(1, 2)
 
-        self.assertEqual(c.car(), 1)
-        self.assertEqual(c.cdr(), 2)
+        self.assertEqual(c.car, 1)
+        self.assertEqual(c.cdr, 2)
 
     def testConsDottedListTypeOf(self):
         c = Cons(1, 2).type_of()

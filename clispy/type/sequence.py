@@ -77,11 +77,11 @@ class Cons(List):
                 self._cdr = cdr
             elif len(car) > 0:  # when Cons([1, 2], `something`) is executed
                 if cdr is None:
-                    cons = Cons.__list_to_cons(car, Null())
-                    self._car = cons.car()
-                    self._cdr = cons.cdr()
+                    cons = Cons._list_to_cons(car, Null())
+                    self._car = cons.car
+                    self._cdr = cons.cdr
                 else:
-                    cons = Cons.__list_to_cons(car, Null())
+                    cons = Cons._list_to_cons(car, Null())
                     self._car = cons
                     self._cdr = cdr
         else:
@@ -93,7 +93,19 @@ class Cons(List):
     def __repr__(self):
         """The official string representation.
         """
-        return '(' + Cons.__repr_helper(self).strip() + ')'
+        return '(' + Cons._repr_helper(self).strip() + ')'
+
+    @property
+    def car(self):
+        """Returns an object of car.
+        """
+        return self._car
+
+    @property
+    def cdr(self):
+        """Returns an object of cdr.
+        """
+        return self._cdr
 
     @property
     def value(self):
@@ -107,23 +119,13 @@ class Cons(List):
         finally:
             return self._value
 
-    def car(self):
-        """Returns an object of car.
-        """
-        return self._car
-
-    def cdr(self):
-        """Returns an object of cdr.
-        """
-        return self._cdr
-
     def tolist(self):
         """Returns a python list.
         """
-        return Cons.__cons_to_list(self, [])
+        return Cons._cons_to_list(self, [])
 
-    @staticmethod
-    def __repr_helper(cons):
+    @classmethod
+    def _repr_helper(cls, cons):
         """Helper function for the official string representation.
         """
         if isinstance(cons, Null):        # end of cons
@@ -131,10 +133,10 @@ class Cons(List):
         elif not isinstance(cons, Cons):  # for dotted pair
             return '. ' + str(cons)
         else:
-            return str(cons.car()) + ' ' + Cons.__repr_helper(cons.cdr())
+            return str(cons.car) + ' ' + cls._repr_helper(cons.cdr)
 
-    @staticmethod
-    def __cons_to_list(cons, acc):
+    @classmethod
+    def _cons_to_list(cls, cons, acc):
         """Helper function for tolist.
 
         Args:
@@ -150,15 +152,15 @@ class Cons(List):
             acc.append(cons)
             return acc
         else:
-            car = cons.car()
+            car = cons.car
             if not isinstance(car, Cons):
                 acc.append(car)
             else:                         # when car is instance of Cons
-                acc.append(Cons.__cons_to_list(cons.car(), []))
-            return Cons.__cons_to_list(cons.cdr(), acc)
+                acc.append(cls._cons_to_list(cons.car, []))
+            return cls._cons_to_list(cons.cdr, acc)
 
-    @staticmethod
-    def __list_to_cons(lst, cons):
+    @classmethod
+    def _list_to_cons(cls, lst, cons):
         """Helper function for constructor.
 
         Args:
@@ -172,9 +174,9 @@ class Cons(List):
             return cons
         else:
             if not isinstance(lst[-1], list):
-                return Cons.__list_to_cons(lst[:-1], Cons(lst[-1], cons))
+                return cls._list_to_cons(lst[:-1], Cons(lst[-1], cons))
             else:                         # when an element is nested list
-                return Cons.__list_to_cons(lst[:-1], Cons(Cons.__list_to_cons(lst[-1], Null()), cons))
+                return cls._list_to_cons(lst[:-1], Cons(cls._list_to_cons(lst[-1], Null()), cons))
 
 
 class Null(Symbol, List):
@@ -192,17 +194,24 @@ class Null(Symbol, List):
         """
         self._value = Nil(value)
 
+        # Defines car and cdr that are itself
+        self._car = self
+        self._cdr = self
+
     def __repr__(self):
         """The official string representation.
         """
         return str(self.value)
 
+    @property
     def car(self):
-        """Returns an object of car (itself).
+        """Returns an object of car.
         """
-        return self
+        return self._car
 
+    @property
     def cdr(self):
-        """Returns an object of cdr (itself).
+        """Returns an object of cdr.
         """
-        return self
+        return self._cdr
+
