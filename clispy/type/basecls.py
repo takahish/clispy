@@ -224,7 +224,11 @@ class Symbol(T, metaclass=SymbolClass):
         """
         if not isinstance(value, str):
             raise TypeError("The value " + str(value) + " is not of type str")
-        self.value = value.upper()
+
+        if value.isupper():
+            self.value = value
+        else:
+            self.value = '|' + value + '|'
 
     def __repr__(self):
         """The official string representation.
