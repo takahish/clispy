@@ -136,7 +136,7 @@ class Integer(Rational):
         Args:
             value: Int. It could be converted into np.int.
         """
-        self._value = np.int(value)
+        self.value = np.int(value)
 
     def __repr__(self):
         """The official string representation.
@@ -204,7 +204,7 @@ class Fixnum(Integer):
         Args:
             value: Int. It could be converted into np.int16.
         """
-        self._value = np.int16(value)
+        self.value = np.int16(value)
 
 
 class Bignum(Integer):
@@ -222,7 +222,7 @@ class Bignum(Integer):
         Args:
             value: Int. It could be converted into np.int.
         """
-        self._value = np.int(value)
+        self.value = np.int(value)
 
 
 class Ratio(Rational):
@@ -255,7 +255,7 @@ class Ratio(Rational):
             numerator: Int.
             denominator: Int.
         """
-        self._value = Fraction(ratio)
+        self.value = Fraction(ratio)
 
     def __repr__(self):
         """The official string representation.
@@ -320,7 +320,7 @@ class Float(Real):
         Args:
             value: Float.
         """
-        self._value = np.float(value)
+        self.value = np.float(value)
 
     def __repr__(self):
         """The official string representation.
@@ -384,7 +384,7 @@ class ShortFloat(Float):
         Args:
             value: Float.
         """
-        self._value = np.float16(value)
+        self.value = np.float16(value)
 
 
 class SingleFloat(Float):
@@ -405,7 +405,7 @@ class SingleFloat(Float):
         Args:
             value: Float.
         """
-        self._value = np.float32(value)
+        self.value = np.float32(value)
 
 
 class DoubleFloat(Float):
@@ -426,7 +426,7 @@ class DoubleFloat(Float):
         Args:
             value: Float.
         """
-        self._value = np.float64(value)
+        self.value = np.float64(value)
 
 
 class LongFloat(Float):
@@ -447,4 +447,4 @@ class LongFloat(Float):
         Args:
             value: Float.
         """
-        self._value = np.float128(value)
+        self.value = np.float128(value)

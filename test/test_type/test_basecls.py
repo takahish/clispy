@@ -58,15 +58,15 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(n_t.value, 'NIL')
 
     def testSymbolObjectRegistry(self):
-        s1 = Symbol('symbol_1')
-        s2 = Symbol('symbol_2')
-        s3 = Symbol('symbol_1')
+        s1 = Symbol('SYMBOL-1')
+        s2 = Symbol('SYMBOL-2')
+        s3 = Symbol('SYMBOL-1')
 
         self.assertTrue(s1 is s3)
         self.assertFalse(s1 is s2)
 
     def testSymbol(self):
-        s = Symbol('symbol')
+        s = Symbol('SYMBOL')
 
         self.assertIsInstance(s, T)
         self.assertIsInstance(s, Symbol)
@@ -75,7 +75,12 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(TypeError, "The value 100 is not of type str", Symbol, 100)
 
     def testSymbolTypeOf(self):
-        s_t = Symbol('symbol').type_of()
+        s_t = Symbol('SYMBOL').type_of()
 
         self.assertIsInstance(s_t, Symbol)
         self.assertEqual(s_t.value, 'SYMBOL')
+
+    def testSymbolNotUppperValue(self):
+        s = Symbol('symbol')
+
+        self.assertEqual(str(s), '|symbol|')

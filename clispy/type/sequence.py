@@ -73,51 +73,30 @@ class Cons(List):
         """
         if isinstance(car, list):
             if len(car) == 0:   # when Cons([], `something`) is executed
-                self._car = Null()
-                self._cdr = cdr
+                self.car = Null()
+                self.cdr = cdr
             elif len(car) > 0:  # when Cons([1, 2], `something`) is executed
                 if cdr is None:
                     cons = Cons._list_to_cons(car, Null())
-                    self._car = cons.car
-                    self._cdr = cons.cdr
+                    self.car = cons.car
+                    self.cdr = cons.cdr
                 else:
                     cons = Cons._list_to_cons(car, Null())
-                    self._car = cons
-                    self._cdr = cdr
+                    self.car = cons
+                    self.cdr = cdr
         else:
             if cdr is None:
                 cdr = Null()
-            self._car = car
-            self._cdr = cdr
+            self.car = car
+            self.cdr = cdr
+
+        # sets value as list
+        self.value = self.tolist()
 
     def __repr__(self):
         """The official string representation.
         """
         return '(' + Cons._repr_helper(self).strip() + ')'
-
-    @property
-    def car(self):
-        """Returns an object of car.
-        """
-        return self._car
-
-    @property
-    def cdr(self):
-        """Returns an object of cdr.
-        """
-        return self._cdr
-
-    @property
-    def value(self):
-        """Getter for self._value, Lazy evaluation of self._value.
-        """
-        try:
-            _ = self._value
-        except AttributeError:
-            print("Info: lazy evaluation of an attribute", file=sys.stderr)
-            self._value = self.tolist()
-        finally:
-            return self._value
 
     def tolist(self):
         """Returns a python list.
@@ -192,26 +171,13 @@ class Null(Symbol, List):
     def __init__(self, value=False):
         """Initializes Null.
         """
-        self._value = Nil(value)
+        self.value = Nil(value)
 
         # Defines car and cdr that are itself
-        self._car = self
-        self._cdr = self
+        self.car = self
+        self.cdr = self
 
     def __repr__(self):
         """The official string representation.
         """
         return str(self.value)
-
-    @property
-    def car(self):
-        """Returns an object of car.
-        """
-        return self._car
-
-    @property
-    def cdr(self):
-        """Returns an object of cdr.
-        """
-        return self._cdr
-

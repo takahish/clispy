@@ -20,15 +20,15 @@ from clispy.type.keyword import *
 
 class UnitTestCase(unittest.TestCase):
     def testKeywordObjectRegistry(self):
-        k1 = Keyword('keyword_1')
-        k2 = Keyword('keyword_2')
-        k3 = Keyword('keyword_1')
+        k1 = Keyword('KEYWORD-1')
+        k2 = Keyword('KEYWORD-2')
+        k3 = Keyword('KEYWORD-1')
 
         self.assertTrue(k1 is k3)
         self.assertFalse(k1 is k2)
 
     def testKeyword(self):
-        k = Keyword(':keyword')
+        k = Keyword(':KEYWORD')
 
         self.assertIsInstance(k, T)
         self.assertIsInstance(k, Symbol)
@@ -38,7 +38,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertRaisesRegex(TypeError, "The value 100 is not of type str", Keyword, 100)
 
     def testKeywordTypeOf(self):
-        k_t = Keyword(':keyword').type_of()
+        k_t = Keyword(':KEYWORD').type_of()
 
         self.assertIsInstance(k_t, Symbol)
         self.assertEqual(k_t.value, 'KEYWORD')

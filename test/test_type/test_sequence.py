@@ -77,8 +77,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertFalse(c1 is c3)
 
         # test nested Cons object equality
-        self.assertTrue(c1, c3._car)
-        self.assertTrue(c1, c4._cdr)
+        self.assertTrue(c1, c3.car)
+        self.assertTrue(c1, c4.cdr)
 
     def testCons(self):
         c1 = Cons(2, Cons(1, Null()))
@@ -143,14 +143,6 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(c, Cons)
         self.assertEqual(str(c), '(NIL . 3)')
 
-    def testConsLazyEvaluation(self):
-        c = Cons(1, Cons(2, Null()))
-
-        c.value  # capture stderr string
-        self.assertEqual(self.capture.getvalue(), "Info: lazy evaluation of an attribute\n")
-
-        self.assertEqual(c.value, [1, 2])
-
     def testConsSpecialMethod(self):
         c = Cons(1, Cons(2, Null()))
 
@@ -178,14 +170,6 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(str(c1), '(1 . 2)')
         self.assertEqual(str(c2), '((1 . 2) . 3)')
         self.assertEqual(str(c3), '(4 1 . 2)')
-
-    def testConsDottedListLazyEvaluation(self):
-        c = Cons(1, 2)
-
-        c.value  # capture stderr string
-        self.assertEqual(self.capture.getvalue(), "Info: lazy evaluation of an attribute\n")
-
-        self.assertEqual(c.value, [1, 2])
 
     def testConsDottedListSpecialMethods(self):
         c = Cons(1, 2)
