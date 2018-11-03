@@ -68,7 +68,7 @@ class UnitTestCase(unittest.TestCase):
         na = np.array([1, 2, 3])
         a_c = Array(na).class_of()
 
-        self.assertTrue(a_c is BuiltInClass)
+        self.assertIsInstance(a_c, BuiltInClass)
         self.assertIsInstance(a_c.type_of(), Symbol)
 
     def testVectorObjectRegistry(self):
@@ -104,7 +104,7 @@ class UnitTestCase(unittest.TestCase):
         va = np.array([1, 2, 3])
         v_c = Vector(va).class_of()
 
-        self.assertTrue(v_c is BuiltInClass)
+        self.assertIsInstance(v_c, BuiltInClass)
         self.assertIsInstance(v_c.type_of(), Symbol)
 
     def testStringObjectRegistry(self):

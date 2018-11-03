@@ -35,15 +35,6 @@ class StandardObject(type):
     def __new__(mcs, name, bases, class_dict):
         """Instantiates StandardObject.
         """
-        return mcs.get_class('STANDARD-OBJECT', name, bases, class_dict)
-
-    @classmethod
-    def get_class(mcs, mcs_name, name, bases, class_dict):
-        """A method to initialize StandardObject, Class, BuiltInClass or SymbolClass etc.
-        """
-        # Sets meta-class name.
-        mcs.__name__ = mcs_name
-
         # Creates a class object.
         cls = type.__new__(mcs, name, bases, class_dict)
 
@@ -52,6 +43,11 @@ class StandardObject(type):
         cls.object_registry = WeakValueDictionary()
 
         return cls
+
+    def __repr__(cls):
+        """The official string representation.
+        """
+        return '#<STANDARD-OBJECT ' + cls.__name__ + ' ' + str(id(cls)) + '>'
 
     @classmethod
     def get_instance(mcs, cls, cls_name, *args, **kwargs):
@@ -77,69 +73,24 @@ class StandardObject(type):
             cls.object_registry[object_key] = self
             return self
 
-    @classmethod
-    def class_of(mcs):
-        """Returns the class of which the object is a direct instance.
-        """
-        return mcs.__class__
-
-    @classmethod
-    def type_of(mcs):
-        """Returns a type specifier for a type that has the objects as an element.
-        """
-        return Symbol(mcs.__name__)
-
 
 class Class(StandardObject):
     """The type class represents objects that determine the structure of their instances.
     """
-    def __new__(mcs, name, bases, class_dict):
-        """Instantiates Class.
+    def __repr__(cls):
+        """The official string representation.
         """
-        return mcs.get_class('CLASS', name, bases, class_dict)
+        return '#<CLASS ' + cls.__name__ + ' ' + str(id(cls)) + '>'
 
 
 class BuiltInClass(Class):
     """A built-in class is a class whose instances have restricted capabilities or
     special representations.
     """
-    def __new__(mcs, name, bases, class_dict):
-        """Instantiates BuiltInClass.
+    def __repr__(cls):
+        """The official string representation.
         """
-        return mcs.get_class('BUILT-IN-CLASS', name, bases, class_dict)
-
-
-class SymbolClass(BuiltInClass):
-    """SymbolClass is meta-class of a symbol object in clispy.
-    """
-    def __new__(mcs, name, bases, class_dict):
-        # Gets a class object and sets meta-class name to 'BUILT-IN-CLASS'.
-        cls = mcs.get_class('BUILT-IN-CLASS', name, bases, class_dict)
-
-        # object_registry manages own objects as strong reference.
-        # If objects are needed, access cls.object_registry.
-        cls.object_registry = {}
-
-        return cls
-
-    @classmethod
-    def get_instance(mcs, cls, cls_name, *args):
-        """Instantiates SymbolClass. If an instance of SymbolClass is already existed
-        in object_table, returns the instance. Otherwise, a new instance is made.
-        """
-        # Sets class name.
-        cls.__name__ = cls_name
-
-        # Sets the seed and the object key for object_registry.
-        object_key = str(args[0]).upper()
-
-        # Gets a class object.
-        if object_key in cls.object_registry:
-            return cls.object_registry[object_key]
-        else:
-            self = object.__new__(cls)
-            cls.object_registry[object_key] = self  # Set object into symbol table.
-            return self
+        return '#<BUILT-IN-CLASS ' + cls.__name__ + ' ' + str(id(cls)) + '>'
 
 
 # ==============================================================================
@@ -175,7 +126,7 @@ class T(object, metaclass=BuiltInClass):
     def class_of(cls):
         """Returns the class of which the object is a direct instance.
         """
-        return cls.__class__
+        return cls
 
     @classmethod
     def type_of(cls):
@@ -205,7 +156,7 @@ class Nil(T):
         return 'NIL'
 
 
-class Symbol(T, metaclass=SymbolClass):
+class Symbol(T, metaclass=BuiltInClass):
     """Symbols are used for their object identity to name various entities
     in Common Lisp, including (but not limited to) linguistic such as
     variables and functions.
@@ -214,7 +165,7 @@ class Symbol(T, metaclass=SymbolClass):
         """Instantiates Symbol. If an instance of Symbol is already existed
         in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        return SymbolClass.get_instance(cls, 'SYMBOL', *args)
+        return BuiltInClass.get_instance(cls, 'SYMBOL', *args)
 
     def __init__(self, value):
         """Initializes Symbol.
