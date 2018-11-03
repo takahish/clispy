@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.type.basecls import SymbolClass, Symbol
+from clispy.type.basecls import BuiltInClass, Symbol
 
 
 # ==============================================================================
@@ -35,4 +35,4 @@ class Keyword(Symbol):
         """Instantiates Keyword. If an instance of Keyword is already existed
         in object_table, returns the instance. Otherwise, a new instance is made.
         """
-        return SymbolClass.get_instance(cls, 'KEYWORD', *args)
+        return BuiltInClass.get_instance(cls, 'KEYWORD', *args)
