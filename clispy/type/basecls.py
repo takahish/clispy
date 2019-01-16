@@ -60,7 +60,12 @@ class StandardObject(type):
         # Sets the seed and the object key for object_registry.
         lst = []
         for arg in args:
-            lst.extend([str(arg), str(id(arg))])
+            if isinstance(arg, str):
+                lst.append(arg)
+            elif isinstance(arg, int):
+                lst.append(str(arg))
+            else:
+                lst.extend([str(arg), str(id(arg))])
 
         seed = '_'.join(lst).encode('utf-8')
         object_key = sha1(seed).hexdigest()
