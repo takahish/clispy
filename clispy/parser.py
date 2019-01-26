@@ -72,7 +72,7 @@ class Parser(object):
                 if token[0] == '"':
                     return String(token[1:-1])
                 else:
-                    return Symbol(token)
+                    return Symbol(token.upper())
 
     @classmethod
     def _read_ahead(cls, token, in_port):
