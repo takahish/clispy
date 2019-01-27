@@ -484,6 +484,8 @@ assign_helper(symbol_name=':EXTERNAL', value=Keyword(':EXTERNAL'), package_name=
 assign_helper(symbol_name=':INHERITED', value=Keyword(':INHERITED'), package_name='KEYWORD', env='VARIABLE', status=':EXTERNAL')
 
 # COMMON-LISP package
+assign_helper(symbol_name='T', value=T(), package_name='COMMON-LISP', env='VARIABLE', status=':EXTERNAL')
+assign_helper(symbol_name='NIL', value=Null(), package_name='COMMON-LISP', env='VARIABLE', status=':EXTERNAL')
 assign_helper(symbol_name='*PACKAGE*', value=PackageManager.current_package, package_name='COMMON-LISP', env='VARIABLE', status=':EXTERNAL')
 
 # COMMON-LISP-USER package
