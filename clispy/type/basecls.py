@@ -47,7 +47,7 @@ class StandardObject(type):
     def __repr__(cls):
         """The official string representation.
         """
-        return '#<STANDARD-OBJECT ' + cls.__name__ + ' ' + str(id(cls)) + '>'
+        return "#<STANDARD-OBJECT {0} {{{1:X}}}>".format(cls.__name__, id(cls))
 
     @classmethod
     def get_instance(mcs, cls, cls_name, *args, **kwargs):
@@ -85,7 +85,7 @@ class Class(StandardObject):
     def __repr__(cls):
         """The official string representation.
         """
-        return '#<CLASS ' + cls.__name__ + ' ' + str(id(cls)) + '>'
+        return "#<CLASS {0} {{{1:X}}}>".format(cls.__name__, id(cls))
 
 
 class BuiltInClass(Class):
@@ -95,7 +95,7 @@ class BuiltInClass(Class):
     def __repr__(cls):
         """The official string representation.
         """
-        return '#<BUILT-IN-CLASS ' + cls.__name__ + ' ' + str(id(cls)) + '>'
+        return "#<BUILT-IN-CLASS {0} {{{1:X}}}>".format(cls.__name__, id(cls))
 
 
 # ==============================================================================
