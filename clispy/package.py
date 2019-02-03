@@ -19,7 +19,7 @@ from clispy.type import BuiltInClass, T, Null, Symbol, Keyword, String
 class Environment(dict):
     """A space is a dict of {'var': val} pairs with an outer Namespace.
     """
-    def __init__(self, params=(), args=(), outer=None):
+    def __init__(self, params=[], args=[], outer=None):
         """Initializes namespace with parameters, arguments and outer name space.
 
         Args:
@@ -29,11 +29,11 @@ class Environment(dict):
         """
         # Define outer
         if (outer is not None) and (not isinstance(outer, Environment)):
-            raise TypeError('outer must be Environment')
+            raise TypeError('outer must be clispy.package.Environment')
         self.outer = outer
 
         # Update self
-        if isinstance(params, Symbol):
+        if isinstance(params, str):
             self.update({params: list(args)})
         else:
             # bind rest parameters for lambda
@@ -58,6 +58,18 @@ class Environment(dict):
         else:
             return self.outer.find(var)
 
+    def extend(self, params=[], args=[]):
+        """Extend the environment.
+
+        Args:
+            params: list.
+            args: list.
+
+        Retruns:
+            An environment that have itself as an outer enviroment.
+        """
+        return Environment(params=params, args=args, outer=self)
+
 
 class Package(T):
     """Package class for managing name space.
@@ -73,21 +85,34 @@ class Package(T):
         """
         self.package_name = package_name
 
-        # symbol_container.
-        # for example, the container is like,
+        # self.global_symbol_container.
+        # For example, the container is like,
         #     symbol_container = {
         #         symbol_name: [Symbol(symbol_name), Keyword(':INTERNAL'), None]
         #         symbol_name: [Symbol(symbol_name), Keyword(':EXTERNAL'), None]
         #         symbol_name: [Symbol(symbol_name), Keyword(':INHERITED'), package_name]
         #     }
-        self.symbol_container = {}
+        self.global_symbol_container = Environment()
 
-        # Space of environments.
+        # self.global_space.
         # There are `VARIABLE`, `FUNCTION` and `MACRO`.
-        self.space = {
+        self.global_space = {
             'VARIABLE': Environment(),
             'FUNCTION': Environment(),
             'MACRO': Environment()
+        }
+
+        # self.symbol_container.
+        # A container manipulated by system.
+        # self.symbol_container.extend() is needed for creating lexical scope.
+        self.symbol_container = self.global_symbol_container
+
+        # self.space.
+        # self.space[env].extend() is needed for creating lexical scope.
+        self.space = {
+            'VARIABLE': self.global_space['VARIABLE'],
+            'FUNCTION': self.global_space['FUNCTION'],
+            'MACRO': self.global_space['MACRO']
         }
 
         # Package use list.
@@ -97,6 +122,17 @@ class Package(T):
         """The official string representation.
         """
         return "#<PACKAGE " + str(self.package_name) + ">"
+
+    def escape(self):
+        """Escape from local scope.
+        """
+        # Reset self.symbol_container.
+        self.symbol_container = self.global_symbol_container
+
+        # Reset self.space.
+        self.space['VARIABLE'] = self.global_space['VARIABLE']
+        self.space['FUNCTION'] = self.global_space['FUNCTION']
+        self.space['MACRO'] = self.global_space['MACRO']
 
 
 class PackageManager(object):
@@ -135,10 +171,10 @@ class PackageManager(object):
 
         # Get the original package including symbol_name.
         while(True):
-            _, status, inherited_package_name = package.symbol_container[symbol_name]
+            _, status, inherited_package_name = package.symbol_container.find(symbol_name)[symbol_name]
             if status is Keyword(':INHERITED'):
                 package = cls._get_package(inherited_package_name)
-                _, status, inherited_package_name = package.symbol_container[symbol_name]
+                _, status, inherited_package_name = package.symbol_container.find(symbol_name)[symbol_name]
             else:
                 break
 
@@ -179,7 +215,7 @@ class PackageManager(object):
 
         # Extract symbol status included by package.symbol_container.
         if symbol_name in package.symbol_container.keys():
-            symbol, status, _ = package.symbol_container[symbol_name]
+            symbol, status, _ = package.symbol_container.find(symbol_name)[symbol_name]
             return symbol, status
         else:
             return Null(), Null()
@@ -215,12 +251,15 @@ class PackageManager(object):
         # Check whether symbol already exists or not.
         # If symbol is not exist, Add symbol to package.symbol_container.
         if symbol_name in package.symbol_container.keys():
-            symbol, status, _ = package.symbol_container[symbol_name]
+            symbol, status, _ = package.symbol_container.find(symbol_name)[symbol_name]
             return symbol, status
         else:
             symbol = Symbol(symbol_name)
             status = Keyword(':INTERNAL')
-            package.symbol_container[symbol_name] = [symbol, status, None]
+            try:
+                package.symbol_container.find(symbol_name)[symbol_name] = [symbol, status, None]
+            except LookupError:
+                package.symbol_container[symbol_name] = [symbol, status, None]
             return symbol, status
 
     @classmethod
@@ -243,7 +282,7 @@ class PackageManager(object):
         package = cls._get_package(package_name)
 
         # Change symbol symbol status to `:EXTERNAL`.
-        package.symbol_container[symbol_name][1] = Keyword(':EXTERNAL')
+        package.symbol_container.find(symbol_name)[symbol_name][1] = Keyword(':EXTERNAL')
 
         return T()
 
@@ -275,19 +314,19 @@ class PackageManager(object):
         package = cls._get_package(package_name)
 
         # Check symbol status.
-        _, status, _ = base_package.symbol_container[symbol_name]
+        _, status, _ = base_package.symbol_container.find(symbol_name)[symbol_name]
         if status_check and (status is not Keyword(':EXTERNAL')):
             raise PackageError('The symbol ' + symbol_name+' is not external in the ' + package_name + ' package.')
 
-        # Import symbol
+        # Import symbol and value.
         package.symbol_container[symbol_name] = [Symbol(symbol_name), Keyword(':INTERNAL'), None]
         try:
-            package.space['VARIABLE'][symbol_name] = base_package.space['VARIABLE'][symbol_name]
-        except KeyError:
+            package.space['VARIABLE'][symbol_name] = base_package.space['VARIABLE'].find(symbol_name)[symbol_name]
+        except LookupError:
             try:
-                package.space['FUNCTION'][symbol_name] = base_package.space['FUNCTION'][symbol_name]
-            except KeyError:
-                package.space['MACRO'][symbol_name] = base_package.space['MACRO'][symbol_name]
+                package.space['FUNCTION'][symbol_name] = base_package.space['FUNCTION'].find(symbol_name)[symbol_name]
+            except LookupError:
+                package.space['MACRO'][symbol_name] = base_package.space['MACRO'].find(symbol_name)[symbol_name]
 
         return T()
 
@@ -348,7 +387,10 @@ class PackageManager(object):
                 continue
 
             # Add symbol status included by package.symbol_container.
-            package.symbol_container[symbol_name] = [symbol, Keyword(':INHERITED'), package_name_to_use]
+            try:
+                package.symbol_container.find(symbol_name)[symbol_name] = [symbol, Keyword(':INHERITED'), package_name_to_use]
+            except LookupError:
+                package.symbol_container[symbol_name] = [symbol, Keyword(':INHERITED'), package_name_to_use]
 
         # Add package_to_use to package.use_list
         if not package_to_use in  package.use_list:

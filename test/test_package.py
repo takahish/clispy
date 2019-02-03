@@ -83,6 +83,15 @@ class EnvironmentUnitTestCase(unittest.TestCase):
         # Raise exception when length of params and args is deffirerent.
         self.assertRaises(TypeError, Environment, ['KEY_1', 'KEY_2'], ['VAL_1'])
 
+    def testEnvironment_extend(self):
+        env = Environment()
+
+        # A environment that have itself as an outer environment.
+        extended_env = env.extend()
+
+        # An outer environment must be itself.
+        self.assertTrue(extended_env.outer is env)
+
 
 class PackageTestCase(unittest.TestCase):
     def testPackage(self):
@@ -125,6 +134,33 @@ class PackageTestCase(unittest.TestCase):
 
         # Check official representation.
         self.assertEqual(str(pkg), '#<PACKAGE COMMON-LISP>')
+
+    def testPackage_escape(self):
+        # Make instance with package_name 'COMMON-LISP'.
+        pkg = Package(package_name='COMMON-LISP')
+
+        # Extend variable space.
+        pkg.symbol_container = pkg.symbol_container.extend()
+        pkg.space['VARIABLE'] = pkg.space['VARIABLE'].extend()
+
+        # Check symbol_container.
+        self.assertTrue(pkg.symbol_container is not pkg.global_symbol_container)
+        self.assertTrue(pkg.symbol_container.outer is pkg.global_symbol_container)
+
+        # Check variable space.
+        self.assertTrue(pkg.space['VARIABLE'] is not pkg.global_space['VARIABLE'])
+        self.assertTrue(pkg.space['VARIABLE'].outer is pkg.global_space['VARIABLE'])
+
+        # Espace from local scope.
+        pkg.escape()
+
+        # Check symbol_container.
+        self.assertTrue(pkg.symbol_container is pkg.global_symbol_container)
+        self.assertTrue(pkg.symbol_container.outer is None)
+
+        # Check variable_space.
+        self.assertTrue(pkg.space['VARIABLE'] is pkg.global_space['VARIABLE'])
+        self.assertTrue(pkg.space['VARIABLE'].outer is None)
 
 
 class PackageManagerTestCase(unittest.TestCase):
