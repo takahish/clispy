@@ -14,8 +14,9 @@
 # ==============================================================================
 
 
-from hashlib import sha1
-from weakref import WeakValueDictionary
+import hashlib
+import re
+import weakref
 
 
 # ==============================================================================
@@ -40,7 +41,7 @@ class StandardObject(type):
 
         # object_table manage own objects as weak reference for gc.
         # If objects are needed, access cls.object_registry.
-        cls.object_registry = WeakValueDictionary()
+        cls.object_registry = weakref.WeakValueDictionary()
 
         return cls
 
@@ -68,7 +69,7 @@ class StandardObject(type):
                 lst.extend([str(arg), str(id(arg))])
 
         seed = '_'.join(lst).encode('utf-8')
-        object_key = sha1(seed).hexdigest()
+        object_key = hashlib.sha1(seed).hexdigest()
 
         # Gets a class object.
         if object_key in cls.object_registry:
@@ -181,7 +182,7 @@ class Symbol(T, metaclass=BuiltInClass):
         if not isinstance(value, str):
             raise TypeError("The value " + str(value) + " is not of type str")
 
-        if value.isupper():
+        if value.isupper() or re.match('^[+-/*]+$', value):
             self.value = value
         else:
             self.value = '|' + value + '|'
