@@ -42,11 +42,12 @@ class Evaluator(object):
             if isinstance(func, SpecialOperator):
                 return func(forms.cdr, package_manager)
             else:
-                exps = forms.cdr
+                args = forms.cdr
 
-                args = []
+                # Replace objects to evalated ones in order.
+                exps = forms.cdr
                 while exps is not Null():
-                    args.append(cls.eval(exps.car, package_manager))
+                    exps.car = cls.eval(exps.car, package_manager)
                     exps = exps.cdr
 
-                return func(*args)
+                return func(args)
