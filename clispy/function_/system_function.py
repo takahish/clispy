@@ -15,7 +15,7 @@
 
 from clispy.function_ import Function
 from clispy.package import assign_helper
-from clispy.type import Integer, Null, Ratio
+from clispy.type import Cons, Integer, Null, Ratio
 
 
 # ==============================================================================
@@ -37,6 +37,53 @@ class SystemFunction(Function):
         """The official string representation.
         """
         return "#<SYSTEM-FUNCTION {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))
+
+
+# ==============================================================================
+# Defines system function classes.
+# ==============================================================================
+
+class Cons_(SystemFunction):
+    """Creates a fresh cons, the car of which is object-1 and the cdr of which is object-2.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates Cons.
+        """
+        cls.__name__ = 'CONS'
+        return object.__new__(cls)
+
+    def __call__(self, args):
+        """Behavior of Cons.
+        """
+        return Cons(args.car, args.cdr.car)
+
+
+class Car(SystemFunction):
+    """If x is a cons, car returns the car of that cons. If x is nil, car returns nil.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates Car.
+        """
+        cls.__name__ = 'CAR'
+        return object.__new__(cls)
+
+    def __call__(self, args):
+        """Behavior of Car.
+        """
+        return args.car.car
+
+
+class Cdr(SystemFunction):
+    """If x is a cons, cdr returns the cdr of that cons. If x is nil, cdr returns nil.
+    """
+    def __new__(cls, *args, **kwargs):
+        cls.__name__ = 'CDR'
+        return object.__new__(cls)
+
+    def __call__(self, args):
+        """Behavior of Cdr.
+        """
+        return args.car.cdr
 
 
 class Add(SystemFunction):
@@ -141,6 +188,9 @@ class Div(SystemFunction):
 # Set functions related on special operators
 # ==============================================================================
 
+assign_helper(symbol_name='CONS', value=Cons_(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='CAR', value=Car(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='CDR', value=Cdr(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='+', value=Add(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='-', value=Sub(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='*', value=Mul(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')

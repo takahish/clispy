@@ -56,10 +56,13 @@ class Lambda(Function):
         # Deepcopy current scope for lexical scope.
         self.lexical_package_manager = copy.deepcopy(package_manager)
 
-    def __call__(self, *args):
+    def __call__(self, args):
         """Behavior of Lambda.
         """
         from clispy.evaluator_ import Evaluator
+
+        # Converts args into python list.
+        args = args.value
 
         # Intern symbol names of params to lexical scope.
         for symbol_name in self.params:
