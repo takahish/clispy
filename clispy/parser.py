@@ -31,7 +31,7 @@ class Parser(object):
         "`": Symbol('QUASIQUOTE'),
         ",": Symbol('UNQUOTE'),
         ",@": Symbol('UNQUOTE-SPLICING'),
-        "#'": Symbol('SHARPQUOTE')
+        "#'": Symbol('FUNCTION')
     }
 
     @classmethod
@@ -49,7 +49,7 @@ class Parser(object):
 
         token_list = cls._read(in_port)
         if isinstance(token_list, list):
-            return Cons(token_list)
+            return Cons.tocons(token_list)
         else:
             return token_list
 

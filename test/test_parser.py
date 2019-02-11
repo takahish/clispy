@@ -153,10 +153,10 @@ class UnitTestCase(unittest.TestCase):
         token = in_port.next_token()
         token_list = Parser._read_ahead(token, in_port)
 
-        # token_list must be [SHARPQUOTE +]
+        # token_list must be [FUNCTION +]
 
         self.assertIsInstance(token_list[0], Symbol)
-        self.assertTrue(token_list[0] is Symbol('SHARPQUOTE'))
+        self.assertTrue(token_list[0] is Symbol('FUNCTION'))
 
         self.assertIsInstance(token_list[1], Symbol)
 
