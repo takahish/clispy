@@ -182,7 +182,7 @@ class Symbol(T, metaclass=BuiltInClass):
         if not isinstance(value, str):
             raise TypeError("The value " + str(value) + " is not of type str")
 
-        if value.isupper() or re.match('^[+-/*]+$', value):
+        if value.isupper() or re.match('^[!-/:-@[-`{-~]+$', value):
             self.value = value
         else:
             self.value = '|' + value + '|'
