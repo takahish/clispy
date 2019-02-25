@@ -94,15 +94,15 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(token_list[1][1], Integer)
         self.assertIsInstance(token_list[1][2], SingleFloat)
 
-    def test_tokenize_quasiquote(self):
+    def test_tokenize_backquote(self):
         in_port = InPort(io.StringIO("`(+ 1 2.3)"))
         token = in_port.next_token()
         token_list = Parser._read_ahead(token, in_port)
 
-        # token_list must be [QUASIQUOTE, [+, 1, 2.3]]
+        # token_list must be [BACKQUOTE, [+, 1, 2.3]]
 
         self.assertIsInstance(token_list[0], Symbol)
-        self.assertTrue(token_list[0] is Symbol('QUASIQUOTE'))
+        self.assertTrue(token_list[0] is Symbol('BACKQUOTE'))
 
         self.assertIsInstance(token_list[1][0], Symbol)
         self.assertIsInstance(token_list[1][1], Integer)
@@ -113,10 +113,10 @@ class UnitTestCase(unittest.TestCase):
         token = in_port.next_token()
         token_list = Parser._read_ahead(token, in_port)
 
-        # token_list must be [QUASIQUOTE, [+, 1, [UNQUOTE, [-, 2, 3]]]]
+        # token_list must be [BACKQUOTE, [+, 1, [UNQUOTE, [-, 2, 3]]]]
 
         self.assertIsInstance(token_list[0], Symbol)
-        self.assertTrue(token_list[0] is Symbol('QUASIQUOTE'))
+        self.assertTrue(token_list[0] is Symbol('BACKQUOTE'))
 
         self.assertIsInstance(token_list[1][0], Symbol)
         self.assertIsInstance(token_list[1][1], Integer)
@@ -133,10 +133,10 @@ class UnitTestCase(unittest.TestCase):
         token = in_port.next_token()
         token_list = Parser._read_ahead(token, in_port)
 
-        # token_list must be [QUASIQUOTE, [+, 1, [UNQUOTE-SPLICING, [-, 2, 3]]]]
+        # token_list must be [BACKQUOTE, [+, 1, [UNQUOTE-SPLICING, [-, 2, 3]]]]
 
         self.assertIsInstance(token_list[0], Symbol)
-        self.assertTrue(token_list[0] is Symbol('QUASIQUOTE'))
+        self.assertTrue(token_list[0] is Symbol('BACKQUOTE'))
 
         self.assertIsInstance(token_list[1][0], Symbol)
         self.assertIsInstance(token_list[1][1], Integer)

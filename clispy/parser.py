@@ -28,7 +28,7 @@ class Parser(object):
     # TODO: to add reader macros as the same as quotes
     quotes = {
         "'": Symbol('QUOTE'),
-        "`": Symbol('QUASIQUOTE'),
+        "`": Symbol('BACKQUOTE'),
         ",": Symbol('UNQUOTE'),
         ",@": Symbol('UNQUOTE-SPLICING'),
         "#'": Symbol('FUNCTION')
