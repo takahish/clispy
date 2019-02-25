@@ -33,7 +33,7 @@ class Environment(dict):
             raise TypeError('outer must be clispy.package.Environment')
         self.outer = outer
 
-        # Update self
+        # Update cls
         if isinstance(params, str):
             self.update({params: list(args)})
         else:
@@ -67,7 +67,7 @@ class Environment(dict):
             args: list.
 
         Retruns:
-            An environment that have itself as an outer enviroment.
+            An environment that have itcls as an outer enviroment.
         """
         return Environment(params=params, args=args, outer=self)
 
@@ -80,7 +80,7 @@ class Package(object):
         """
         self.package_name = package_name
 
-        # self.global_symbol_container.
+        # self.symbol_container.
         # For example, the container is like,
         #     symbol_container = {
         #         symbol_name: [Symbol(symbol_name), Keyword(':INTERNAL'), None]
@@ -89,9 +89,9 @@ class Package(object):
         #     }
         self.symbol_container = Environment()
 
-        # self.global_space.
+        # self.env.
         # There are `VARIABLE`, `FUNCTION` and `MACRO`.
-        self.space = {
+        self.env = {
             'VARIABLE': Environment(),
             'FUNCTION': Environment(),
             'MACRO': Environment()
@@ -109,53 +109,18 @@ class Package(object):
 class PackageManager(object):
     """PackageManager is static class and managing package objects.
     """
-    def __init__(self):
-        self.package_container = {
-            'COMMON-LISP': Package('COMMON-LISP'),
-            'KEYWORD': Package('KEYWORD'),
-            'COMMON-LISP-USER': Package('COMMON-LISP-USER'),
-            'PYTHON': Package('PYTHON')
-        }
+    package_container = {
+        'COMMON-LISP': Package('COMMON-LISP'),
+        'KEYWORD': Package('KEYWORD'),
+        'COMMON-LISP-USER': Package('COMMON-LISP-USER'),
+        'PYTHON': Package('PYTHON')
+    }
 
-        # Current package is COMMON-LISP.
-        self.current_package = self.package_container['COMMON-LISP']
+    # Current package is COMMON-LISP.
+    current_package = package_container['COMMON-LISP']
 
-    def find(self, symbol_designator, env='VARIABLE'):
-        """Find the innermost environment where var appears.
-
-        Args:
-            symbol_designator: Symbol. a symbol name.
-            env: str. a searched environment in package
-
-        Returns:
-            An environment that have variable. If own space don't have value,
-            this method looks up variable from the outer environment.
-        """
-        # Get symbol_name.
-        symbol_name = symbol_designator.value
-
-        # Split and get symbol_name, package_name and status_check.
-        symbol_name, package_name, status_check = self._split_symbol(symbol_name)
-
-        # Get package. The default is the current package.
-        package = self._get_package(package_name)
-
-        # Get the original package including symbol_name.
-        while(True):
-            _, status, inherited_package_name = package.symbol_container.find(symbol_name)[symbol_name]
-            if status is Keyword(':INHERITED'):
-                package = self._get_package(inherited_package_name)
-                _, status, inherited_package_name = package.symbol_container.find(symbol_name)[symbol_name]
-            else:
-                break
-
-        # Check symbol status.
-        if status_check and (status is not Keyword(':EXTERNAL')):
-            raise PackageError('The symbol ' + symbol_name+' is not external in the ' + package_name + ' package.')
-
-        return package.space[env].find(symbol_name)
-
-    def find_symbol(self, symbol_designator, package_designator=None):
+    @classmethod
+    def find_symbol(cls, symbol_designator, package_designator=None):
         """find_symbol locates a symbol whose name is symbol_designator in a package. If a symbol named
         symbol_designator is found in package, directly or by inheritance, the symbol found is returned
         as the first value; the second value is as follows:
@@ -178,10 +143,10 @@ class PackageManager(object):
         """
         # Get symbol_name and package_name.
         symbol_name = symbol_designator.value
-        package_name = self._get_package_name(package_designator)
+        package_name = cls.get_package_name(package_designator)
 
         # Get package. The default is the current package.
-        package = self._get_package(package_name)
+        package = cls.get_package(package_name)
 
         # Extract symbol status included by package.symbol_container.
         if symbol_name in package.symbol_container.keys():
@@ -190,7 +155,8 @@ class PackageManager(object):
         else:
             return Null(), Null()
 
-    def intern(self, symbol_designator, package_designator=None):
+    @classmethod
+    def intern(cls, symbol_designator, package_designator=None):
         """The first value returned by intern, symbol_designator, is the symbol that was found or created.
         The meaning of the secondary value, status, is as follows:
 
@@ -212,10 +178,10 @@ class PackageManager(object):
         """
         # Get symbol_name and package_name.
         symbol_name = symbol_designator.value
-        package_name = self._get_package_name(package_designator)
+        package_name = cls.get_package_name(package_designator)
 
         # Get package. The default is the current package.
-        package = self._get_package(package_name)
+        package = cls.get_package(package_name)
 
         # Check whether symbol already exists or not.
         # If symbol is not exist, Add symbol to package.symbol_container.
@@ -231,7 +197,8 @@ class PackageManager(object):
                 package.symbol_container[symbol_name] = [symbol, status, None]
             return symbol, status
 
-    def export(self, symbol_designator, package_designator=None):
+    @classmethod
+    def export(cls, symbol_designator, package_designator=None):
         """Export makes one or more symbols that are accessible in package (whether directly
         or by inheritance) be external symbols of that package.
 
@@ -244,17 +211,18 @@ class PackageManager(object):
         """
         # Get symbol_name and package_name.
         symbol_name = symbol_designator.value
-        package_name = self._get_package_name(package_designator)
+        package_name = cls.get_package_name(package_designator)
 
         # Get package. The default is the current package.
-        package = self._get_package(package_name)
+        package = cls.get_package(package_name)
 
         # Change symbol symbol status to `:EXTERNAL`.
         package.symbol_container.find(symbol_name)[symbol_name][1] = Keyword(':EXTERNAL')
 
         return T()
 
-    def import_(self, symbol_designator, package_designator=None):
+    @classmethod
+    def import_(cls, symbol_designator, package_designator=None):
         """Import adds symbol or symbols to the internals of package, checking for name conflicts
         with existing symbols either present in package or accessible to it. Once the symbols have
         been imported, they may be referenced in the importing package without the use of a package
@@ -269,16 +237,16 @@ class PackageManager(object):
         """
         # Get symbol_name and package_name.
         symbol_name = symbol_designator.value
-        package_name = self._get_package_name(package_designator)
+        package_name = cls.get_package_name(package_designator)
 
         # Split and get symbol_name, base_package_name and status_check.
-        symbol_name, base_package_name, status_check = self._split_symbol(symbol_name)
+        symbol_name, base_package_name, status_check = cls.split_symbol_name(symbol_name)
 
         # Get base package instance. The default is the current package.
-        base_package = self._get_package(base_package_name)
+        base_package = cls.get_package(base_package_name)
 
         # Get package instance. The default is the current package.
-        package = self._get_package(package_name)
+        package = cls.get_package(package_name)
 
         # Check symbol status.
         _, status, _ = base_package.symbol_container.find(symbol_name)[symbol_name]
@@ -288,16 +256,17 @@ class PackageManager(object):
         # Import symbol and value.
         package.symbol_container[symbol_name] = [Symbol(symbol_name), Keyword(':INTERNAL'), None]
         try:
-            package.space['VARIABLE'][symbol_name] = base_package.space['VARIABLE'].find(symbol_name)[symbol_name]
+            package.env['VARIABLE'][symbol_name] = base_package.env['VARIABLE'].find(symbol_name)[symbol_name]
         except LookupError:
             try:
-                package.space['FUNCTION'][symbol_name] = base_package.space['FUNCTION'].find(symbol_name)[symbol_name]
+                package.env['FUNCTION'][symbol_name] = base_package.env['FUNCTION'].find(symbol_name)[symbol_name]
             except LookupError:
-                package.space['MACRO'][symbol_name] = base_package.space['MACRO'].find(symbol_name)[symbol_name]
+                package.env['MACRO'][symbol_name] = base_package.env['MACRO'].find(symbol_name)[symbol_name]
 
         return T()
 
-    def in_package(self, package_designator):
+    @classmethod
+    def in_package(cls, package_designator):
         """Causes the the package named by name to become the current package---that is,
         the value of *package*. If no such package already exists, an error of package-error
         is signaled.
@@ -312,15 +281,16 @@ class PackageManager(object):
         package_name = package_designator.value
 
         # Set current package to package shown by package_name.
-        self.current_package = self.package_container[package_name]
+        cls.current_package = cls.package_container[package_name]
 
         # Variable *PACKAGE* in COMMON-LISP package is set to a current package.
-        common_lisp_package = self.package_container['COMMON-LISP']
-        common_lisp_package.space['VARIABLE']['*PACKAGE*'] = self.current_package
+        common_lisp_package = cls.package_container['COMMON-LISP']
+        common_lisp_package.env['VARIABLE']['*PACKAGE*'] = cls.current_package
 
-        return self.current_package
+        return cls.current_package
 
-    def use_package(self, package_designator_to_use, package_designator=None):
+    @classmethod
+    def use_package(cls, package_designator_to_use, package_designator=None):
         """use-package causes package to inherit all the external symbols of packages-to-use.
         The inherited symbols become accessible as internal symbols of package.
 
@@ -338,11 +308,11 @@ class PackageManager(object):
         """
         # Get symbol_name and package_name.
         package_name_to_use = package_designator_to_use.value
-        package_name = self._get_package_name(package_designator)
+        package_name = cls.get_package_name(package_designator)
 
         # Get package instance. The default is the current package.
-        package_to_use = self._get_package(package_name_to_use)
-        package = self._get_package(package_name)
+        package_to_use = cls.get_package(package_name_to_use)
+        package = cls.get_package(package_name)
 
         for symbol_name, symbol_value in package_to_use.symbol_container.items():
             symbol, status, _ = symbol_value
@@ -363,7 +333,8 @@ class PackageManager(object):
 
         return T()
 
-    def _get_package_name(self, package_designator):
+    @classmethod
+    def get_package_name(cls, package_designator):
         """Extract package name from package_designator. If package_designator is None,
         it returns None. Otherwise it returns package_name included package_designator.
 
@@ -378,7 +349,8 @@ class PackageManager(object):
         else:
             return package_designator.value
 
-    def _get_package(self, package_name):
+    @classmethod
+    def get_package(cls, package_name):
         """Extract package shown by package_name. The default is the current package.
 
         Args:
@@ -390,12 +362,13 @@ class PackageManager(object):
         # Return Package that shown by package_name.
         # The default is the current package.
         if package_name is None:
-            return self.current_package
+            return cls.current_package
         else:
-            return self.package_container[package_name]
+            return cls.package_container[package_name]
 
-    def _split_symbol(self, symbol_name):
-        """Split symbol_name to symbol_name itself, package_name. At the same time,
+    @classmethod
+    def split_symbol_name(cls, symbol_name):
+        """Split symbol_name to symbol_name itcls, package_name. At the same time,
         status_check that represents whether checking status is needed or not is returned.
 
         For examples:
@@ -439,6 +412,36 @@ class PackageManager(object):
 
         return symbol_name, package_name, status_check
 
+    @classmethod
+    def find(cls, symbol_name, package_name, status_check, env='VARIABLE'):
+        """Find the innermost environment where var appears.
+
+        Args:
+            symbol_designator: Symbol. a symbol name.
+            env: str. a searched environment in package
+
+        Returns:
+            An environment that have variable. If own space don't have value,
+            this method looks up variable from the outer environment.
+        """
+        # Get package. The default is the current package.
+        package = cls.get_package(package_name)
+
+        # Get the original package including symbol_name.
+        while(True):
+            _, status, inherited_package_name = package.symbol_container.find(symbol_name)[symbol_name]
+            if status is Keyword(':INHERITED'):
+                package = cls.get_package(inherited_package_name)
+                _, status, inherited_package_name = package.symbol_container.find(symbol_name)[symbol_name]
+            else:
+                break
+
+        # Check symbol status.
+        if status_check and (status is not Keyword(':EXTERNAL')):
+            raise PackageError('The symbol ' + symbol_name+' is not external in the ' + package_name + ' package.')
+
+        return package.env[env].find(symbol_name)
+
 
 class PackageError(Exception):
     """PackageError is raised in PackageTable.
@@ -447,13 +450,6 @@ class PackageError(Exception):
         """Initialize PackageError.
         """
         super().__init__(message)
-
-
-# ==============================================================================
-# Make instance of PackageManager.
-# ==============================================================================
-
-package_manager = PackageManager()
 
 
 # ==============================================================================
@@ -470,10 +466,10 @@ def assign_helper(symbol_name, value, package_name, env='VARIABLE', status=':INT
         env: str. An environment is selected from 'VARIABLE', 'FUNCTION' or 'MACRO'.
         status: str. A status is selected from ':INTERNAL' or ':EXTERNAL'
     """
-    package_manager.intern(String(symbol_name), String(package_name))
-    package_manager.package_container[package_name].space[env][symbol_name] = value
+    PackageManager.intern(String(symbol_name), String(package_name))
+    PackageManager.package_container[package_name].env[env][symbol_name] = value
     if status == ':EXTERNAL':
-        package_manager.export(Symbol(symbol_name), Symbol(package_name))
+        PackageManager.export(Symbol(symbol_name), Symbol(package_name))
 
 def use_package_helper(package_name_to_use, package_name):
     """Import helper function. Other modules use this function to import symbol from original package.
@@ -482,7 +478,7 @@ def use_package_helper(package_name_to_use, package_name):
         symbol_name: str. A symbol name that include package (for example `COMMON-LISP::CAR`).
         package_name: str. A package name that import symbol indicated by a symbol name.
     """
-    package_manager.use_package(Symbol(package_name_to_use), Symbol(package_name))
+    PackageManager.use_package(Symbol(package_name_to_use), Symbol(package_name))
 
 
 # ==============================================================================
@@ -497,7 +493,7 @@ assign_helper(symbol_name=':INHERITED', value=Keyword(':INHERITED'), package_nam
 # COMMON-LISP package
 assign_helper(symbol_name='T', value=T(), package_name='COMMON-LISP', env='VARIABLE', status=':EXTERNAL')
 assign_helper(symbol_name='NIL', value=Null(), package_name='COMMON-LISP', env='VARIABLE', status=':EXTERNAL')
-assign_helper(symbol_name='*PACKAGE*', value=package_manager.current_package, package_name='COMMON-LISP', env='VARIABLE', status=':EXTERNAL')
+assign_helper(symbol_name='*PACKAGE*', value=PackageManager.current_package, package_name='COMMON-LISP', env='VARIABLE', status=':EXTERNAL')
 
 # COMMON-LISP-USER package
 use_package_helper(package_name_to_use='COMMON-LISP', package_name='COMMON-LISP-USER')
