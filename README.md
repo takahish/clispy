@@ -12,45 +12,47 @@ Comon lisp s-expression have good compatibility with some deep learning framewor
 
 ## Examples
 ```
->>> import clispy
->>> clispy.repl()
-CLisPy Version 0.2
-clispy> (setq pi 3.14)
+$ python
+Python 3.7.1 (default, Dec 14 2018, 19:28:38) 
+[GCC 7.3.0] :: Anaconda, Inc. on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import clispy; clispy.repl()
+CL-USER=> (setq pi 3.14)
 3.14
-clispy> (defun area (r) (* pi r r))
+
+CL-USER=> (defun area (r) (* pi r r))
 AREA
-clispy> (area 3)
-28.259999999999998
-clispy> (defun fact (n)
-          (if (<= n 1)
-              1
-              (* n (fact (- n 1)))))
-FACT
-clispy> (fact 10)
-3628800
-clispy> (fact 50)
-30414093201713378043612608166064768844377641568960512000000000000
-clispy> (defmacro when (test-form &rest body)
-          `(if ,test-form
-             (progn ,@body)))
+
+CL-USER=> (area 3)
+28.26
+
+CL-USER=> (defmacro when (test-form &rest body)
+            `(if ,test-form
+               (progn ,@body)))
 WHEN
-clispy> (When t 3)
+
+CL-USER=> (when t 3)
 3
-clispy> (when nil 3)
+
+CL-USER=> (when nil 3)
 NIL
-clispy> (car '(1 2 3 4 5))
+
+CL-USER=> (car '(1 2 3 4 5))
 1
-clispy> (cdr '(1 2 3 4 5))
+
+CL-USER=> (cdr '(1 2 3 4 5))
 (2 3 4 5)
-clispy> (cons 'a nil)
+
+CL-USER=> (cons 'a nil)
 (A)
-clispy> (cons 'a 'b)
+
+CL-USER=> (cons 'a 'b)
 (A . B)
-clispy> (car '(a . b))
-A
-clispy> (cdr '(a . b))
-B
-clispy> ^D
+
+CL-USER=> ^D
+
+Although never is often better than *right* now.
+
 >>> 
 ```
 
