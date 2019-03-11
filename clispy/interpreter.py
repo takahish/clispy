@@ -15,10 +15,11 @@
 
 import sys
 import random
-from clispy.evaluator_ import Evaluator
-from clispy.package import package_manager
+from clispy.evaluator import Evaluator
+from clispy.expander import Expander
+from clispy.package import PackageManager
 from clispy.parser import InPort, Parser
-from clispy.type import Symbol
+from clispy.type import String, Symbol
 
 
 class Interpreter(object):
@@ -52,9 +53,16 @@ class Interpreter(object):
 
     @classmethod
     def repl(cls, prompt='clispy>', inport=InPort(sys.stdin), out=sys.stdout):
+        PackageManager.in_package(String("COMMON-LISP-USER"))
         while True:
             try:
                 if prompt:
+                    # Set prompt.
+                    try:
+                        prompt = PackageManager.current_package.package_nicknames[0] + '=>'
+                    except IndexError:
+                        prompt = PackageManager.current_package.package_name + '=>'
+
                     # Wait input.
                     prompt = cls.GREEN+prompt+cls.RESET
                     print("{}{}{}".format(cls.GREEN, prompt, cls.RESET), end=' ', file=out, flush=True)
@@ -69,10 +77,21 @@ class Interpreter(object):
                     return
 
                 # Expand token.
-                #forms = Expander.expand(token)
+                forms = Expander.expand(
+                    forms,
+                    var_env=PackageManager.current_package.env['VARIABLE'],
+                    func_env=PackageManager.current_package.env['FUNCTION'],
+                    macro_env=PackageManager.current_package.env['MACRO']
+                )
 
                 # Evaluate expression.
-                retval = Evaluator.eval(forms, package_manager)
+                retval = Evaluator.eval(
+                    forms,
+                    var_env=PackageManager.current_package.env['VARIABLE'],
+                    func_env=PackageManager.current_package.env['FUNCTION'],
+                    macro_env=PackageManager.current_package.env['MACRO']
+                )
+
                 # Print return value.
                 out.write(cls.RED) # Sets color RED.
                 print("{}{}{}".format(cls.RED, retval, cls.RESET), end="\n\n", file=out, flush=True)

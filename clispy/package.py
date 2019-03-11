@@ -75,10 +75,13 @@ class Environment(dict):
 class Package(object):
     """Package class for managing name space.
     """
-    def __init__(self, package_name):
+    def __init__(self, package_name, package_nicknames=[]):
         """Initialize Package.
         """
         self.package_name = package_name
+
+        # Sets nicknames
+        self.package_nicknames = package_nicknames
 
         # self.symbol_container.
         # For example, the container is like,
@@ -110,10 +113,10 @@ class PackageManager(object):
     """PackageManager is static class and managing package objects.
     """
     package_container = {
-        'COMMON-LISP': Package('COMMON-LISP'),
-        'KEYWORD': Package('KEYWORD'),
-        'COMMON-LISP-USER': Package('COMMON-LISP-USER'),
-        'PYTHON': Package('PYTHON')
+        'COMMON-LISP': Package(package_name='COMMON-LISP', package_nicknames=['CL']),
+        'KEYWORD': Package(package_name='KEYWORD', package_nicknames=[]),
+        'COMMON-LISP-USER': Package(package_name='COMMON-LISP-USER', package_nicknames=['CL-USER']),
+        'PYTHON': Package(package_name='PYTHON', package_nicknames=['PY'])
     }
 
     # Current package is COMMON-LISP.
@@ -191,11 +194,14 @@ class PackageManager(object):
         else:
             symbol = Symbol(symbol_name)
             status = Keyword(':INTERNAL')
+
             try:
                 package.symbol_container.find(symbol_name)[symbol_name] = [symbol, status, None]
             except LookupError:
                 package.symbol_container[symbol_name] = [symbol, status, None]
-            return symbol, status
+
+            # (intern "Never-Before") => |Never-Before|, NIL
+            return symbol, Null()
 
     @classmethod
     def export(cls, symbol_designator, package_designator=None):

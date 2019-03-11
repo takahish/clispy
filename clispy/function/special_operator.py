@@ -13,9 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
-import copy
-from clispy.function_ import Function, Lambda
-from clispy.package import Environment, assign_helper
+from clispy.callcc import CallCC
+from clispy.function import Function, Lambda
+from clispy.package import Environment, PackageManager, assign_helper, use_package_helper
 from clispy.type import BuiltInClass, Symbol, Null, Cons, String
 
 
@@ -73,55 +73,63 @@ class SpecialOperator(Function):
 # ==============================================================================
 
 
-class Block(SpecialOperator):
+class BlockSpecialOperator(SpecialOperator):
     """block establishes a block and then evaluates forms as an implicit progn.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Block.
+        """Instantiates BlockSpecialOperator.
         """
         cls.__name__ = 'BLOCK'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Block.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of BlockSpecialOperator.
         """
-        return forms  # TODO: To implement the behavior.
+        from clispy.evaluator import Evaluator
+
+        # throw is a param of lambda in call/cc.
+        lambda_forms = Cons(Cons(forms.car, Null()), forms.cdr)
+
+        # call/cc is used to control.
+        callcc = CallCC(Lambda(lambda_forms, var_env, func_env, macro_env))
+
+        return callcc(var_env, func_env, macro_env)
 
 
-class Catch(SpecialOperator):
+class CatchSpecialOperator(SpecialOperator):
     """catch is used as the destination of a non-local control transfer by throw.
     Tags are used to find the catch to which a throw is transferring control.
     (catch 'foo forms) catches a (throw 'foo forms) but not a (throw 'bar forms).
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Catch.
+        """Instantiates CatchSpecialOperator.
         """
         cls.__name__ = 'CATCH'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Catch.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of CatchSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class EvalWhen(SpecialOperator):
+class EvalWhenSpecialOperator(SpecialOperator):
     """The body of an eval-when forms is processed as an implicit progn, but only
     in the situations listed.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates EvalWhen.
+        """Instantiates EvalWhenSpecialOperator.
         """
         cls.__name__ = 'EVAL-WHEN'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of EvalWhen.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of EvalWhenSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class Flet(SpecialOperator):
+class FletSpecialOperator(SpecialOperator):
     """flet, labels, and macrolet define local functions and macros, and execute
     forms using the local definitions. forms are executed in order of occurence.
 
@@ -134,109 +142,112 @@ class Flet(SpecialOperator):
     these definition bindings. Any number of such local functions can be defined.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Flet.
+        """Instantiates FletSpecialOperator.
         """
         cls.__name__ = 'FLET'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Flet.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of FletSpecialOperator.
         """
-        from clispy.evaluator_ import Evaluator
+        from clispy.evaluator import Evaluator
 
-        # Deepcopy current scope to escape from local scope later.
-        lexical_package_manager = copy.deepcopy(package_manager)
-
-        bindings, body = forms.car, forms.cdr
-
-        # The body of a let* is an implicit progn.
-        body = Cons(Symbol('PROGN'), body)
+        bindings, body = forms.car, forms.cdr.car
 
         funcs = []
         exps = []
         while bindings is not Null():
             func, exp = bindings.car.car, bindings.car.cdr
 
-            lexical_package_manager.intern(String(func.value))
+            # Interns symbol that represents function name into current package.
+            PackageManager.intern(String(func.value))
 
             funcs.append(func.value)
             exp = Cons(Symbol('LAMBDA'), exp)
 
             # The scope of the name bindings dose not encompasse the function definitions.
-            exps.append(Evaluator.eval(exp, package_manager))
+            exps.append(Evaluator.eval(exp, var_env, func_env, macro_env))
 
             bindings = bindings.cdr
 
         # The bindings are in parallel.
-        local_scope = lexical_package_manager.current_package.space['FUNCTION'].extend(params=funcs, args=exps)
-        lexical_package_manager.current_package.space['FUNCTION'] = local_scope
+        func_env = func_env.extend(params=funcs, args=exps)
 
-        return Evaluator.eval(body, lexical_package_manager)
+        return Evaluator.eval(body, var_env, func_env, macro_env)
 
 
-class Function_(SpecialOperator):
+class FunctionSpecialOperator(SpecialOperator):
     """The value of function is the functional value of name in the current
     lexical environment.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Function_.
+        """Instantiates FunctionSpecialOperator.
         """
         cls.__name__ = 'FUNCTION'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Function_.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of FunctionSpecialOperator.
         """
         if isinstance(forms.car, Cons) and forms.car.car is Symbol('LAMBDA'):
-            return Lambda(forms.car.cdr, package_manager)
+            return Lambda(forms.car.cdr, var_env, func_env, macro_env)
         else:
-            return package_manager.find(forms.car, env='FUNCTION')[forms.car.value]
+            # Gets symbol_name, package_name, and status_check.
+            func_name, package_name, status_check = PackageManager.split_symbol_name(forms.car.value)
+
+            # Gets the function binded by the symbol.
+            try:
+                # First, tries to get the value from lexical environment.
+                return func_env.find(func_name)[func_name]
+            except LookupError:
+                # If LookupError is raised, tries to get from another package.
+                return PackageManager.find(func_name, package_name, status_check, env='FUNCTION')[func_name]
 
 
-class Go(SpecialOperator):
+class GoSpecialOperator(SpecialOperator):
     """go transfers control to the point in the body of an enclosing tagbody
     forms labeled by a tag eql to tag.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Go.
+        """Instantiates GoSpecialOperator.
         """
         cls.__name__ = 'GO'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Go.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of GoSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class If(SpecialOperator):
+class IfSpecialOperator(SpecialOperator):
     """if allows the execution of a form to be dependent on a single test-form.
 
     First test-form is evaluated. If the result is true, then then-form is selected;
     otherwise else-form is selected. Whichever form is selected is then evaluated.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates If.
+        """Instantiates IfSpecialOperator.
         """
         cls.__name__ = 'IF'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of If.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of IfSpecialOperator.
         """
-        from clispy.evaluator_ import Evaluator
+        from clispy.evaluator import Evaluator
 
-        # Sets test-forms, then-forms and else-forms.
-        test_forms, then_forms, else_forms = forms.car, forms.cdr.car, forms.cdr.cdr.car
+        # Sets test-form, then-form and else-form.
+        test_form, then_form, else_form = forms.car, forms.cdr.car, forms.cdr.cdr.car
 
         # If-then-else
-        if Evaluator.eval(test_forms, package_manager) is Null():
-            return Evaluator.eval(else_forms, package_manager)
+        if Evaluator.eval(test_form, var_env, func_env, macro_env) is Null():
+            return Evaluator.eval(else_form, var_env, func_env, macro_env)
         else:
-            return Evaluator.eval(then_forms, package_manager)
+            return Evaluator.eval(then_form, var_env, func_env, macro_env)
 
 
-class Labels(SpecialOperator):
+class LabelsSpecialOperator(SpecialOperator):
     """flet, labels, and macrolet define local functions and macros, and execute
     forms using the local definitions. forms are executed in order of occurence.
 
@@ -250,30 +261,25 @@ class Labels(SpecialOperator):
     as the body.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Labels.
+        """Instantiates LabelsSpecialOperator.
         """
         cls.__name__ = 'LABELS'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Flet.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of FletSpecialOperator.
         """
-        from clispy.evaluator_ import Evaluator
+        from clispy.evaluator import Evaluator
 
-        # Deepcopy current scope to escape from local scope later.
-        lexical_package_manager = copy.deepcopy(package_manager)
-
-        bindings, body = forms.car, forms.cdr
-
-        # The body of a let* is an implicit progn.
-        body = Cons(Symbol('PROGN'), body)
+        bindings, body = forms.car, forms.cdr.car
 
         funcs = []
         exps = []
         while bindings is not Null():
             func, exp = bindings.car.car, bindings.car.cdr
 
-            lexical_package_manager.intern(String(func.value))
+            # Interns symbol that represents function name into current package.
+            PackageManager.intern(String(func.value))
 
             funcs.append(func.value)
 
@@ -281,133 +287,120 @@ class Labels(SpecialOperator):
 
             # The scope of the name bindings encompasses the function definitions
             # themselves as well as the body.
-            exps.append(Evaluator.eval(exp, lexical_package_manager))
+            exps.append(Evaluator.eval(exp, var_env, func_env, macro_env))
 
             bindings = bindings.cdr
 
         # The bindings are in parallel.
-        local_scope = lexical_package_manager.current_package.space['FUNCTION'].extend(params=funcs, args=exps)
-        lexical_package_manager.current_package.space['FUNCTION'] = local_scope
+        func_env = func_env.extend(params=funcs, args=exps)
 
-        return Evaluator.eval(body, lexical_package_manager)
+        return Evaluator.eval(body, var_env, func_env, macro_env)
 
 
-class Let(SpecialOperator):
+class LetSpecialOperator(SpecialOperator):
     """let and let* create new variable bindings and execute a series of forms
     that use these bindings. let performs the bindings in parallel and let* does
     them sequentially.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Let.
+        """Instantiates LetSpecialOperator.
         """
         cls.__name__ = 'LET'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Let.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of LetSpecialOperator.
         """
-        from clispy.evaluator_ import Evaluator
+        from clispy.evaluator import Evaluator
 
-        # Deepcopy current scope to escape from local scope later.
-        lexical_package_manager = copy.deepcopy(package_manager)
-
-        bindings, body = forms.car, forms.cdr
-
-        # The body of a let* is an implicit progn.
-        body = Cons(Symbol('PROGN'), body)
+        bindings, body = forms.car, forms.cdr.car
 
         vars, vals = [], []
         while bindings is not Null():
             var, val = bindings.car.car, bindings.car.cdr.car
 
-            lexical_package_manager.intern(String(var.value))
+            # Interns symbol that represents function name into current package.
+            PackageManager.intern(String(var.value))
 
             vars.append(var.value)
-            vals.append(Evaluator.eval(val, lexical_package_manager))
+            vals.append(Evaluator.eval(val, var_env, func_env, macro_env))
 
             bindings = bindings.cdr
 
         # The bindings are in parallel.
-        local_scope = lexical_package_manager.current_package.space['VARIABLE'].extend(params=vars, args=vals)
-        lexical_package_manager.current_package.space['VARIABLE'] = local_scope
+        var_env = var_env.extend(params=vars, args=vals)
 
-        return Evaluator.eval(body, lexical_package_manager)
+        return Evaluator.eval(body, var_env, func_env, macro_env)
 
 
-class LetAster(SpecialOperator):
+class LetAsterSpecialOperator(SpecialOperator):
     """let and let* create new variable bindings and execute a series of forms
     that use these bindings. let performs the bindings in parallel and let* does
     them sequentially.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates LetAster.
+        """Instantiates LetAsterSpecialOperator.
         """
         cls.__name__ = 'LET*'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of LetAster.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of LetAsterSpecialOperator.
         """
-        from clispy.evaluator_ import Evaluator
+        from clispy.evaluator import Evaluator
 
-        # Deepcopy current scope to escape from local scope later.
-        lexical_package_manager = copy.deepcopy(package_manager)
-
-        bindings, body = forms.car, forms.cdr
-
-        # The body of a let* is an implicit progn.
-        body = Cons(Symbol('PROGN'), body)
+        bindings, body = forms.car, forms.cdr.car
 
         while bindings is not Null():
             var, val = bindings.car.car, bindings.car.cdr.car
 
-            lexical_package_manager.intern(String(var.value))
+            # Interns symbol that represents function name into current package.
+            PackageManager.intern(String(var.value))
 
             var = var.value
-            val = Evaluator.eval(val, lexical_package_manager)
+            val = Evaluator.eval(val, var_env, func_env, macro_env)
 
             # The bindings are in sequence.
-            nested_scope = lexical_package_manager.current_package.space['VARIABLE'].extend(params=[var], args=[val])
-            lexical_package_manager.current_package.space['VARIABLE'] = nested_scope
+            var_env = var_env.extend(params=[var], args=[val])
 
             bindings = bindings.cdr
 
-        return Evaluator.eval(body, lexical_package_manager)
+        return Evaluator.eval(body, var_env, func_env, macro_env)
 
 
-class LoadTimeValue(SpecialOperator):
+class LoadTimeValueSpecialOperator(SpecialOperator):
     """Load-time-value provides a mechanism for delaying evaluation of forms until
     the expression is in the run-time environment
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates LoadTimeValue.
+        """Instantiates LoadTimeValueSpecialOperator.
         """
         cls.__name__ = 'LOAD-TIME-VALUE'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of LoadTimeValue.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of LoadTimeValueSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class Locally(SpecialOperator):
+class LocallySpecialOperator(SpecialOperator):
     """Sequentially evaluates a body of formss in a lexical environment where the
     given declarations have effect.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Locally.
+        """Instantiates LocallySpecialOperator.
         """
         cls.__name__ = 'LOCALLY'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Locally.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of LocallySpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class Macrolet(SpecialOperator):
+class MacroletSpecialOperator(SpecialOperator):
     """flet, labels, and macrolet define local functions and macros, and execute
     forms using the local definitions. forms are executed in order of occurence.
 
@@ -420,214 +413,229 @@ class Macrolet(SpecialOperator):
     by defmacro.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Macrolet.
+        """Instantiates MacroletSpecialOperator.
         """
         cls.__name__ = 'MACROLET'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Macrolet.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of MacroletSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class MultipleValueCall(SpecialOperator):
+class MultipleValueCallSpecialOperator(SpecialOperator):
     """Applies function to a list of the objects collected from groups of
     multiple values
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates MultipleValueCall.
+        """Instantiates MultipleValueCallSpecialOperator.
         """
         cls.__name__ = 'MULTIPLE-VALUE-CALL'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of MutipleValueCall.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of MutipleValueCallSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class MultipleValueProg1(SpecialOperator):
+class MultipleValueProg1SpecialOperator(SpecialOperator):
     """multiple-value-prog1 evaluates first-form and saves all the values
     produced by that form. It then evaluates each form from left to right,
     discarding their values.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates MultipleValueProg1.
+        """Instantiates MultipleValueProg1SpecialOperator.
         """
         cls.__name__ = 'MULTIPLE-VALUE-PROG1'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of MultipleValueProg1.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of MultipleValueProg1SpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class Progn(SpecialOperator):
+class PrognSpecialOperator(SpecialOperator):
     """progn evaluates forms, in the order in which they are given.
     The values of each form but the last are discarded.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Progn.
+        """Instantiates PrognSpecialOperator.
         """
         cls.__name__ = 'PROGN'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Progn.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of PrognSpecialOperator.
         """
-        from clispy.evaluator_ import Evaluator
+        from clispy.evaluator import Evaluator
 
         # The values of eatch form but the last are discarded.
         while forms is not Null():
-            last = Evaluator.eval(forms.car, package_manager)
+            last = Evaluator.eval(forms.car, var_env, func_env, macro_env)
             forms = forms.cdr
 
         return last
 
 
-class Progv(SpecialOperator):
+class ProgvSpecialOperator(SpecialOperator):
     """progv creates new dynamic variable bindings and executes each form
     using those bindings. Each form is evaluated in order.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Progv.
+        """Instantiates ProgvSpecialOperator.
         """
         cls.__name__ = 'PROGV'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Progv.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ProgvSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class Quote(SpecialOperator):
+class QuoteSpecialOperator(SpecialOperator):
     """The quote special operator just returns object.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Quote.
+        """Instantiates QuoteSpecialOperator.
         """
         cls.__name__ = 'QUOTE'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Quote.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of QuoteSpecialOperator.
         """
         return forms.car
 
 
-class ReturnFrom(SpecialOperator):
+class ReturnFromSpecialOperator(SpecialOperator):
     """Returns control and multiple values[2] from a lexically enclosing block.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates ReturnFrom.
+        """Instantiates ReturnFromSpecialOperator.
         """
         cls.__name__ = 'RETURN-FROM'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of ReturnFrom.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ReturnFromSpecialOperator.
         """
-        return forms  # TODO: To implement the behavior.
+        from clispy.evaluator import Evaluator
+
+        block_name, body = forms.car.value, forms.cdr.car
+
+        # Sets return value.
+        retval = Evaluator.eval(body, var_env, func_env, macro_env)
+
+        # name is param of lambda and have throw function as value in call/cc.
+        return var_env.find(block_name)[block_name](retval)
 
 
-class Setq(SpecialOperator):
+class SetqSpecialOperator(SpecialOperator):
     """Assigns values to variables.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Setq.
+        """Instantiates SetqSpecialOperator.
         """
         cls.__name__ = 'SETQ'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Setq.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of SetqSpecialOperator.
         """
-        from clispy.evaluator_ import Evaluator
+        from clispy.evaluator import Evaluator
 
         while forms is not Null():
             symbol, value, forms = forms.car, forms.cdr.car, forms.cdr.cdr
 
             symbol_name = symbol.value
-            value = Evaluator.eval(value, package_manager)
+            value = Evaluator.eval(value, var_env, func_env, macro_env)
 
-            package_manager.intern(String(symbol_name))
+            # Interns symbol that represents function name into current package.
+            PackageManager.intern(String(symbol_name))
+
+            # setq may be used for assignment of both lexical and dynamic variables.
             try:
-                package_manager.find(symbol, env='VARIABLE')[symbol_name] = value
+                var_env.find(symbol_name)[symbol_name] = value
             except LookupError:
-                package_manager.current_package.space['VARIABLE'][symbol_name] = value
+                try:
+                    # package_name=None means finding an environment from current package.
+                    PackageManager.find(symbol_name, package_name=None, status_check=False)[symbol_name] = value
+                except LookupError:
+                    PackageManager.current_package.env['VARIABLE'][symbol_name] = value
 
         # the primary value of the last form
         return value
 
 
-class SymbolMacrolet(SpecialOperator):
+class SymbolMacroletSpecialOperator(SpecialOperator):
     """symbol-macrolet provides a mechanism for affecting the macro expansion
     environment for symbols.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates SymbolMacrolet.
+        """Instantiates SymbolMacroletSpecialOperator.
         """
         cls.__name__ = 'SYMBOL-MACROLET'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of SymbolMacrolet.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of SymbolMacroletSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class Tagbody(SpecialOperator):
+class TagbodySpecialOperator(SpecialOperator):
     """Executes zero or more statements in a lexical environment that provides
     for control transfers to labels indicated by the tags.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Tagbody.
+        """Instantiates TagbodySpecialOperator.
         """
         cls.__name__ = 'TAGBODY'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Tagbody.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of TagbodySpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class The(SpecialOperator):
+class TheSpecialOperator(SpecialOperator):
     """the specifies that the values[1a] returned by form are of the types
     specified by value-type. The consequences are undefined if any result is
     not of the declared type.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates The.
+        """Instantiates TheSpecialOperator.
         """
         cls.__name__ = 'THE'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of The.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of TheSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class Throw(SpecialOperator):
+class ThrowSpecialOperator(SpecialOperator):
     """throw causes a non-local control transfer to a catch whose tag is eq to tag.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Throw.
+        """Instantiates ThrowSpecialOperator.
         """
         cls.__name__ = 'THROW'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of Throw.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ThrowSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
 
-class UnwindProtect(SpecialOperator):
+class UnwindProtectSpecialOperator(SpecialOperator):
     """unwind-protect evaluates protected-form and guarantees that cleanup-forms are
     executed before unwind-protect exits, whether it terminates normally or is
     aborted by a control transfer of some kind. unwind-protect is intended to be
@@ -635,13 +643,13 @@ class UnwindProtect(SpecialOperator):
     of protected-form.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates UnwindProtect.
+        """Instantiates UnwindProtectSpecialOperator.
         """
         cls.__name__ = 'UNWIND-PROTECT'
         return object.__new__(cls)
 
-    def __call__(self, forms, package_manager):
-        """Behavior of UnwindProtect.
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of UnwindProtectSpecialOperator.
         """
         return forms  # TODO: To implement the behavior.
 
@@ -650,28 +658,31 @@ class UnwindProtect(SpecialOperator):
 # Set functions related on special operators
 # ==============================================================================
 
-assign_helper(symbol_name='BLOCK', value=Block(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='CATCH', value=Catch(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='EVAL-WHEN', value=EvalWhen(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='FLET', value=Flet(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='FUNCTION', value=Function_(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='GO', value=Go(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='IF', value=If(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='LABELS', value=Labels(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='LET', value=Let(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='LET*', value=LetAster(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='LOAD-TIME-VALUE', value=LoadTimeValue(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='LOCALLY', value=Locally(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='MACROLET', value=LoadTimeValue(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='MULTIPLE-VALUE-CALL', value=MultipleValueCall(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='MULTIPLE-VALUE-PROG1', value=MultipleValueProg1(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='PROGN', value=Progn(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='PROGV', value=Progv(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='QUOTE', value=Quote(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='RETURN-FROM', value=ReturnFrom(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='SETQ', value=Setq(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='SYMBOL-MACROLET', value=SymbolMacrolet(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='TAGBODY', value=Tagbody(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='THE', value=The(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='THROW', value=Throw(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-assign_helper(symbol_name='UNWIND-PROTECT', value=UnwindProtect(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='BLOCK', value=BlockSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='CATCH', value=CatchSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='EVAL-WHEN', value=EvalWhenSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='FLET', value=FletSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='FUNCTION', value=FunctionSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='GO', value=GoSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='IF', value=IfSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='LABELS', value=LabelsSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='LET', value=LetSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='LET*', value=LetAsterSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='LOAD-TIME-VALUE', value=LoadTimeValueSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='LOCALLY', value=LocallySpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='MACROLET', value=LoadTimeValueSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='MULTIPLE-VALUE-CALL', value=MultipleValueCallSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='MULTIPLE-VALUE-PROG1', value=MultipleValueProg1SpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='PROGN', value=PrognSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='PROGV', value=ProgvSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='QUOTE', value=QuoteSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='RETURN-FROM', value=ReturnFromSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='SETQ', value=SetqSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='SYMBOL-MACROLET', value=SymbolMacroletSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='TAGBODY', value=TagbodySpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='THE', value=TheSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='THROW', value=ThrowSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='UNWIND-PROTECT', value=UnwindProtectSpecialOperator(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+
+# COMMON-LISP-USER package
+use_package_helper(package_name_to_use='COMMON-LISP', package_name='COMMON-LISP-USER')

@@ -1,6 +1,3 @@
-# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -13,11 +10,7 @@
 # limitations under the License.
 # ==============================================================================
 
-# Cons cell is equal to list.
-Cons = list
-
-class DottedPair(Cons):
-    """Dotted Pair inherite Cons (list)
-    """
-    def __init__(self, args):
-        Cons.__init__(self, args)
+from clispy.function.function import *
+from clispy.function.lambda_expression import *
+from clispy.function.special_operator import *
+from clispy.function.system_function import *
