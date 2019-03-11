@@ -1,4 +1,4 @@
-# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-# Cons cell is equal to list.
-Cons = list
-
-class DottedPair(Cons):
-    """Dotted Pair inherite Cons (list)
-    """
-    def __init__(self, args):
-        Cons.__init__(self, args)

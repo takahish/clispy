@@ -1,6 +1,3 @@
-# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -13,7 +10,6 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.interpreter import Interpreter
-
-def repl():
-    Interpreter.repl()
+from clispy.macro.macro import *
+from clispy.macro.reader_macro import *
+from clispy.macro.system_macro import *

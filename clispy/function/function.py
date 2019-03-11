@@ -1,4 +1,4 @@
-# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,26 +13,31 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.type.basecls import BuiltInClass, Symbol
-
 
 # ==============================================================================
-# Defines keyword class.
+# Defines base classes.
 #
-#     Keyword
+#     Function
 # ==============================================================================
 
 
-class Keyword(Symbol):
-    """The type Keyword includes all symbols interned the KEYWORD package.
+class Function(object):
+    """A function is a construct to structure programs. This is known
+    in most programming languages, sometimes also called subroutine or
+    procedure. The bulk of lisp itself consists of functions.
 
-    Interning a symbol in the KEYWORD package has three automatic effects:
-        1. It causes the symbol to become bound to itself.
-        2. It causes the symbol to become an external symbol of the KEYWORD package.
-        3. It causes the symbol to become a constant variable.
+    Despite the importance of macros to The Lisp Way, in the end all
+    real functionality is provided by functions. Macros run at compile time,
+    so the code they generate will consist entirely of calls to functions
+    and special operators.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates Keyword. If an instance of Keyword is already existed
-        in object_table, returns the instance. Otherwise, a new instance is made.
+        """Instantiates SpecialOperator.
         """
-        return BuiltInClass.get_instance(cls, 'KEYWORD', *args)
+        cls.__name__ = 'FUNCTION'
+        return object.__new__(cls)
+
+    def __repr__(self):
+        """The official string representation.
+        """
+        return "#<FUNCTION {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))

@@ -51,6 +51,31 @@ class List(Sequence):
         return BuiltInClass.get_instance(cls, 'LIST', True)
 
 
+class Null(Symbol, List):
+    """The only object of type null is nil, which represents the empty
+    list and can also be notated ().
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates Null. If an instance of Null is already existed
+        in object_table, returns the instance. Otherwise, a new instance is made.
+        """
+        return BuiltInClass.get_instance(cls, 'NULL', False)
+
+    def __init__(self, value=False):
+        """Initializes Null.
+        """
+        self.value = Nil(value)
+
+        # Defines car and cdr that are itself
+        self.car = self
+        self.cdr = self
+
+    def __repr__(self):
+        """The official string representation.
+        """
+        return str(self.value)
+
+
 class Cons(List):
     """A Cons is compound object having two object called car and cdr.
     Each component can be any object.
@@ -64,66 +89,41 @@ class Cons(List):
         else:
             return BuiltInClass.get_instance(cls, 'CONS', *args)
 
-    def __init__(self, car, cdr=None):
+    def __init__(self, car, cdr=Null()):
         """Initializes Cons.
 
         Args:
             car: mix.
             cdr: Cons.
         """
+        # If car is list, converted into Cons.
         if isinstance(car, list):
-            if len(car) == 0:   # when Cons([], `something`) is executed
-                self._car = Null()
-                self._cdr = cdr
-            elif len(car) > 0:  # when Cons([1, 2], `something`) is executed
-                if cdr is None:
-                    cons = Cons.__list_to_cons(car, Null())
-                    self._car = cons.car()
-                    self._cdr = cons.cdr()
-                else:
-                    cons = Cons.__list_to_cons(car, Null())
-                    self._car = cons
-                    self._cdr = cdr
-        else:
-            if cdr is None:
+            if len(car) == 0:
+                car = Null()
+            else:
+                car = Cons.tocons(car)
+
+        # If cdr is list, converted into Cons.
+        if isinstance(cdr, list):
+            if len(cdr) == 0:
                 cdr = Null()
-            self._car = car
-            self._cdr = cdr
+            else:
+                cdr = Cons.tocons(cdr)
+
+        # Sets car and cdr.
+        self.car = car
+        self.cdr = cdr
+
+        # Sets value as list
+        self.value = self._tolist()
 
     def __repr__(self):
         """The official string representation.
         """
-        return '(' + Cons.__repr_helper(self).strip() + ')'
+        return '(' + Cons._repr_helper(self).strip() + ')'
 
-    @property
-    def value(self):
-        """Getter for self._value, Lazy evaluation of self._value.
-        """
-        try:
-            _ = self._value
-        except AttributeError:
-            print("Info: lazy evaluation of an attribute", file=sys.stderr)
-            self._value = self.tolist()
-        finally:
-            return self._value
-
-    def car(self):
-        """Returns an object of car.
-        """
-        return self._car
-
-    def cdr(self):
-        """Returns an object of cdr.
-        """
-        return self._cdr
-
-    def tolist(self):
-        """Returns a python list.
-        """
-        return Cons.__cons_to_list(self, [])
-
-    @staticmethod
-    def __repr_helper(cons):
+    @classmethod
+    def _repr_helper(cls, cons):
         """Helper function for the official string representation.
         """
         if isinstance(cons, Null):        # end of cons
@@ -131,10 +131,15 @@ class Cons(List):
         elif not isinstance(cons, Cons):  # for dotted pair
             return '. ' + str(cons)
         else:
-            return str(cons.car()) + ' ' + Cons.__repr_helper(cons.cdr())
+            return str(cons.car) + ' ' + cls._repr_helper(cons.cdr)
 
-    @staticmethod
-    def __cons_to_list(cons, acc):
+    def _tolist(self):
+        """Returns a python list.
+        """
+        return Cons._tolist_helper(self, [])
+
+    @classmethod
+    def _tolist_helper(cls, cons, acc):
         """Helper function for tolist.
 
         Args:
@@ -150,15 +155,24 @@ class Cons(List):
             acc.append(cons)
             return acc
         else:
-            car = cons.car()
+            car = cons.car
             if not isinstance(car, Cons):
                 acc.append(car)
             else:                         # when car is instance of Cons
-                acc.append(Cons.__cons_to_list(cons.car(), []))
-            return Cons.__cons_to_list(cons.cdr(), acc)
+                acc.append(cls._tolist_helper(cons.car, []))
+            return cls._tolist_helper(cons.cdr, acc)
 
-    @staticmethod
-    def __list_to_cons(lst, cons):
+    @classmethod
+    def tocons(cls, lst):
+        """tocons converts python list into cons.
+        """
+        if (len(lst) >= 3) and lst[-2] is Symbol('.'):
+            return cls._tocons_helper(lst[:-2], lst[-1])
+        else:
+            return cls._tocons_helper(lst, Null())
+
+    @classmethod
+    def _tocons_helper(cls, lst, cons):
         """Helper function for constructor.
 
         Args:
@@ -172,37 +186,6 @@ class Cons(List):
             return cons
         else:
             if not isinstance(lst[-1], list):
-                return Cons.__list_to_cons(lst[:-1], Cons(lst[-1], cons))
+                return cls._tocons_helper(lst[:-1], Cons(lst[-1], cons))
             else:                         # when an element is nested list
-                return Cons.__list_to_cons(lst[:-1], Cons(Cons.__list_to_cons(lst[-1], Null()), cons))
-
-
-class Null(Symbol, List):
-    """The only object of type null is nil, which represents the empty
-    list and can also be notated ().
-    """
-    def __new__(cls, *args, **kwargs):
-        """Instantiates Null. If an instance of Null is already existed
-        in object_table, returns the instance. Otherwise, a new instance is made.
-        """
-        return BuiltInClass.get_instance(cls, 'NULL', False)
-
-    def __init__(self, value=False):
-        """Initializes Null.
-        """
-        self._value = Nil(value)
-
-    def __repr__(self):
-        """The official string representation.
-        """
-        return str(self.value)
-
-    def car(self):
-        """Returns an object of car (itself).
-        """
-        return self
-
-    def cdr(self):
-        """Returns an object of cdr (itself).
-        """
-        return self
+                return cls._tocons_helper(lst[:-1], Cons(cls.tocons(lst[-1]), cons))

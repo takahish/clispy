@@ -15,6 +15,7 @@
 
 from io import StringIO
 import unittest
+from clispy.type.basecls import Symbol
 from clispy.type.sequence import *
 
 
@@ -67,6 +68,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(l_t, Symbol)
         self.assertEqual(l_t.value, 'LIST')
 
+class ConsUnitTestCase(unittest.TestCase):
     def testConsObjectRegistry(self):
         c1 = Cons(2, Cons(1, Null()))
         c2 = Cons(2, Cons(1, Null()))
@@ -77,8 +79,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertFalse(c1 is c3)
 
         # test nested Cons object equality
-        self.assertTrue(c1, c3._car)
-        self.assertTrue(c1, c4._cdr)
+        self.assertTrue(c1, c3.car)
+        self.assertTrue(c1, c4.cdr)
 
     def testCons(self):
         c1 = Cons(2, Cons(1, Null()))
@@ -95,9 +97,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(str(c3), '(3 2 1)')
 
     def testConsConvertedFromList(self):
-        c1 = Cons([1, 2, 3])
-        c2 = Cons([1, [2, [3]]])
-        c3 = Cons([1])
+        c1 = Cons.tocons([1, 2, 3])
+        c2 = Cons.tocons([1, [2, [3]]])
+        c3 = Cons.tocons([1])
 
         self.assertIsInstance(c1, T)
         self.assertIsInstance(c1, Sequence)
@@ -109,12 +111,26 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(str(c3), '(1)')
 
     def testConsConvertedFromEmptyList(self):
-        c = Cons([])
+        c = Cons.tocons([])
 
         self.assertIsInstance(c, T)
         self.assertIsInstance(c, Sequence)
         self.assertIsInstance(c, List)
         self.assertIsInstance(c, Symbol)
+
+    def testConsConvertedFromDottedList(self):
+        c1 = Cons.tocons([1, 2, Symbol('.'), 3])
+        c2 = Cons.tocons([[1, Symbol('.'), 2], 3])
+        c3 = Cons.tocons([1, [2, Symbol('.'), 3]])
+
+        self.assertEqual(str(c1), '(1 2 . 3)')
+        self.assertEqual(str(c2), '((1 . 2) 3)')
+        self.assertEqual(str(c3), '(1 (2 . 3))')
+
+        # Check cdr.
+        self.assertEqual(c1.cdr.cdr, 3)
+        self.assertEqual(c2.car.cdr, 2)
+        self.assertEqual(c3.cdr.car.cdr, 3)
 
     def testConsConvertedFromAtom(self):
         c = Cons(1)
@@ -143,19 +159,11 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(c, Cons)
         self.assertEqual(str(c), '(NIL . 3)')
 
-    def testConsLazyEvaluation(self):
-        c = Cons(1, Cons(2, Null()))
-
-        c.value  # capture stderr string
-        self.assertEqual(self.capture.getvalue(), "Info: lazy evaluation of an attribute\n")
-
-        self.assertEqual(c.value, [1, 2])
-
     def testConsSpecialMethod(self):
         c = Cons(1, Cons(2, Null()))
 
-        self.assertEqual(c.car(), 1)
-        self.assertEqual(c.cdr(), Cons(2, Null()))
+        self.assertEqual(c.car, 1)
+        self.assertEqual(c.cdr, Cons(2, Null()))
 
     def testConsTypeOf(self):
         c_t = Cons(1, Cons(2, Null())).type_of()
@@ -179,19 +187,11 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(str(c2), '((1 . 2) . 3)')
         self.assertEqual(str(c3), '(4 1 . 2)')
 
-    def testConsDottedListLazyEvaluation(self):
-        c = Cons(1, 2)
-
-        c.value  # capture stderr string
-        self.assertEqual(self.capture.getvalue(), "Info: lazy evaluation of an attribute\n")
-
-        self.assertEqual(c.value, [1, 2])
-
     def testConsDottedListSpecialMethods(self):
         c = Cons(1, 2)
 
-        self.assertEqual(c.car(), 1)
-        self.assertEqual(c.cdr(), 2)
+        self.assertEqual(c.car, 1)
+        self.assertEqual(c.cdr, 2)
 
     def testConsDottedListTypeOf(self):
         c = Cons(1, 2).type_of()
