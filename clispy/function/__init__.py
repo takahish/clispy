@@ -1,6 +1,3 @@
-# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -13,8 +10,7 @@
 # limitations under the License.
 # ==============================================================================
 
-import unittest
-
-
-class UnitTestCase(unittest.TestCase):
-    pass
+from clispy.function.function import *
+from clispy.function.lambda_expression import *
+from clispy.function.special_operator import *
+from clispy.function.system_function import *

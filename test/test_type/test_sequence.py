@@ -15,6 +15,7 @@
 
 from io import StringIO
 import unittest
+from clispy.type.basecls import Symbol
 from clispy.type.sequence import *
 
 
@@ -67,6 +68,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(l_t, Symbol)
         self.assertEqual(l_t.value, 'LIST')
 
+class ConsUnitTestCase(unittest.TestCase):
     def testConsObjectRegistry(self):
         c1 = Cons(2, Cons(1, Null()))
         c2 = Cons(2, Cons(1, Null()))
@@ -95,9 +97,9 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(str(c3), '(3 2 1)')
 
     def testConsConvertedFromList(self):
-        c1 = Cons([1, 2, 3])
-        c2 = Cons([1, [2, [3]]])
-        c3 = Cons([1])
+        c1 = Cons.tocons([1, 2, 3])
+        c2 = Cons.tocons([1, [2, [3]]])
+        c3 = Cons.tocons([1])
 
         self.assertIsInstance(c1, T)
         self.assertIsInstance(c1, Sequence)
@@ -109,12 +111,26 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(str(c3), '(1)')
 
     def testConsConvertedFromEmptyList(self):
-        c = Cons([])
+        c = Cons.tocons([])
 
         self.assertIsInstance(c, T)
         self.assertIsInstance(c, Sequence)
         self.assertIsInstance(c, List)
         self.assertIsInstance(c, Symbol)
+
+    def testConsConvertedFromDottedList(self):
+        c1 = Cons.tocons([1, 2, Symbol('.'), 3])
+        c2 = Cons.tocons([[1, Symbol('.'), 2], 3])
+        c3 = Cons.tocons([1, [2, Symbol('.'), 3]])
+
+        self.assertEqual(str(c1), '(1 2 . 3)')
+        self.assertEqual(str(c2), '((1 . 2) 3)')
+        self.assertEqual(str(c3), '(1 (2 . 3))')
+
+        # Check cdr.
+        self.assertEqual(c1.cdr.cdr, 3)
+        self.assertEqual(c2.car.cdr, 2)
+        self.assertEqual(c3.cdr.car.cdr, 3)
 
     def testConsConvertedFromAtom(self):
         c = Cons(1)

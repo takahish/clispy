@@ -84,3 +84,8 @@ class UnitTestCase(unittest.TestCase):
         s = Symbol('symbol')
 
         self.assertEqual(str(s), '|symbol|')
+
+    def testSymtolArithmeticValue(self):
+        s = Symbol('+')
+
+        self.assertEqual(str(s), '+')
