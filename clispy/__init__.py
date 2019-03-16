@@ -14,6 +14,8 @@
 # ==============================================================================
 
 from clispy.interpreter import Interpreter
+from clispy.loader import Loader
 
 def repl():
+    Loader.load("lisp")
     Interpreter.repl()

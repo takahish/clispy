@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import glob
 import sys
 import random
 from clispy.evaluator import Evaluator
@@ -26,6 +27,7 @@ class Interpreter(object):
     # Sets colors.
     GREEN = "\033[0;32m"
     RED = "\033[1;31m"
+    CYAN = "\033[0;36m"
     RESET = "\033[0;0m"
 
     # The Zen of Python, by Tim Peters.
@@ -52,11 +54,11 @@ class Interpreter(object):
     )
 
     @classmethod
-    def repl(cls, prompt='clispy>', inport=InPort(sys.stdin), out=sys.stdout):
+    def repl(cls, prompt='=>', inport=InPort(sys.stdin), out=sys.stdout, zen=True):
         PackageManager.in_package(String("COMMON-LISP-USER"))
         while True:
             try:
-                if prompt:
+                if prompt is not None:
                     # Set prompt.
                     try:
                         prompt = PackageManager.current_package.package_nicknames[0] + '=>'
@@ -72,8 +74,9 @@ class Interpreter(object):
 
                 # Check eof.
                 if forms is Symbol('#<EOF-OJBECT>'):
-                    # Print the zen of python at random.
-                    print("\n\n{}".format(random.choices(cls.the_zen_of_python)[0]), end="\n\n", file=out, flush=True)
+                    if zen:
+                        # Print the zen of python at random.
+                        print("\n{}".format(random.choices(cls.the_zen_of_python)[0]), end="\n\n", file=out, flush=True)
                     return
 
                 # Expand token.
@@ -93,8 +96,8 @@ class Interpreter(object):
                 )
 
                 # Print return value.
-                out.write(cls.RED) # Sets color RED.
-                print("{}{}{}".format(cls.RED, retval, cls.RESET), end="\n\n", file=out, flush=True)
+                if out is not None:
+                    print("{}{}{}".format(cls.CYAN, retval, cls.RESET), end="\n\n", file=out, flush=True)
 
             except Exception as e:
                 print("{}------------------------------------------------------------".format(cls.RED))

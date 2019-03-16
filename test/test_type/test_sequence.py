@@ -69,13 +69,13 @@ class UnitTestCase(unittest.TestCase):
         self.assertEqual(l_t.value, 'LIST')
 
 class ConsUnitTestCase(unittest.TestCase):
-    def testConsObjectRegistry(self):
+    def testConsNotObjectRegistry(self):
         c1 = Cons(2, Cons(1, Null()))
         c2 = Cons(2, Cons(1, Null()))
         c3 = Cons(c1, 3)
         c4 = Cons(3, c1)
 
-        self.assertTrue(c1 is c2)
+        self.assertFalse(c1 is c2)
         self.assertFalse(c1 is c3)
 
         # test nested Cons object equality
@@ -163,7 +163,7 @@ class ConsUnitTestCase(unittest.TestCase):
         c = Cons(1, Cons(2, Null()))
 
         self.assertEqual(c.car, 1)
-        self.assertEqual(c.cdr, Cons(2, Null()))
+        self.assertEqual(c.cdr.car, 2)
 
     def testConsTypeOf(self):
         c_t = Cons(1, Cons(2, Null())).type_of()

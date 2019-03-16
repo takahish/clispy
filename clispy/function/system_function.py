@@ -15,7 +15,7 @@
 
 from clispy.function import Function, Lambda
 from clispy.package import PackageManager, assign_helper, use_package_helper
-from clispy.type import Cons, Integer, Null, Ratio, String, Symbol
+from clispy.type import Cons, Integer, Null, Ratio, String, Symbol, T
 
 
 # ==============================================================================
@@ -145,6 +145,28 @@ class DefmacroSystemFunction(SystemFunction):
             PackageManager.current_package.env['MACRO'][macro_name] = macro
 
         return macro_symbol
+
+
+class EqSystemFunction(SystemFunction):
+    """Returns true if its arguments are the same, identical object;
+    otherwise, returns false.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates EqSystemFunction.
+        """
+        cls.__name__ = 'EQ'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of EqSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Whether arguments are the same or not.
+        if args.car is args.cdr.car:
+            return T()
+        else:
+            return Null()
 
 
 class ConsSystemFunction(SystemFunction):
@@ -300,10 +322,46 @@ class InternSystemFunction(SystemFunction):
         symbol_designator = args.car
         package_designator = args.cdr.car
 
+        # Checks package_designator whether it is given or not.
         if package_designator is Null():
             return PackageManager.intern(symbol_designator=symbol_designator)
         else:
             return PackageManager.intern(symbol_designator=symbol_designator, package_designator=package_designator)
+
+
+class ExportSystemFunction(SystemFunction):
+    """Export makes one or more symbols that are accessible in package (whether directly
+    or by inheritance) be external symbols of that package.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates ExportSystemFunction.
+        """
+        cls.__name__ = 'EXPORT'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ExportSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        symbol_designator = args.car
+        package_designator = args.cdr.car
+
+        # Checks package_designator whether it is given or not.
+        if package_designator is Null():
+            package_designator = None
+
+        if isinstance(symbol_designator, Cons):
+            # If symbol_designator is symbol list, exports all symbols.
+            while symbol_designator.cdr is not Null():
+                PackageManager.export(symbol_designator=symbol_designator.car, package_designator=package_designator)
+                symbol_designator = symbol_designator.cdr
+
+            # The last symbol.
+            return PackageManager.export(symbol_designator=symbol_designator.car, package_designator=package_designator)
+
+        else:
+            return PackageManager.export(symbol_designator=symbol_designator, package_designator=package_designator)
 
 
 class InPackageSystemFunction(SystemFunction):
@@ -322,6 +380,55 @@ class InPackageSystemFunction(SystemFunction):
         """
         args = self.eval_forms(forms, var_env, func_env, macro_env)
         return PackageManager.in_package(package_designator=args.car)
+
+
+class UsePackageSystemFunction(SystemFunction):
+    """use-package causes package to inherit all the external symbols of packages-to-use.
+    The inherited symbols become accessible as internal symbols of package.
+
+    packages-to-use are added to the use list of package if they are not there already.
+    All external symbols in packages-to-use become accessible in package as internal
+    symbols. use-package does not cause any new symbols to be present in package but
+    only makes them accessible by inheritance.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates UsePackageSystemFunction.
+        """
+        cls.__name__ = 'USE-PACKAGE'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of UsePackageSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        package_designator_to_use = args.car
+        package_designator = args.cdr.car
+
+        # Checks package_designator whether it is given or not.
+        if package_designator is Null():
+            package_designator = None
+
+        if isinstance(package_designator_to_use, Cons):
+            # If package_designator_to_use is symbol list, exports all symbols.
+            while package_designator_to_use.cdr is not Null():
+                PackageManager.use_package(
+                    package_designator_to_use=package_designator_to_use.car,
+                    package_designator=package_designator
+                )
+                package_designator_to_use = package_designator_to_use.cdr
+
+            # The last package_dexignator_to_use.
+            return PackageManager.use_package(
+                package_designator_to_use=package_designator_to_use.car,
+                package_designator=package_designator
+            )
+
+        else:
+            return PackageManager.use_package(
+                package_designator_to_use=package_designator_to_use,
+                package_designator=package_designator
+            )
 
 
 class AddSystemFunction(SystemFunction):
@@ -430,6 +537,181 @@ class DivSystemFunction(SystemFunction):
         return retval
 
 
+class NumericalEqualSystemFunction(SystemFunction):
+    """The value of = is true if all numbers are the same in value;
+    otherwise it is false.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates NumericalEqualSystemFunction.
+        """
+        cls.__name__ = '='
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of NumericalEqualSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets initial value.
+        val, args = args.car, args.cdr
+
+        # Whether all numbers are the same or not.
+        while args is not Null():
+            if args.car != val:
+                return Null()
+            args = args.cdr
+
+        return T()
+
+
+class NumericalNotEqualSystemFunction(SystemFunction):
+    """The value of /= is true if no two numbers are the same in value;
+    otherwise it is false.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates NumericalNotEqualSystemFunction.
+        """
+        cls.__name__ = '/='
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of NumericalNotEqualSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets initial value.
+        val, args = args.car, args.cdr
+
+        # Whether no two numbers are the same or not.
+        while args is not Null():
+            rest_args = args
+            while rest_args is not Null():
+                if rest_args.car == val:
+                    return Null()
+                rest_args = rest_args.cdr
+
+            # Updates value and args.
+            val, args = args.car, args.cdr
+
+        return T()
+
+
+class LessThanSystemFunction(SystemFunction):
+    """The value of < is true if the numbers are in monotonically increasing order;
+    otherwise it is false.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates LessThanSystemFunction.
+        """
+        cls.__name__ = '<'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of LessThanSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets initial value.
+        val, args = args.car, args.cdr
+
+        # Whether the numbers are in monotonically increasing order or not.
+        while args is not Null():
+            if val >= args.car:
+                return Null()
+
+            # Updates value and args.
+            val, args = args.car, args.cdr
+
+        return T()
+
+
+class GreaterThanSystemFunction(SystemFunction):
+    """The value of > is true if the numbers are in monotonically decreasing order;
+    otherwise it is false.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates GreaterThanSystemFunction.
+        """
+        cls.__name__ = '>'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of GreaterThanSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets initial value.
+        val, args = args.car, args.cdr
+
+        # Whether the numbers are in monotonically decreasing order or not.
+        while args is not Null():
+            if val <= args.car:
+                return Null()
+
+            # Updates value and args.
+            val, args = args.car, args.cdr
+
+        return T()
+
+
+class LessThanEqualSystemFunction(SystemFunction):
+    """The value of <= is true if the numbers are in monotonically nondecreasing order;
+    otherwise it is false.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates LessThanEqualSystemFunction.
+        """
+        cls.__name__ = '<='
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of LessThanEqualSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets initial value.
+        val, args = args.car, args.cdr
+
+        # Whether the numbers are in monotonically increasing order or not.
+        while args is not Null():
+            if val > args.car:
+                return Null()
+
+            # Updates value and args.
+            val, args = args.car, args.cdr
+
+        return T()
+
+
+class GreaterThanEqualSystemFunction(SystemFunction):
+    """The value of >= is true if the numbers are in monotonically nonincreasing order;
+    otherwise it is false.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates GreaterThanSystemFunction.
+        """
+        cls.__name__ = '>='
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of GreaterThanSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets initial value.
+        val, args = args.car, args.cdr
+
+        # Whether the numbers are in monotonically decreasing order or not.
+        while args is not Null():
+            if val < args.car:
+                return Null()
+
+            # Updates value and args.
+            val, args = args.car, args.cdr
+
+        return T()
+
+
 # ==============================================================================
 # Set functions related on special operators
 # ==============================================================================
@@ -437,17 +719,27 @@ class DivSystemFunction(SystemFunction):
 assign_helper(symbol_name='LAMBDA', value=LambdaSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='DEFUN', value=DefunSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='DEFMACRO', value=DefmacroSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='EQ', value=EqSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='EQL', value=EqSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='CONS', value=ConsSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='CAR', value=CarSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='CDR', value=CdrSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='APPEND', value=AppendSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='FIND-SYMBOL', value=FindSymbolSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='INTERN', value=InternSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='EXPORT', value=ExportSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='IN-PACKAGE', value=InPackageSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='USE-PACKAGE', value=UsePackageSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='+', value=AddSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='-', value=SubSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='*', value=MulSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='/', value=DivSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='=', value=NumericalEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='/=', value=NumericalNotEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='<', value=LessThanSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='>', value=GreaterThanSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='<=', value=LessThanEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='>=', value=GreaterThanEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 
 # COMMON-LISP-USER package
 use_package_helper(package_name_to_use='COMMON-LISP', package_name='COMMON-LISP-USER')

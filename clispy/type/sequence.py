@@ -87,7 +87,20 @@ class Cons(List):
         if len(args) == 1 and isinstance(args[0], list) and len(args[0]) == 0:
             return Null()  # when Cons([]) is executed
         else:
-            return BuiltInClass.get_instance(cls, 'CONS', *args)
+            # Don't use BuiltInClass.get_instance.
+            # Because a cons object is different from another cons.
+            # If a cons object is binded, it is equal to itself.
+            #
+            # For example,
+            #   (eq (cons 'a 'b) (cons 'a 'b)) => nil
+            #   (eq '(a . b) '(a . b)) => nil
+            #   (progn (setq x (cons 'a 'b)) (eq x x)) =>  t
+            #   (progn (setq x '(a . b)) (eq x x)) =>  t
+
+            #return BuiltInClass.get_instance(cls, 'CONS', *args)
+
+            cls.__name__ = 'CONS'
+            return object.__new__(cls)
 
     def __init__(self, car, cdr=Null()):
         """Initializes Cons.

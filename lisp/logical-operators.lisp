@@ -1,4 +1,4 @@
-;;;; Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
+;;;; Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
 ;;;;
 ;;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;;; you may not use this file except in compliance with the License.
@@ -13,10 +13,19 @@
 ;;;; limitations under the License.
 ;;;; ==========================================================================
 
-(defmacro when (test-form &rest body)
-  `(if ,test-form
-       (progn ,@body)))
+(in-package "COMMON-LISP")
 
-(defmacro unless (test-form &rest body)
-  `(if (not ,test-form)
-       (progn ,@body)))
+
+;;; Defines functions, macros or classes.
+
+(defun not (x) (if x nil t))
+
+
+;;; Exports symbols.
+
+(export 'not)
+
+
+;;; Inherits symbols from common-lisp.
+
+(use-package 'common-lisp 'common-lisp-user)
