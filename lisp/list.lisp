@@ -23,10 +23,54 @@
       0
       (+ 1 (list-length (cdr lst)))))
 
+(defun nth (n lst)
+  (labels ((ith (i lst)
+             (if (= i n)
+                 (car lst)
+                 (ith (+ i 1) (cdr lst)))))
+    (ith 0 lst)))
+
+(defun first (lst) (car lst))
+
+(defun second (lst) (cadr lst))
+
+(defun third (lst) (caddr lst))
+
+(defun fourth (lst) (cadddr lst))
+
+(defun fifth (lst) (nth 4 lst))
+
+(defun sixth (lst) (nth 5 lst))
+
+(defun seventh (lst) (nth 6 lst))
+
+(defun eighth (lst) (nth 7 lst))
+
+(defun ninth (lst) (nth 8 lst))
+
+(defun tenth (lst) (nth 9 lst))
+
+(defun rest (lst) (cdr lst))
+
+(defun nthcdr (n lst)
+  (labels ((ithcdr (i lst)
+             (if (= i n)
+                 lst
+                 (ithcdr (+ i 1) (cdr lst)))))
+    (ithcdr 0 lst)))
+
+(defun last (lst)
+  (labels ((find-last (first rest)
+             (if (eq rest nil)
+                 first
+                 (find-last (car rest) (cdr rest)))))
+    (find-last nil lst)))
+
 
 ;;; Exports symbols.
 
-(export 'list-length)
+(export '(list-length nth first second third fourth fifth sixth seventh eighth
+          ninth tenth rest nthcdr last))
 
 
 ;;; Inherits symbols from common-lisp.
