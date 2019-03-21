@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-import glob
 import sys
 import random
 from clispy.evaluator import Evaluator
@@ -24,12 +23,6 @@ from clispy.type import String, Symbol
 
 
 class Interpreter(object):
-    # Sets colors.
-    GREEN = "\033[0;32m"
-    RED = "\033[1;31m"
-    CYAN = "\033[0;36m"
-    RESET = "\033[0;0m"
-
     # The Zen of Python, by Tim Peters.
     the_zen_of_python = (
         "Beautiful is better than ugly.",
@@ -54,11 +47,11 @@ class Interpreter(object):
     )
 
     @classmethod
-    def repl(cls, prompt='=>', inport=InPort(sys.stdin), out=sys.stdout, zen=True):
+    def repl(cls, prompt=True, inport=InPort(sys.stdin), out=sys.stdout):
         PackageManager.in_package(String("COMMON-LISP-USER"))
         while True:
             try:
-                if prompt is not None:
+                if prompt:
                     # Set prompt.
                     try:
                         prompt = PackageManager.current_package.package_nicknames[0] + '=>'
@@ -66,17 +59,15 @@ class Interpreter(object):
                         prompt = PackageManager.current_package.package_name + '=>'
 
                     # Wait input.
-                    prompt = cls.GREEN+prompt+cls.RESET
-                    print("{}{}{}".format(cls.GREEN, prompt, cls.RESET), end=' ', file=out, flush=True)
+                    print(prompt, end=' ', file=out, flush=True)
 
                 # Parse inport.
                 forms = Parser.parse(inport)
 
                 # Check eof.
                 if forms is Symbol('#<EOF-OJBECT>'):
-                    if zen:
-                        # Print the zen of python at random.
-                        print("\n{}".format(random.choices(cls.the_zen_of_python)[0]), end="\n\n", file=out, flush=True)
+                    # Print the zen of python at random.
+                    print(random.choices(cls.the_zen_of_python)[0], end="\n\n", file=out, flush=True)
                     return
 
                 # Expand token.
@@ -96,9 +87,8 @@ class Interpreter(object):
                 )
 
                 # Print return value.
-                if out is not None:
-                    print("{}{}{}".format(cls.CYAN, retval, cls.RESET), end="\n\n", file=out, flush=True)
+                print(retval, end="\n\n", file=out, flush=True)
 
             except Exception as e:
-                print("{}------------------------------------------------------------".format(cls.RED))
-                print("{}: {}{}".format(type(e).__name__, e, cls.RESET), end="\n\n", file=out, flush=True)
+                print("------------------------------------------------------------")
+                print("{}: {}".format(type(e).__name__, e), end="\n\n", file=out, flush=True)
