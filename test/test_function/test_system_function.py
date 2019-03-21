@@ -883,7 +883,7 @@ class QuitSystemFunctionUnitTestCase(unittest.TestCase):
         # Checks official representation.
         self.assertRegex(str(quit_), r"#<SYSTEM-FUNCTION QUIT \{[0-9A-Z]+\}>")
 
-    def testQuitSystemFunction(self):
+    def testQuitSystemFunction_call(self):
         # Import Interrupt exception class form clispy.interpreter.
         from clispy.interpreter import Interrupt
 
