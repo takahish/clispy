@@ -14,10 +14,11 @@
 # ==============================================================================
 
 import unittest
-from clispy.type import Cons, Integer, Keyword, Null, Ratio, String, Symbol
 from clispy.function.system_function import *
+from clispy.interpreter import Interrupt
 from clispy.package import PackageManager
 from clispy.parser import Parser
+from clispy.type import Cons, Integer, Keyword, Null, Ratio, String, Symbol
 
 
 class SystemFunctionUnitTestCase(unittest.TestCase):
@@ -873,3 +874,27 @@ class GreaterThanEqualSystemFunctionUnitTestCase(unittest.TestCase):
         # Checks return value.
         self.assertEqual(retval, Null())
 
+
+class QuitSystemFunctionUnitTestCase(unittest.TestCase):
+    def testQuitSystemFunction(self):
+        # Makes an instance of QuitSystemFunction.
+        quit_ = QuitSystemFunction()
+
+        # Checks official representation.
+        self.assertRegex(str(quit_), r"#<SYSTEM-FUNCTION QUIT \{[0-9A-Z]+\}>")
+
+    def testQuitSystemFunction(self):
+        # Import Interrupt exception class form clispy.interpreter.
+        from clispy.interpreter import Interrupt
+
+        # Makes an instance of QuitSystemFunction.
+        quit_ = QuitSystemFunction()
+
+        # Checks raise exception.
+        with self.assertRaises(Interrupt):
+            quit_(
+                Parser.parse('()'),
+                PackageManager.current_package.env['VARIABLE'],
+                PackageManager.current_package.env['FUNCTION'],
+                PackageManager.current_package.env['MACRO']
+            )

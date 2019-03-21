@@ -712,6 +712,25 @@ class GreaterThanEqualSystemFunction(SystemFunction):
         return T()
 
 
+class QuitSystemFunction(SystemFunction):
+    """Quit interpreter.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates QuitSystemFunction.
+        """
+        cls.__name__ = 'QUIT'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of QuitSystemFunction.
+        """
+        # Import Interrupt exception class from clispy.interpreter.
+        from clispy.interpreter import Interrupt
+
+        # Raises Interrupt.
+        raise Interrupt()
+
+
 # ==============================================================================
 # Set functions related on special operators
 # ==============================================================================
@@ -740,6 +759,8 @@ assign_helper(symbol_name='<', value=LessThanSystemFunction(), package_name='COM
 assign_helper(symbol_name='>', value=GreaterThanSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='<=', value=LessThanEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='>=', value=GreaterThanEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='QUIT', value=QuitSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+
 
 # COMMON-LISP-USER package
 use_package_helper(package_name_to_use='COMMON-LISP', package_name='COMMON-LISP-USER')

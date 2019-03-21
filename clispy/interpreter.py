@@ -47,11 +47,11 @@ class Interpreter(object):
     )
 
     @classmethod
-    def repl(cls, prompt=True, inport=InPort(sys.stdin), out=sys.stdout):
+    def repl(cls, prompt='=>', inport=InPort(sys.stdin), out=sys.stdout, zen=True):
         PackageManager.in_package(String("COMMON-LISP-USER"))
         while True:
             try:
-                if prompt:
+                if prompt is not None:
                     # Set prompt.
                     try:
                         prompt = PackageManager.current_package.package_nicknames[0] + '=>'
@@ -66,8 +66,6 @@ class Interpreter(object):
 
                 # Check eof.
                 if forms is Symbol('#<EOF-OJBECT>'):
-                    # Print the zen of python at random.
-                    print(random.choices(cls.the_zen_of_python)[0], end="\n\n", file=out, flush=True)
                     return
 
                 # Expand token.
@@ -87,8 +85,21 @@ class Interpreter(object):
                 )
 
                 # Print return value.
-                print(retval, end="\n\n", file=out, flush=True)
+                if out is not None:
+                    print(retval, end="\n\n", file=out, flush=True)
+
+            except Interrupt:
+                if zen:
+                    # Print the zen of python at random.
+                    print(random.choices(cls.the_zen_of_python)[0], end="\n\n", file=out, flush=True)
+                return
 
             except Exception as e:
                 print("------------------------------------------------------------")
                 print("{}: {}".format(type(e).__name__, e), end="\n\n", file=out, flush=True)
+
+
+class Interrupt(Exception):
+    """Intrrupt interpreter.
+    """
+    pass
