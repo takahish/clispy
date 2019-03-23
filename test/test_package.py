@@ -252,18 +252,18 @@ class PackageManagerTestCase(unittest.TestCase):
 
         # The package_designator argument is omitted,
         # symbol_designator is interned to PackageManager.current_package.symbol_container.
-        symbol, status = PackageManager.intern(symbol_designator=String('INTERN'))
+        symbol, status = PackageManager.intern(symbol_designator=String('TEST-INTERN'))
 
-        self.assertTrue(symbol is Symbol('INTERN'))
-        self.assertTrue(status is Keyword(':INTERNAL'))
-        self.assertTrue('INTERN' in PackageManager.current_package.symbol_container.keys())
-        self.assertEqual(PackageManager.current_package.symbol_container['INTERN'], [Symbol('INTERN'), Keyword(':INTERNAL'), None])
+        self.assertTrue(symbol is Symbol('TEST-INTERN'))
+        self.assertTrue(status is Null())
+        self.assertTrue('TEST-INTERN' in PackageManager.current_package.symbol_container.keys())
+        self.assertEqual(PackageManager.current_package.symbol_container['TEST-INTERN'], [Symbol('TEST-INTERN'), Keyword(':INTERNAL'), None])
 
         # The package_designator argument is supplied to the specified package.
         symbol, status = PackageManager.intern(symbol_designator=String('INTERN-WITH-PACKAGE'), package_designator=String('COMMON-LISP-USER'))
 
         self.assertTrue(symbol is Symbol('INTERN-WITH-PACKAGE'))
-        self.assertTrue(status is Keyword(':INTERNAL'))
+        self.assertTrue(status is Null())
         self.assertTrue('INTERN-WITH-PACKAGE' in PackageManager.package_container['COMMON-LISP-USER'].symbol_container.keys())
         self.assertEqual(PackageManager.package_container['COMMON-LISP-USER'].symbol_container['INTERN-WITH-PACKAGE'], [Symbol('INTERN-WITH-PACKAGE'), Keyword(':INTERNAL'), None])
 
