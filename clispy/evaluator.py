@@ -15,6 +15,7 @@
 
 from clispy.function import *
 from clispy.package import PackageManager
+from clispy.python import *
 from clispy.type import Cons, Null, Symbol
 
 
