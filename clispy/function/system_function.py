@@ -15,7 +15,7 @@
 
 from clispy.function import Function, Lambda
 from clispy.package import PackageManager, assign_helper, use_package_helper
-from clispy.type import Cons, Integer, Null, Ratio, String, Symbol, T
+from clispy.type import Cons, Integer, Null, Ratio, SingleFloat, String, Symbol, T
 
 
 # ==============================================================================
@@ -731,6 +731,39 @@ class QuitSystemFunction(SystemFunction):
         raise Interrupt()
 
 
+class CoerceSystemFunction(SystemFunction):
+    """The following function may be used to convert an object to
+    an equivalent object of another type.
+    """
+    # Defines mapping table for symbol name and type classes.
+    symbo_to_class = {
+        'T': T,
+        'NULL': Null,
+        'SYMBOL': Symbol,
+        'CONS': Cons.tocons,
+        'STRING': String,
+        'INTEGER': Integer,
+        'SINGLE-FLOAT': SingleFloat
+    }
+
+    def __new__(cls, *args, **kwargs):
+        """Instantiates CoerceSystemFunction.
+        """
+        cls.__name__ = 'COERCE'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of CoerceSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets an object and result type.
+        object_ = args.car
+        result_type = args.cdr.car
+
+        return self.symbo_to_class[result_type.value](object_.value)
+
+
 # ==============================================================================
 # Set functions related on special operators
 # ==============================================================================
@@ -760,7 +793,7 @@ assign_helper(symbol_name='>', value=GreaterThanSystemFunction(), package_name='
 assign_helper(symbol_name='<=', value=LessThanEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='>=', value=GreaterThanEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='QUIT', value=QuitSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-
+assign_helper(symbol_name='COERCE', value=CoerceSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 
 # COMMON-LISP-USER package
 use_package_helper(package_name_to_use='COMMON-LISP', package_name='COMMON-LISP-USER')

@@ -16,7 +16,7 @@
 from clispy.function import SystemFunction
 from clispy.package import assign_helper
 from clispy.python import PyObject
-from clispy.type import Cons, Null, T
+from clispy.type import Cons, Integer, Null, SingleFloat, String, Symbol, T
 
 
 # ==============================================================================
@@ -40,8 +40,14 @@ class ObjectManipulation(SystemFunction):
         return "#<OBJECT-MANIPULATION {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))
 
 
+# ==============================================================================
+# Defines object manipulation classes.
+#
+#     make    call
+# ==============================================================================
+
 class CallObjectManipulation(ObjectManipulation):
-    """Call python object with message (method) and args.
+    """Calls python object with message (method) and args.
     """
     def __new__(cls, *args, **kwargs):
         """Instaintiates CallObjectManipulation.
@@ -54,7 +60,7 @@ class CallObjectManipulation(ObjectManipulation):
         """
         args = self.eval_forms(forms, var_env, func_env, macro_env)
 
-        # Sets identifier of python object and attribute.
+        # Sets python object and identifier of attribute.
         py_object = args.car
         py_attr = args.cdr.car
 

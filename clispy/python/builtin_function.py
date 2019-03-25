@@ -55,7 +55,7 @@ class BuiltinFunction(SystemFunction):
         """
         return "#<BUILTIN-FUNCTION {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))
 
-    def exec(self, py_func_name, args):
+    def exec_func(self, py_func_name, args):
         """Executes builtin function.
         """
         # Sets args for function.
@@ -64,11 +64,11 @@ class BuiltinFunction(SystemFunction):
             py_args.append(args.car.value)
             args = args.cdr
 
-        return PyObject(__builtins__[py_func_name](*py_args))
+        return __builtins__[py_func_name](*py_args)
 
 
 # ==============================================================================
-# Defines special operator classes.
+# Defines builtin function classes.
 #
 #    abs         delattr   hash       memoryview set
 #    all         dict      help       min        setattr
@@ -101,7 +101,64 @@ class AbsBuiltinFunction(BuiltinFunction):
         """Behavior of AbsBuiltinFunction.
         """
         args = self.eval_forms(forms, var_env, func_env, macro_env)
-        return self.exec(py_func_name='abs', args=args)
+        return PyObject(self.exec_func(py_func_name='abs', args=args))
+
+
+class BoolBuiltinFunction(BuiltinFunction):
+    """Return a Boolean value, i.e. one of True or False. x is converted using
+    the standard truth testing procedure. If x is false or omitted, this
+    returns False; otherwise it returns True.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates BoolBuiltinFunction.
+        """
+        cls.__name__ = 'BOOL'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of BoolBuiltinFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+        return PyObject(self.exec_func(py_func_name='bool', args=args))
+
+
+class CallableBuiltinFunction(BuiltinFunction):
+    """Return True if the object argument appears callable, False if not.
+    If this returns true, it is still possible that a call fails, but
+    if it is false, calling object will never succeed. Note that classes
+    are callable (calling a class returns a new instance); instances are
+    callable if their class has a __call__() method.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates CallableBuiltinFunction.
+        """
+        cls.__name__ = 'CALLABLE'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of CallableBuiltinFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+        return PyObject(self.exec_func(py_func_name='callable', args=args))
+
+
+class CompileBuiltinFunction(BuiltinFunction):
+    """Compile the source into a code or AST object. Code objects can
+    be exec_funcuted by exec_func() or eval(). source can either be a normal
+    string, a byte string, or an AST object. Refer to the ast module
+    documentation for information on how to work with AST objects.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instaintiates CompileBuiltinFunction.
+        """
+        cls.__name__ = 'COMPILE'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of CompileBuiltinFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+        return PyObject(self.exec_func(py_func_name='compile', args=args))
 
 
 class PrintBuiltinFunction(BuiltinFunction):
@@ -119,7 +176,28 @@ class PrintBuiltinFunction(BuiltinFunction):
         """Behavior of PrintBuiltinFunction.
         """
         args = self.eval_forms(forms, var_env, func_env, macro_env)
-        return self.exec(py_func_name='print', args=args)
+        return PyObject(self.exec_func(py_func_name='print', args=args))
+
+
+class SortedBuiltinFunction(BuiltinFunction):
+    """Return a new sorted list from the items in iterable.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates SortedBuiltinFunction.
+        """
+        cls.__name__ = 'SORTED'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of SortedBuiltinFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # If an argument is empty list.
+        if args.car is Null():
+            return PyObject([])
+
+        return PyObject(self.exec_func(py_func_name='sorted', args=args))
 
 
 # ==============================================================================
@@ -127,4 +205,8 @@ class PrintBuiltinFunction(BuiltinFunction):
 # ==============================================================================
 
 assign_helper(symbol_name='ABS', value=AbsBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='BOOL', value=BoolBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='CALLABLE', value=CallableBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='COMPILE', value=CompileBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='PRINT', value=PrintBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='SORTED', value=SortedBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
