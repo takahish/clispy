@@ -20,8 +20,10 @@
 #     Function
 # ==============================================================================
 
+from clispy.type import Symbol, T
 
-class Function(object):
+
+class Function(T):
     """A function is a construct to structure programs. This is known
     in most programming languages, sometimes also called subroutine or
     procedure. The bulk of lisp itself consists of functions.
@@ -34,6 +36,7 @@ class Function(object):
     def __new__(cls, *args, **kwargs):
         """Instantiates SpecialOperator.
         """
+        # Don't use BuiltInClass.get_instance.
         cls.__name__ = 'FUNCTION'
         return object.__new__(cls)
 
@@ -41,3 +44,15 @@ class Function(object):
         """The official string representation.
         """
         return "#<FUNCTION {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))
+
+    @classmethod
+    def class_of(cls):
+        """Returns the class of which the object is a direct instance.
+        """
+        return cls
+
+    @classmethod
+    def type_of(cls):
+        """Returns a type specifier for a type that has the objects as an element.
+        """
+        return Symbol('FUNCTION')

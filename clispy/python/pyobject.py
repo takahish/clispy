@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.type import T
+from clispy.type import Symbol, T
 
 
 class PyObject(T):
@@ -35,3 +35,15 @@ class PyObject(T):
         """The official string representation.
         """
         return str(self.value)
+
+    @classmethod
+    def class_of(cls):
+        """Returns the class of which the object is a direct instance.
+        """
+        return cls
+
+    @classmethod
+    def type_of(cls):
+        """Returns a type specifier for a type that has the objects as an element.
+        """
+        return Symbol('PYTHON-OBJECT')

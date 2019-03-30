@@ -200,6 +200,25 @@ class SortedBuiltinFunction(BuiltinFunction):
         return PyObject(self.exec_func(py_func_name='sorted', args=args))
 
 
+class TypeBuiltinFunction(BuiltinFunction):
+    """With one argument, return the type of an object. The return value is a type
+    object and generally the same object as returned by object.__class__.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates TypeBuiltinFunction.
+        """
+        cls.__name__ = 'TYPE'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of TypeBuiltinFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # type return value a type object, so it dose not wrap by using PyObject.
+        return type(args.car)
+
+
 # ==============================================================================
 # Set functions related on buitin function
 # ==============================================================================
@@ -210,3 +229,4 @@ assign_helper(symbol_name='CALLABLE', value=CallableBuiltinFunction(), package_n
 assign_helper(symbol_name='COMPILE', value=CompileBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='PRINT', value=PrintBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='SORTED', value=SortedBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='TYPE', value=TypeBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
