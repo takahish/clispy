@@ -15,7 +15,8 @@
 
 from clispy.function import Function, Lambda
 from clispy.package import PackageManager, assign_helper, use_package_helper
-from clispy.type import Cons, Integer, Null, Ratio, String, Symbol, T
+from clispy.type import Cons, Integer, List, Null, Ratio, Real, Sequence, String, T, Vector
+from clispy.type import Float, ShortFloat, SingleFloat, DoubleFloat, LongFloat
 
 
 # ==============================================================================
@@ -731,6 +732,177 @@ class QuitSystemFunction(SystemFunction):
         raise Interrupt()
 
 
+class CoerceSystemFunction(SystemFunction):
+    """The following function may be used to convert an object to
+    an equivalent object of another type.
+    """
+    # Type specified.
+    type_specified = {
+        'SEQUENCE': Sequence,
+        'LIST': List,
+        'NULL': Null,
+        'CONS': Cons,
+        'VECTOR': Vector,
+        'STRING': String,
+        'FLOAT': Float,
+        'SHORT-FLOAT': ShortFloat,
+        'SINGLE-FLOAT': SingleFloat,
+        'DOUBLE-FLOAT': DoubleFloat,
+        'LONG-FLOAT': LongFloat,
+        'T': T
+    }
+
+    def __new__(cls, *args, **kwargs):
+        """Instantiates CoerceSystemFunction.
+        """
+        cls.__name__ = 'COERCE'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of CoerceSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets an object_ and a result type.
+        object_ = args.car
+        result_type = args.cdr.car
+
+        # If object_ is already of the specified type, then it is simply returned.
+        if isinstance(object_, self.type_specified[result_type.value]):
+            return object_
+
+        # Converts object_.
+        if issubclass(self.type_specified[result_type.value], Sequence):
+            return self.to_sequence(object_, result_type)
+        elif issubclass(self.type_specified[result_type.value], Float):
+            return self.to_float(object_, result_type)
+
+    @classmethod
+    def to_sequence(cls, object_, result_type):
+        """Converts object_ to Sequence.
+        """
+        from clispy.python import PyObject
+
+        # Checks object_ classes.
+        if (not isinstance(object_, Sequence)) and (not isinstance(object_, PyObject)):
+            raise SimpleTypeError("{} can't be converted to type {}.".format(str(object_), str(result_type)))
+
+        # Converts object_ to result_type that is subclass of Sequence.
+        if cls.type_specified[result_type.value] is Null:
+            return cls.to_null(object_, result_type)
+        elif cls.type_specified[result_type.value] is Cons:
+            return cls.to_cons(object_, result_type)
+        elif cls.type_specified[result_type.value] is T:
+            return cls.to_t(object_, result_type)
+
+    @classmethod
+    def to_null(cls, object_, result_type):
+        """Converts object_ to Null.
+        """
+        # Checks a length of sequence.
+        sequence_length = len(object_.value)
+
+        # If sequence_length is greater than zero, SIMPLE-TYPE-ERROR is occured.
+        if sequence_length > 0:
+            raise SimpleTypeError("The requested length ({}) does not match the specified type {}.".format(
+                str(sequence_length),
+                str(result_type)
+            ))
+        return Null()
+
+    @classmethod
+    def to_cons(cls, object_, result_type):
+        """Converts object_ to Cons.
+        """
+        # Checks a length of sequence.
+        if isinstance(object_, Null):
+            sequence_length = 0
+        else:
+            sequence_length = len(object_.value)
+
+        # If sequence_length is zero, SIMPLE-TYPE-ERROR is occured.
+        if sequence_length == 0:
+            raise SimpleTypeError("The requested length ({}) does not match the specified type {}.".format(
+                str(sequence_length),
+                str(result_type)
+            ))
+
+        if isinstance(object_.value, list):
+            return Cons.tocons(object_.value)
+        else: # If object_.value is not list, it is converted to list in advance.
+            return Cons.tocons(list(object_.value))
+
+    @classmethod
+    def to_float(cls, object_, result_type):
+        # Converts object_ to float.
+        from clispy.python import PyObject
+
+        # Checks object_ classes.
+        if (not isinstance(object_, Real)) and (not isinstance(object_, PyObject)):
+            raise SimpleTypeError("{} can't be converted to type {}.".format(str(object_), str(result_type)))
+
+        # Converts object_ to result_type that is subclass of Sequence.
+        return cls.type_specified[result_type.value](object_.value)
+
+    @classmethod
+    def to_t(cls, object_, result_type):
+        # Converts object_ to t.
+        # In this case, the object is simply returned.
+        return object_
+
+
+class TypeOfSystemFunction(SystemFunction):
+    """Returns a type specifier, typespec, for a type that has the object as an element.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates TypeOfSystemFunction.
+        """
+        cls.__name__ = 'TYPE-OF'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of TypeOfSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets an object_.
+        object_ = args.car
+
+        return object_.type_of()
+
+
+class ClassOfSystemFunction(SystemFunction):
+    """Returns the class of which the object is a direct instance.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates ClassOfSystemFunction.
+        """
+        cls.__name__ = 'CLASS-OF'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ClassOfSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets an object_.
+        object_ = args.car
+
+        return object_.class_of()
+
+
+# ==============================================================================
+# Defines some exception classes
+# ==============================================================================
+
+class SimpleTypeError(Exception):
+    def __new__(cls, *args, **kwargs):
+        """Instantiates SimpleTypeError.
+        """
+        cls.__name__ = 'SIMPLE-TYPE-ERROR'
+        return Exception.__new__(cls)
+
+
 # ==============================================================================
 # Set functions related on special operators
 # ==============================================================================
@@ -760,7 +932,9 @@ assign_helper(symbol_name='>', value=GreaterThanSystemFunction(), package_name='
 assign_helper(symbol_name='<=', value=LessThanEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='>=', value=GreaterThanEqualSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='QUIT', value=QuitSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
-
+assign_helper(symbol_name='COERCE', value=CoerceSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='TYPE-OF', value=TypeOfSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='CLASS-OF', value=ClassOfSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 
 # COMMON-LISP-USER package
 use_package_helper(package_name_to_use='COMMON-LISP', package_name='COMMON-LISP-USER')
