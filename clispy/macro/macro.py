@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+from clispy.type import Symbol, T
+
 
 # ==============================================================================
 # Defines base classes.
@@ -20,8 +22,7 @@
 #     Macro
 # ==============================================================================
 
-
-class Macro(object):
+class Macro(T):
     """The Common Lisp macro facility allows the user to define arbitrary
     functions that convert certain Lisp forms into different forms before
     evaluating or compiling them. This is done at the expression level,
@@ -33,6 +34,7 @@ class Macro(object):
     def __new__(cls, *args, **kwargs):
         """Instantiates Macro.
         """
+        # Don't use BuiltInClass.get_instance.
         cls.__name__ = 'MACRO'
         return object.__new__(cls)
 
@@ -40,3 +42,15 @@ class Macro(object):
         """The official string representation.
         """
         return "#<MACRO {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))
+
+    @classmethod
+    def class_of(cls):
+        """Returns the class of which the object is a direct instance.
+        """
+        return cls
+
+    @classmethod
+    def type_of(cls):
+        """Returns a type specifier for a type that has the objects as an element.
+        """
+        return Symbol('MACRO')

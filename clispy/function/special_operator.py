@@ -275,6 +275,11 @@ class LabelsSpecialOperator(SpecialOperator):
 
         funcs = []
         exps = []
+
+        # For encompassing the function definitions themselves,
+        # a function environment is extended in advance.
+        local_func_env = func_env.extend()
+
         while bindings is not Null():
             func, exp = bindings.car.car, bindings.car.cdr
 
@@ -282,19 +287,18 @@ class LabelsSpecialOperator(SpecialOperator):
             PackageManager.intern(String(func.value))
 
             funcs.append(func.value)
-
             exp = Cons(Symbol('LAMBDA'), exp)
 
             # The scope of the name bindings encompasses the function definitions
             # themselves as well as the body.
-            exps.append(Evaluator.eval(exp, var_env, func_env, macro_env))
+            exps.append(Evaluator.eval(exp, var_env, local_func_env, macro_env))
 
             bindings = bindings.cdr
 
         # The bindings are in parallel.
-        func_env = func_env.extend(params=funcs, args=exps)
+        local_func_env.update(zip(funcs, exps))
 
-        return Evaluator.eval(body, var_env, func_env, macro_env)
+        return Evaluator.eval(body, var_env, local_func_env, macro_env)
 
 
 class LetSpecialOperator(SpecialOperator):

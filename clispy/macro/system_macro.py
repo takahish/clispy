@@ -220,6 +220,20 @@ class LetAsterSystemMacro(SystemMacro):
         return forms
 
 
+class QuoteSystemMacro(SystemMacro):
+    """The quote special operator just returns object.
+    """
+    def __new__(cls, *args, **kwargs):
+        cls.__name__ = 'QUOTE'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of QuoteSystemMacro.
+        """
+        # Retruns itself.
+        return Cons(Symbol('QUOTE'), forms)
+
+
 class LambdaSystemMacro(SystemMacro):
     """Provides a shorthand notation for a function special form involving a lambda expression.
     """
@@ -351,6 +365,7 @@ assign_helper(symbol_name='IF', value=IfSystemMacro(), package_name='COMMON-LISP
 assign_helper(symbol_name='LABELS', value=LabelsSystemMacro(), package_name='COMMON-LISP', env='MACRO', status=':EXTERNAL')
 assign_helper(symbol_name='LET', value=LetSystemMacro(), package_name='COMMON-LISP', env='MACRO', status=':EXTERNAL')
 assign_helper(symbol_name='LET*', value=LetAsterSystemMacro(), package_name='COMMON-LISP', env='MACRO', status=':EXTERNAL')
+assign_helper(symbol_name='QUOTE', value=QuoteSystemMacro(), package_name='COMMON-LISP', env='MACRO', status='EXTERNAL')
 
 # For system functions
 assign_helper(symbol_name='LAMBDA', value=LambdaSystemMacro(), package_name='COMMON-LISP', env='MACRO', status=':EXTERNAL')

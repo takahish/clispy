@@ -1,4 +1,4 @@
-;;;; Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
+;;;; Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
 ;;;;
 ;;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;;; you may not use this file except in compliance with the License.
@@ -13,14 +13,25 @@
 ;;;; limitations under the License.
 ;;;; ==========================================================================
 
-;; Redefined as macro.
-(defmacro lambda (lambda-list &rest body)
-  `(defun ,lambda-list ,@body))
+(in-package "COMMON-LISP")
 
-;; Redefined as macro.
-(defmacro defun (name lambda-list &rest body)
-  `(defun ,name (lambda ,lambda-list (block ,name ,@body))))
 
-;; Redefined as macro.
-(defmacro defmacro (name lambda-list &rest body)
-  `(defmacro ,name (lambda ,lambda-list ,@body)))
+;;; Defines functions, macros or classes.
+
+(defmacro when (test-form &rest body)
+  `(if ,test-form
+       (progn ,@body)))
+
+(defmacro unless (test-form &rest body)
+  `(if (not ,test-form)
+       (progn ,@body)))
+
+
+;;; Exports symbols.
+
+(export '(when unless))
+
+
+;;; Inherits symbols from common-lisp.
+
+(use-package 'common-lisp 'common-lisp-user)

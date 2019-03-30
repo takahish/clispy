@@ -13,37 +13,28 @@
 # limitations under the License.
 # ==============================================================================
 
-
-# ==============================================================================
-# Defines base classes.
-#
-#     Function
-# ==============================================================================
-
 from clispy.type import Symbol, T
 
 
-class Function(T):
-    """A function is a construct to structure programs. This is known
-    in most programming languages, sometimes also called subroutine or
-    procedure. The bulk of lisp itself consists of functions.
-
-    Despite the importance of macros to The Lisp Way, in the end all
-    real functionality is provided by functions. Macros run at compile time,
-    so the code they generate will consist entirely of calls to functions
-    and special operators.
+class PyObject(T):
+    """PyObject is wapper of python objects.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates SpecialOperator.
+        """Instantiates PyObject.
         """
         # Don't use BuiltInClass.get_instance.
-        cls.__name__ = 'FUNCTION'
+        cls.__name__ = 'PYTHON-OBJECT'
         return object.__new__(cls)
+
+    def __init__(self, value):
+        """Initializes PyObject.
+        """
+        self.value = value
 
     def __repr__(self):
         """The official string representation.
         """
-        return "#<FUNCTION {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))
+        return str(self.value)
 
     @classmethod
     def class_of(cls):
@@ -55,4 +46,4 @@ class Function(T):
     def type_of(cls):
         """Returns a type specifier for a type that has the objects as an element.
         """
-        return Symbol('FUNCTION')
+        return Symbol('PYTHON-OBJECT')

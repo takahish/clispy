@@ -1,4 +1,4 @@
-# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,5 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.interpreter import Interpreter
-from clispy.loader import Loader
-
-def repl():
-    Loader.load("lisp")
-    Interpreter.repl()
+from clispy.python.builtin_function import *
+from clispy.python.object_manipulation import *

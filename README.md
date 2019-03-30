@@ -49,11 +49,27 @@ CL-USER=> (cons 'a nil)
 CL-USER=> (cons 'a 'b)
 (A . B)
 
-CL-USER=> ^D
-
+CL-USER=> (quit)
 Although never is often better than *right* now.
 
 >>> 
+```
+
+### Python bridge
+```
+CL-USER=> (python:abs -100)
+100
+
+CL-USER=> (python:sorted '(9 8 7 6 5 4 3 2 1 0))
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+CL-USER=> (type-of (python:sorted '(9 8 7 6 5 4 3 2 1 0)))
+PYTHON-OBJECT
+
+CL-USER=> (coerce (python:sorted '(9 8 7 6 5 4 3 2 1 0)) 'cons)
+(0 1 2 3 4 5 6 7 8 9)
+
+CL-USER=>
 ```
 
 ## References
