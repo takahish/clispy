@@ -174,6 +174,12 @@ class PackageManagerTestCase(unittest.TestCase):
         # PackageMnager.package_container.
         self.assertRaises(KeyError, PackageManager.get_package, 'NOT-EXIST')
 
+    def testPackageManager_get_package_name_from_nickname(self):
+        # PackageManager.get_package returns package represented by nickname.
+        self.assertTrue(PackageManager.get_package(package_name='CL') is PackageManager.package_container['COMMON-LISP'])
+        self.assertTrue(PackageManager.get_package(package_name='CL-USER') is PackageManager.package_container['COMMON-LISP-USER'])
+        self.assertTrue(PackageManager.get_package(package_name='PY') is PackageManager.package_container['PYTHON'])
+
     def testPackageManager_split_symbol_name(self):
         # PackageManager.split_symbol_name splits symbol_name including package_name
         # and returns status_check indicating whether it needs status check or not.
