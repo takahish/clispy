@@ -100,8 +100,10 @@ class CallObjectManipulation(ObjectManipulation):
         py_object = args.car
         py_attr = args.cdr.car
 
-        # Sets an attribute
-        attr = getattr(py_object.value, py_attr.value)
+        # Sets an attribute recursively.
+        attr = py_object.value
+        for py_attr_name in py_attr.value.split('.'):
+            attr = getattr(attr, py_attr_name)
 
         # If an attribute is callable, executes the method.
         if callable(attr):
