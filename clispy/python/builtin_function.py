@@ -176,7 +176,8 @@ class PrintBuiltinFunction(BuiltinFunction):
         """Behavior of PrintBuiltinFunction.
         """
         args = self.eval_forms(forms, var_env, func_env, macro_env)
-        return PyObject(self.exec_func(py_func_name='print', args=args))
+        self.exec_func(py_func_name='print', args=args)
+        return T()
 
 
 class SortedBuiltinFunction(BuiltinFunction):
