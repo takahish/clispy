@@ -120,9 +120,38 @@ class CallObjectManipulation(ObjectManipulation):
             return PyObject(attr)
 
 
+class GetitemObjectManipulation(ObjectManipulation):
+    """Called to implement evaluation of self[key]. For sequence types,
+    the accepted keys should be integers and slice objects.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instaintiates GetitemObjectManipulation.
+        """
+        cls.__name__ = 'GETITEM'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of GetitemObjectManipulation.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets identifier of python object and rest args.
+        py_object = args.car
+        rest_args = args.cdr
+
+        # Sets slice objects
+        slice_objects = []
+        while rest_args is not Null():
+            slice_objects.append(rest_args.car.value)
+            rest_args = rest_args.cdr
+
+        return PyObject(py_object.value.__getitem__(tuple(slice_objects)))
+
+
 # ==============================================================================
 # Set functions related on object manipulation
 # ==============================================================================
 
 assign_helper(symbol_name='IMPORT-MODULE', value=ImportModuleObjectManipulation(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='CALL', value=CallObjectManipulation(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='GETITEM', value=GetitemObjectManipulation(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
