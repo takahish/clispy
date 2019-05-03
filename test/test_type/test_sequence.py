@@ -16,6 +16,7 @@
 from io import StringIO
 import unittest
 from clispy.type.basecls import Symbol
+from clispy.type.number import Integer
 from clispy.type.sequence import *
 
 
@@ -70,10 +71,10 @@ class UnitTestCase(unittest.TestCase):
 
 class ConsUnitTestCase(unittest.TestCase):
     def testConsNotObjectRegistry(self):
-        c1 = Cons(2, Cons(1, Null()))
-        c2 = Cons(2, Cons(1, Null()))
-        c3 = Cons(c1, 3)
-        c4 = Cons(3, c1)
+        c1 = Cons(Integer(2), Cons(Integer(1), Null()))
+        c2 = Cons(Integer(2), Cons(Integer(1), Null()))
+        c3 = Cons(c1, Integer(3))
+        c4 = Cons(Integer(3), c1)
 
         self.assertFalse(c1 is c2)
         self.assertFalse(c1 is c3)
@@ -83,9 +84,9 @@ class ConsUnitTestCase(unittest.TestCase):
         self.assertTrue(c1, c4.cdr)
 
     def testCons(self):
-        c1 = Cons(2, Cons(1, Null()))
+        c1 = Cons(Integer(2), Cons(Integer(1), Null()))
         c2 = Cons(c1, Null())
-        c3 = Cons(3, c1)
+        c3 = Cons(Integer(3), c1)
 
         self.assertIsInstance(c1, T)
         self.assertIsInstance(c1, Sequence)
@@ -97,9 +98,9 @@ class ConsUnitTestCase(unittest.TestCase):
         self.assertEqual(str(c3), '(3 2 1)')
 
     def testConsConvertedFromList(self):
-        c1 = Cons.tocons([1, 2, 3])
-        c2 = Cons.tocons([1, [2, [3]]])
-        c3 = Cons.tocons([1])
+        c1 = Cons.tocons([Integer(1), Integer(2), Integer(3)])
+        c2 = Cons.tocons([Integer(1), [Integer(2), [Integer(3)]]])
+        c3 = Cons.tocons([Integer(1)])
 
         self.assertIsInstance(c1, T)
         self.assertIsInstance(c1, Sequence)
@@ -119,21 +120,21 @@ class ConsUnitTestCase(unittest.TestCase):
         self.assertIsInstance(c, Symbol)
 
     def testConsConvertedFromDottedList(self):
-        c1 = Cons.tocons([1, 2, Symbol('.'), 3])
-        c2 = Cons.tocons([[1, Symbol('.'), 2], 3])
-        c3 = Cons.tocons([1, [2, Symbol('.'), 3]])
+        c1 = Cons.tocons([Integer(1), Integer(2), Symbol('.'), Integer(3)])
+        c2 = Cons.tocons([[Integer(1), Symbol('.'), Integer(2)], Integer(3)])
+        c3 = Cons.tocons([Integer(1), [Integer(2), Symbol('.'), Integer(3)]])
 
         self.assertEqual(str(c1), '(1 2 . 3)')
         self.assertEqual(str(c2), '((1 . 2) 3)')
         self.assertEqual(str(c3), '(1 (2 . 3))')
 
         # Check cdr.
-        self.assertEqual(c1.cdr.cdr, 3)
-        self.assertEqual(c2.car.cdr, 2)
-        self.assertEqual(c3.cdr.car.cdr, 3)
+        self.assertEqual(c1.cdr.cdr, Integer(3))
+        self.assertEqual(c2.car.cdr, Integer(2))
+        self.assertEqual(c3.cdr.car.cdr, Integer(3))
 
     def testConsConvertedFromAtom(self):
-        c = Cons(1)
+        c = Cons(Integer(1))
 
         self.assertIsInstance(c, T)
         self.assertIsInstance(c, Sequence)
@@ -142,7 +143,7 @@ class ConsUnitTestCase(unittest.TestCase):
         self.assertEqual(str(c), '(1)')
 
     def testDottedListConvertedFromList(self):
-        c = Cons([1, 2], 3)
+        c = Cons([Integer(1), Integer(2)], Integer(3))
 
         self.assertIsInstance(c, T)
         self.assertIsInstance(c, Sequence)
@@ -151,7 +152,7 @@ class ConsUnitTestCase(unittest.TestCase):
         self.assertEqual(str(c), '((1 2) . 3)')
 
     def testDottedListConvertedFromEmptyList(self):
-        c = Cons([], 3)
+        c = Cons([], Integer(3))
 
         self.assertIsInstance(c, T)
         self.assertIsInstance(c, Sequence)
@@ -160,21 +161,21 @@ class ConsUnitTestCase(unittest.TestCase):
         self.assertEqual(str(c), '(NIL . 3)')
 
     def testConsSpecialMethod(self):
-        c = Cons(1, Cons(2, Null()))
+        c = Cons(Integer(1), Cons(Integer(2), Null()))
 
-        self.assertEqual(c.car, 1)
-        self.assertEqual(c.cdr.car, 2)
+        self.assertEqual(c.car, Integer(1))
+        self.assertEqual(c.cdr.car, Integer(2))
 
     def testConsTypeOf(self):
-        c_t = Cons(1, Cons(2, Null())).type_of()
+        c_t = Cons(Integer(1), Cons(Integer(2), Null())).type_of()
 
         self.assertIsInstance(c_t, Symbol)
         self.assertEqual(c_t.value, 'CONS')
 
     def testConsDottedList(self):
-        c1 = Cons(1, 2)
-        c2 = Cons(c1, 3)
-        c3 = Cons(4, c1)
+        c1 = Cons(Integer(1), Integer(2))
+        c2 = Cons(c1, Integer(3))
+        c3 = Cons(Integer(4), c1)
 
         self.assertIsInstance(c1, T)
         self.assertIsInstance(c1, Sequence)
@@ -188,13 +189,13 @@ class ConsUnitTestCase(unittest.TestCase):
         self.assertEqual(str(c3), '(4 1 . 2)')
 
     def testConsDottedListSpecialMethods(self):
-        c = Cons(1, 2)
+        c = Cons(Integer(1), Integer(2))
 
-        self.assertEqual(c.car, 1)
-        self.assertEqual(c.cdr, 2)
+        self.assertEqual(c.car, Integer(1))
+        self.assertEqual(c.cdr, Integer(2))
 
     def testConsDottedListTypeOf(self):
-        c = Cons(1, 2).type_of()
+        c = Cons(Integer(1), Integer(2)).type_of()
 
         self.assertIsInstance(c, Symbol)
         self.assertEqual(c.value, 'CONS')
