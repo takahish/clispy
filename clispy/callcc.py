@@ -18,10 +18,12 @@ from clispy.type import Cons, Null
 
 class CallCC(object):
     def __init__(self, proc):
+        from clispy.python import PyObject
+
         self.ball = RuntimeWarning("Sorry, can't continue this continuation any longer.")
         self.ball.retval = Null()
         self.proc = proc
-        self.args = Cons(Invoke(self), Null())
+        self.args = Cons(PyObject(Invoke(self)), Null())
 
     def __call__(self, var_env, func_env, macro_env):
         try:
