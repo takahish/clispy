@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import operator as op
+import os
 from fractions import Fraction
 import numpy as np
 from clispy.type.basecls import BuiltInClass, T
@@ -447,4 +448,10 @@ class LongFloat(Float):
         Args:
             value: Float.
         """
-        self.value = np.float128(value)
+        # numpy.float128 isn't supported on Windows using the MS compiler
+        # https://github.com/winpython/winpython/issues/613
+        # https://stackoverflow.com/questions/9062562/what-is-the-internal-precision-of-numpy-float128
+        if os.name == 'nt':
+            self.value = np.float64(value)
+        else:
+            self.value = np.float128(value)

@@ -14,8 +14,8 @@
 # ==============================================================================
 
 import unittest
-from clispy.evaluator_ import Evaluator
-from clispy.expander_ import Expander
+from clispy.evaluator import Evaluator
+from clispy.expander import Expander
 from clispy.function.lambda_expression import Lambda
 from clispy.package import PackageManager
 from clispy.parser import Parser
@@ -68,7 +68,7 @@ class LambdaUnitTestCase(unittest.TestCase):
         self.assertEqual(lambda_func.params, ['X'])
 
         # Checks lambda_func.forms.
-        self.assertEqual(lambda_func.forms, Parser.parse('(* x x x)'))
+        self.assertEqual(str(lambda_func.forms), '(* X X X)')
 
         # Checks lambda_func lexical scope.
         self.assertTrue(lambda_func.var_env is PackageManager.current_package.env['VARIABLE'])
@@ -200,6 +200,26 @@ class LambdaUnitTestCase(unittest.TestCase):
         # Checks lambda_func.accessor_index.
         self.assertEqual(lambda_func.accessor_index['&REST'], 1)
 
+    def testLambda_properties_keyword_accessor(self):
+        # Makes an instance of Lambda.
+        forms = Parser.parse('((x &key y) (* x x x))')
+
+        lambda_func = Lambda(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # Checks properties.
+
+        # Checks lambda_func.params.
+
+        self.assertEqual(lambda_func.params, ['X', 'Y'])
+
+        # Checks lambda_func.accessor_index.
+        self.assertEqual(lambda_func.accessor_index['&KEY'], 1)
+
     def testLambda_call_optional_argument(self):
         """Checks assigning optinal arguments.
         """
@@ -236,6 +256,42 @@ class LambdaUnitTestCase(unittest.TestCase):
         # retval is result of (* x x).
         self.assertTrue(retval is Integer(4))
 
+    def testLambda_call_optional_argument_with_default_value(self):
+        """Checks assigning optinal arguments.
+        """
+        # Makes an instance of Lmabda.
+        forms = Parser.parse('((x &optional (y t)) (if y (* x x) (* x x x))))')
+        lambda_func = Lambda(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # Checks call.
+
+        # When an optional argumet is not given, Null() is set to an argument.
+        retval = lambda_func(
+            Parser.parse('(2)'),
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # retval is result of (* x x x).
+        self.assertTrue(retval is Integer(4))
+
+        # When an optional argumet is given, this is set to an argument.
+        retval = lambda_func(
+            Parser.parse('(2 nil)'),
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # retval is result of (* x x).
+        self.assertTrue(retval is Integer(8))
+
     def testLambda_call_rest_argument(self):
         """Checks assigning rest arguments.
         """
@@ -259,4 +315,76 @@ class LambdaUnitTestCase(unittest.TestCase):
         )
 
         # retval is result of being given &rest parameter.
-        self.assertEqual(retval, Parser.parse('(1 2 3 4 5)'))
+        self.assertEqual(str(retval), '(1 2 3 4 5)')
+
+    def testLambda_call_keyword_argument(self):
+        """Checks assigning keyword arguments.
+        """
+        # Makes an instance of Lmabda.
+        forms = Parser.parse('((x &key y) (if y (* x x) (* x x x))))')
+        lambda_func = Lambda(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # Checks call.
+
+        # When a keyword argumet is not given, Null() is set to an argument.
+        retval = lambda_func(
+            Parser.parse('(2)'),
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # retval is result of (* x x x).
+        self.assertTrue(retval is Integer(8))
+
+        # When an keyword argumet is given, this is set to an argument.
+        retval = lambda_func(
+            Parser.parse('(2 :y t)'),
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # retval is result of (* x x).
+        self.assertTrue(retval is Integer(4))
+
+    def testLambda_call_keyword_argument_with_default_value(self):
+        """Checks assigning keyword arguments.
+        """
+        # Makes an instance of Lmabda.
+        forms = Parser.parse('((x &key (y t)) (if y (* x x) (* x x x))))')
+        lambda_func = Lambda(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # Checks call.
+
+        # When a keyword argumet is not given, Null() is set to an argument.
+        retval = lambda_func(
+            Parser.parse('(2)'),
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # retval is result of (* x x x).
+        self.assertTrue(retval is Integer(4))
+
+        # When an keyword argumet is given, this is set to an argument.
+        retval = lambda_func(
+            Parser.parse('(2 :y nil)'),
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # retval is result of (* x x).
+        self.assertTrue(retval is Integer(8))
