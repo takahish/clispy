@@ -145,9 +145,9 @@ class PackageManagerTestCase(unittest.TestCase):
         self.assertIsInstance(PackageManager.package_container['PYTHON'], Package)
 
     def testPackageManager_current_package(self):
-        # PackageManager.current_package is 'COMMON-LISP' as default.
+        # PackageManager.current_package is 'COMMON-LISP-USER' as default.
         self.assertIsInstance(PackageManager.current_package, Package)
-        self.assertTrue(PackageManager.current_package is PackageManager.package_container['COMMON-LISP'])
+        self.assertTrue(PackageManager.current_package is PackageManager.package_container['COMMON-LISP-USER'])
 
     def testPackageManager_get_package_name(self):
         # PackageManager.get_package_name returns package name represented by package_designator.
@@ -363,11 +363,6 @@ class PackageManagerTestCase(unittest.TestCase):
 
     def testPackageManager_in_package(self):
         # PackageManager.in_package changes PackageManager.current_package to package_designator.
-
-        # PackageManager.current_package is 'COMMON-LISP' as default.
-        # And *PACKAGE* variable in COMMON-LISP package indicates PackageManager.current_package.
-        self.assertTrue(PackageManager.current_package is PackageManager.package_container['COMMON-LISP'])
-        self.assertTrue(PackageManager.package_container['COMMON-LISP'].env['VARIABLE']['*PACKAGE*'] is PackageManager.current_package)
 
         # PackageManager.current_package is chenged to COMMON-LISP-USER.
         PackageManager.in_package(package_designator=Symbol('COMMON-LISP-USER'))

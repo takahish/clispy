@@ -214,7 +214,7 @@ class LambdaUnitTestCase(unittest.TestCase):
         # Checks properties.
 
         # Checks lambda_func.params.
-        print(lambda_func.params)
+
         self.assertEqual(lambda_func.params, ['X', 'Y'])
 
         # Checks lambda_func.accessor_index.
@@ -349,7 +349,7 @@ class LambdaUnitTestCase(unittest.TestCase):
             PackageManager.current_package.env['FUNCTION'],
             PackageManager.current_package.env['MACRO']
         )
-        print(retval)
+
         # retval is result of (* x x).
         self.assertTrue(retval is Integer(4))
 
@@ -385,6 +385,6 @@ class LambdaUnitTestCase(unittest.TestCase):
             PackageManager.current_package.env['FUNCTION'],
             PackageManager.current_package.env['MACRO']
         )
-        print(retval)
+
         # retval is result of (* x x).
         self.assertTrue(retval is Integer(8))
