@@ -168,6 +168,7 @@ class Lambda(Function):
             kargs = {}
             for i, karg in enumerate(keyword_args):
                 if isinstance(karg, Keyword):
+                    # A value of Keyword has ':' at the first character.
                     kargs[karg.value[1:]] = keyword_args[i+1]
 
             for param in self.params[self.accessor_index['&KEY']:]:
