@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import operator as op
 from clispy.type import Symbol, T
 
 
@@ -35,6 +36,32 @@ class PyObject(T):
         """The official string representation.
         """
         return str(self.value)
+
+    def __add__(self, other):
+        """Hook of self + other.
+        """
+        return PyObject.__calculate(op.add, self, other)
+
+    def __sub__(self, other):
+        """Hook of self - other.
+        """
+        return PyObject.__calculate(op.sub, self, other)
+
+    def __mul__(self, other):
+        """Hook of self * other.
+        """
+        return PyObject.__calculate(op.mul, self, other)
+
+    def __truediv__(self, other):
+        """Hook of self / other.
+        """
+        return PyObject.__calculate(op.truediv, self, other)
+
+    @staticmethod
+    def __calculate(operator, self, other):
+        """Calculate arithmetic.
+        """
+        return PyObject(operator(self.value, other.value))
 
     @classmethod
     def class_of(cls):
