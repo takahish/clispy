@@ -145,9 +145,9 @@ class PackageManagerTestCase(unittest.TestCase):
         self.assertIsInstance(PackageManager.package_container['PYTHON'], Package)
 
     def testPackageManager_current_package(self):
-        # PackageManager.current_package is 'COMMON-LISP' as default.
+        # PackageManager.current_package is 'COMMON-LISP-USER' as default.
         self.assertIsInstance(PackageManager.current_package, Package)
-        self.assertTrue(PackageManager.current_package is PackageManager.package_container['COMMON-LISP'])
+        self.assertTrue(PackageManager.current_package is PackageManager.package_container['COMMON-LISP-USER'])
 
     def testPackageManager_get_package_name(self):
         # PackageManager.get_package_name returns package name represented by package_designator.
@@ -173,6 +173,12 @@ class PackageManagerTestCase(unittest.TestCase):
         # Raise an exception of KeyError if package_name dose not exist in keys of
         # PackageMnager.package_container.
         self.assertRaises(KeyError, PackageManager.get_package, 'NOT-EXIST')
+
+    def testPackageManager_get_package_name_from_nickname(self):
+        # PackageManager.get_package returns package represented by nickname.
+        self.assertTrue(PackageManager.get_package(package_name='CL') is PackageManager.package_container['COMMON-LISP'])
+        self.assertTrue(PackageManager.get_package(package_name='CL-USER') is PackageManager.package_container['COMMON-LISP-USER'])
+        self.assertTrue(PackageManager.get_package(package_name='PY') is PackageManager.package_container['PYTHON'])
 
     def testPackageManager_split_symbol_name(self):
         # PackageManager.split_symbol_name splits symbol_name including package_name
@@ -357,11 +363,6 @@ class PackageManagerTestCase(unittest.TestCase):
 
     def testPackageManager_in_package(self):
         # PackageManager.in_package changes PackageManager.current_package to package_designator.
-
-        # PackageManager.current_package is 'COMMON-LISP' as default.
-        # And *PACKAGE* variable in COMMON-LISP package indicates PackageManager.current_package.
-        self.assertTrue(PackageManager.current_package is PackageManager.package_container['COMMON-LISP'])
-        self.assertTrue(PackageManager.package_container['COMMON-LISP'].env['VARIABLE']['*PACKAGE*'] is PackageManager.current_package)
 
         # PackageManager.current_package is chenged to COMMON-LISP-USER.
         PackageManager.in_package(package_designator=Symbol('COMMON-LISP-USER'))

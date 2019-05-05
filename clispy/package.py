@@ -119,6 +119,13 @@ class PackageManager(object):
         'PYTHON': Package(package_name='PYTHON', package_nicknames=['PY'])
     }
 
+    # Mapping package nicknemes to package names
+    package_nicknames = {
+        'CL': 'COMMON-LISP',
+        'CL-USER': 'COMMON-LISP-USER',
+        'PY': 'PYTHON'
+    }
+
     # Current package is COMMON-LISP.
     current_package = package_container['COMMON-LISP']
 
@@ -365,6 +372,9 @@ class PackageManager(object):
         Returns:
             Package.
         """
+        # Converts package nickname into package name.
+        package_name = cls.package_nicknames.get(package_name, package_name)
+
         # Return Package that shown by package_name.
         # The default is the current package.
         if package_name is None:

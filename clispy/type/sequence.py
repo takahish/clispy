@@ -165,12 +165,12 @@ class Cons(List):
         if isinstance(cons, Null):        # end of cons
             return acc
         elif not isinstance(cons, Cons):  # for dotted pair
-            acc.append(cons)
+            acc.append(cons.value)
             return acc
         else:
             car = cons.car
             if not isinstance(car, Cons):
-                acc.append(car)
+                acc.append(car.value)
             else:                         # when car is instance of Cons
                 acc.append(cls._tolist_helper(cons.car, []))
             return cls._tolist_helper(cons.cdr, acc)

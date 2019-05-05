@@ -14,9 +14,9 @@
 # ==============================================================================
 
 from clispy.function import *
-from clispy.package import PackageManager
+from clispy.package import PackageManager, assign_helper
 from clispy.python import *
-from clispy.type import Cons, Null, Symbol
+from clispy.type import Cons, Keyword, Null, Symbol
 
 
 class Evaluator(object):
@@ -38,6 +38,11 @@ class Evaluator(object):
             except LookupError:
                 # Tries to get the value from another package.
                 return PackageManager.find(symbol_name, package_name, status_check, env='VARIABLE')[symbol_name]
+            finally:
+                # If package_name is 'KEYWORD', sets keyword represented by symbol_name.
+                if package_name == 'KEYWORD':
+                    assign_helper(symbol_name, Keyword(symbol_name), package_name, 'VARIABLE', ':EXTERNAL')
+                    return PackageManager.find(symbol_name, package_name, status_check, env='VARIABLE')[symbol_name]
 
         elif not isinstance(forms, Cons):
             # If an atom is given, returns itself.

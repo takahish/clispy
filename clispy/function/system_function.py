@@ -262,6 +262,21 @@ class AppendSystemFunction(SystemFunction):
         return last
 
 
+class ListSystemFunction(SystemFunction):
+    """list returns a list containing the supplied objects.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates ListSystemFunction.
+        """
+        cls.__name__ = 'LIST'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ListSystemFunction.
+        """
+        return self.eval_forms(forms, var_env, func_env, macro_env)
+
+
 class FindSymbolSystemFunction(SystemFunction):
     """FindSymbol locates a symbol whose name is symbol_designator in a package. If a symbol named
     symbol_designator is found in package, directly or by inheritance, the symbol found is returned
@@ -776,6 +791,8 @@ class CoerceSystemFunction(SystemFunction):
             return self.to_sequence(object_, result_type)
         elif issubclass(self.type_specified[result_type.value], Float):
             return self.to_float(object_, result_type)
+        elif self.type_specified[result_type.value] is T:
+            return self.to_t(object_, result_type)
 
     @classmethod
     def to_sequence(cls, object_, result_type):
@@ -792,8 +809,8 @@ class CoerceSystemFunction(SystemFunction):
             return cls.to_null(object_, result_type)
         elif cls.type_specified[result_type.value] is Cons:
             return cls.to_cons(object_, result_type)
-        elif cls.type_specified[result_type.value] is T:
-            return cls.to_t(object_, result_type)
+        elif cls.type_specified[result_type.value] is Vector:
+            return cls.to_vector(object_, result_type)
 
     @classmethod
     def to_null(cls, object_, result_type):
@@ -833,6 +850,11 @@ class CoerceSystemFunction(SystemFunction):
             return Cons.tocons(list(object_.value))
 
     @classmethod
+    def to_vector(cls, object_, result_type):
+        # Converts object_ to Vector.
+        return cls.type_specified[result_type.value](object_.value)
+
+    @classmethod
     def to_float(cls, object_, result_type):
         # Converts object_ to float.
         from clispy.python import PyObject
@@ -841,7 +863,7 @@ class CoerceSystemFunction(SystemFunction):
         if (not isinstance(object_, Real)) and (not isinstance(object_, PyObject)):
             raise SimpleTypeError("{} can't be converted to type {}.".format(str(object_), str(result_type)))
 
-        # Converts object_ to result_type that is subclass of Sequence.
+        # Converts object_ to result_type that is subclass of Float.
         return cls.type_specified[result_type.value](object_.value)
 
     @classmethod
@@ -916,6 +938,7 @@ assign_helper(symbol_name='CONS', value=ConsSystemFunction(), package_name='COMM
 assign_helper(symbol_name='CAR', value=CarSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='CDR', value=CdrSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='APPEND', value=AppendSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='LIST', value=ListSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='FIND-SYMBOL', value=FindSymbolSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='INTERN', value=InternSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='EXPORT', value=ExportSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')

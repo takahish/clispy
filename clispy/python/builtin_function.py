@@ -161,6 +161,23 @@ class CompileBuiltinFunction(BuiltinFunction):
         return PyObject(self.exec_func(py_func_name='compile', args=args))
 
 
+class ListBuiltinFunction(BuiltinFunction):
+    """Rather than being a function, list is actually a mutable sequence type,
+    as documented in Lists and Sequence Types — list, tuple, range.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates ListBuiltinFunction.
+        """
+        cls.__name__ = 'LIST'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ListBuiltinFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+        return PyObject(self.exec_func(py_func_name='list', args=args))
+
+
 class PrintBuiltinFunction(BuiltinFunction):
     """Print objects to the text stream file, separated by sep and followed
     by end. sep, end, file and flush, if present, must be given as keyword
@@ -176,7 +193,32 @@ class PrintBuiltinFunction(BuiltinFunction):
         """Behavior of PrintBuiltinFunction.
         """
         args = self.eval_forms(forms, var_env, func_env, macro_env)
-        return PyObject(self.exec_func(py_func_name='print', args=args))
+        self.exec_func(py_func_name='print', args=args)
+        return Null()
+
+
+class SliceBuiltinFunction(BuiltinFunction):
+    """Return a slice object representing the set of indices specified by
+    range(start, stop, step). The start and step arguments default to None.
+    Slice objects have read-only data attributes start, stop and step which
+    merely return the argument values (or their default).
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates SliceBuiltinFunction.
+        """
+        cls.__name__ = 'SLICE'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of SliceBuiltinFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Sets slice object for getting all elements.
+        if args is Null():
+            return PyObject(slice(None, None, None))
+
+        return PyObject(self.exec_func(py_func_name='slice', args=args))
 
 
 class SortedBuiltinFunction(BuiltinFunction):
@@ -198,6 +240,23 @@ class SortedBuiltinFunction(BuiltinFunction):
             return PyObject([])
 
         return PyObject(self.exec_func(py_func_name='sorted', args=args))
+
+
+class TupleBuiltinFunction(BuiltinFunction):
+    """Rather than being a function, tuple is actually an immutable sequence type,
+    as documented in Tuples and Sequence Types — list, tuple, range.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates TupleBuiltinFunction.
+        """
+        cls.__name__ = 'TUPLE'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of TupleBuiltinFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+        return PyObject(self.exec_func(py_func_name='tuple', args=args))
 
 
 class TypeBuiltinFunction(BuiltinFunction):
@@ -227,6 +286,9 @@ assign_helper(symbol_name='ABS', value=AbsBuiltinFunction(), package_name='PYTHO
 assign_helper(symbol_name='BOOL', value=BoolBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='CALLABLE', value=CallableBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='COMPILE', value=CompileBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='LIST', value=ListBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='PRINT', value=PrintBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='SLICE', value=SliceBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='SORTED', value=SortedBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='TUPLE', value=TupleBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='TYPE', value=TypeBuiltinFunction(), package_name='PYTHON', env='FUNCTION', status=':EXTERNAL')

@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import unittest
+import os
 from clispy.type.basecls import Symbol
 from clispy.type.number import *
 
@@ -304,8 +305,16 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Float)
         self.assertIsInstance(f, LongFloat)
         self.assertEqual(str(f), '100.0')
-        self.assertIsInstance(f.value, np.float128)
-        self.assertEqual(f.value, np.float128(100))
+
+        # numpy.float128 isn't supported on Windows using the MS compiler
+        # https://github.com/winpython/winpython/issues/613
+        # https://stackoverflow.com/questions/9062562/what-is-the-internal-precision-of-numpy-float128
+        if os.name == 'nt':
+            self.assertIsInstance(f.value, np.float64)
+            self.assertEqual(f.value, np.float64(100))
+        else:
+            self.assertIsInstance(f.value, np.float128)
+            self.assertEqual(f.value, np.float128(100))
 
     def testLongFloatTypeOf(self):
         f_t = LongFloat(100).type_of()
