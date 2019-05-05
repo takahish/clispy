@@ -281,7 +281,7 @@ class CdrSystemFunctionUnitTestCase(unittest.TestCase):
         self.assertEqual(str(retval), '(2)')
 
 
-class AppendSystemFunctionUniteTestCase(unittest.TestCase):
+class AppendSystemFunctionUnitTestCase(unittest.TestCase):
     def testAppendSystemFunction(self):
         # Makes an instance of AppendSystemFunction.
         append = AppendSystemFunction()
@@ -305,7 +305,6 @@ class AppendSystemFunctionUniteTestCase(unittest.TestCase):
         # Chesk return value.
         self.assertEqual(str(retval), '(1 2 3)')
 
-
     def testAppendSystemFunction_call_dotted_list(self):
         # Makes an instance of AppendSystemFunction.
         append = AppendSystemFunction()
@@ -321,6 +320,31 @@ class AppendSystemFunctionUniteTestCase(unittest.TestCase):
 
         # Chesk return value.
         self.assertEqual(str(retval), '(1 2 . 3)')
+
+
+class ListSystemFunctionUnitTestCase(unittest.TestCase):
+    def testListSystemFunction(self):
+        # Makes an instance of ListSystemFunction.
+        lst = ListSystemFunction()
+
+        # Checks official representation.
+        self.assertRegex(str(lst), r"#<SYSTEM-FUNCTION LIST \{[0-9A-Z]+\}>")
+
+    def testListSystemFunction_call(self):
+        # Makes an instance of ListSystemFunction.
+        lst = ListSystemFunction()
+
+        # Calls list.
+        forms = Parser.parse("(3 4 'a (car '(b . c)) (+ 6 -2))")
+        retval = lst(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO']
+        )
+
+        # Chesk return value.
+        self.assertEqual(str(retval), '(3 4 A B 4)')
 
 
 class FindSymbolSytemFunctionUnitTestCase(unittest.TestCase):

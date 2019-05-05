@@ -262,6 +262,21 @@ class AppendSystemFunction(SystemFunction):
         return last
 
 
+class ListSystemFunction(SystemFunction):
+    """list returns a list containing the supplied objects.
+    """
+    def __new__(cls, *args, **kwargs):
+        """Instantiates ListSystemFunction.
+        """
+        cls.__name__ = 'LIST'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ListSystemFunction.
+        """
+        return self.eval_forms(forms, var_env, func_env, macro_env)
+
+
 class FindSymbolSystemFunction(SystemFunction):
     """FindSymbol locates a symbol whose name is symbol_designator in a package. If a symbol named
     symbol_designator is found in package, directly or by inheritance, the symbol found is returned
@@ -923,6 +938,7 @@ assign_helper(symbol_name='CONS', value=ConsSystemFunction(), package_name='COMM
 assign_helper(symbol_name='CAR', value=CarSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='CDR', value=CdrSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='APPEND', value=AppendSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='LIST', value=ListSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='FIND-SYMBOL', value=FindSymbolSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='INTERN', value=InternSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='EXPORT', value=ExportSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
