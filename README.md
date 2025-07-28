@@ -4,7 +4,7 @@
 Common Lisp interpreter written in Python (CLisPy) inspired from [Peter Norvig](http://norvig.com/), [lispy](http://norvig.com/lispy.html) and [lispy.py](http://norvig.com/lispy2.html). This interpreter will be implemented to satisfy　ANSI Common Lisp (Syntax, Macro System, CLOS etc).
 
 ## Motivation
-Comon lisp s-expression have good compatibility with some deep learning frameworks to stack layers. And to build the machine learning model by using scikit-learn, the s-expression also have compatibility for data and model pipline.
+Common Lisp s-expression have good compatibility with some deep learning frameworks to stack layers. And to build the machine learning model by using scikit-learn, the s-expression also have compatibility for data and model pipeline.
 
 ## Required libraries
 - Python 3.x
