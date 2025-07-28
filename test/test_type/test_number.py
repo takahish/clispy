@@ -1,4 +1,4 @@
-# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -97,8 +97,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(i, Rational)
         self.assertIsInstance(i, Integer)
         self.assertEqual(str(i), '100')
-        self.assertIsInstance(i.value, np.int)
-        self.assertEqual(i.value, np.int(100))
+        self.assertIsInstance(i.value, int)
+        self.assertEqual(i.value, int(100))
 
     def testIntegerType(self):
         i_t = Integer(100).type_of()
@@ -151,8 +151,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(b, Integer)
         self.assertIsInstance(b, Bignum)
         self.assertEqual(str(b), '100')
-        self.assertIsInstance(b.value, np.int)
-        self.assertEqual(b.value, np.int(100))
+        self.assertIsInstance(b.value, int)
+        self.assertEqual(b.value, int(100))
 
     def testBignumTypeOf(self):
         b_t = Bignum(100).type_of()
@@ -201,8 +201,8 @@ class UnitTestCase(unittest.TestCase):
         self.assertIsInstance(f, Real)
         self.assertIsInstance(f, Float)
         self.assertEqual(str(f), '100.0')
-        self.assertIsInstance(f.value, np.float)
-        self.assertEqual(f.value, np.float(100))
+        self.assertIsInstance(f.value, float)
+        self.assertEqual(f.value, float(100))
 
     def testFloatTypeOf(self):
         f_t = Float(100).type_of()
@@ -332,15 +332,15 @@ class UnitTestCase(unittest.TestCase):
 
         i = a + b
         self.assertIsInstance(i, Integer)
-        self.assertEqual(i.value, np.int(3))
+        self.assertEqual(i.value, int(3))
 
         i = a - b
         self.assertIsInstance(i, Integer)
-        self.assertEqual(i.value, np.int(-1))
+        self.assertEqual(i.value, int(-1))
 
         i = a * b
         self.assertIsInstance(i, Integer)
-        self.assertEqual(i.value, np.int(2))
+        self.assertEqual(i.value, int(2))
 
         r = a / b
         self.assertIsInstance(r, Ratio)
@@ -364,19 +364,19 @@ class UnitTestCase(unittest.TestCase):
 
         f = a + d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(5.0)) < eps)
+        self.assertTrue(abs(f.value - float(5.0)) < eps)
 
         f = a - d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(-3.0)) < eps)
+        self.assertTrue(abs(f.value - float(-3.0)) < eps)
 
         f = a * d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(4.0)) < eps)
+        self.assertTrue(abs(f.value - float(4.0)) < eps)
 
         f = a / f
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(0.25)) < eps)
+        self.assertTrue(abs(f.value - float(0.25)) < eps)
 
     def testIntegerArithmetic_skeleton(self):
         a = Fixnum(1)
@@ -488,7 +488,7 @@ class UnitTestCase(unittest.TestCase):
         # Check returning Integer value.
         i = a / b
         self.assertIsInstance(i, Integer)
-        self.assertEqual(i.value, np.int(2))
+        self.assertEqual(i.value, int(2))
 
         r = a + c
         self.assertIsInstance(r, Ratio)
@@ -509,23 +509,23 @@ class UnitTestCase(unittest.TestCase):
         # Check returning Integer value.
         r = c / a
         self.assertIsInstance(r, Integer)
-        self.assertEqual(r.value, np.int(2))
+        self.assertEqual(r.value, int(2))
 
         f = a + d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(3/2)) < eps)
+        self.assertTrue(abs(f.value - float(3/2)) < eps)
 
         f = a - d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(-1/2)) < eps)
+        self.assertTrue(abs(f.value - float(-1/2)) < eps)
 
         f = a * d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(1/2)) < eps)
+        self.assertTrue(abs(f.value - float(1/2)) < eps)
 
         f = a / d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(1/2)) < eps)
+        self.assertTrue(abs(f.value - float(1/2)) < eps)
 
     def testRatioCompare(self):
         a = Ratio('1/2')
@@ -564,51 +564,51 @@ class UnitTestCase(unittest.TestCase):
 
         f = a + b
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(3.0)) < eps)
+        self.assertTrue(abs(f.value - float(3.0)) < eps)
 
         f = a - b
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(-1.0)) < eps)
+        self.assertTrue(abs(f.value - float(-1.0)) < eps)
 
         f = a * b
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(2.0)) < eps)
+        self.assertTrue(abs(f.value - float(2.0)) < eps)
 
         f = a / b
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(0.5)) < eps)
+        self.assertTrue(abs(f.value - float(0.5)) < eps)
 
         f = a + c
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(5/3)) < eps)
+        self.assertTrue(abs(f.value - float(5/3)) < eps)
 
         f = a - c
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(1/3)) < eps)
+        self.assertTrue(abs(f.value - float(1/3)) < eps)
 
         f = a * c
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(2/3)) < eps)
+        self.assertTrue(abs(f.value - float(2/3)) < eps)
 
         f = a / c
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(1.5)) < eps)
+        self.assertTrue(abs(f.value - float(1.5)) < eps)
 
         f = a + d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(5.0)) < eps)
+        self.assertTrue(abs(f.value - float(5.0)) < eps)
 
         f = a - d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(-3.0)) < eps)
+        self.assertTrue(abs(f.value - float(-3.0)) < eps)
 
         f = a * d
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(4.0)) < eps)
+        self.assertTrue(abs(f.value - float(4.0)) < eps)
 
         f = a / f
         self.assertIsInstance(f, Float)
-        self.assertTrue(abs(f.value - np.float(0.25)) < eps)
+        self.assertTrue(abs(f.value - float(0.25)) < eps)
 
     def testFloatArithmetic_skeleton(self):
         a = SingleFloat('1.0')

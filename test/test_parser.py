@@ -1,4 +1,4 @@
-# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class UnitTestCase(unittest.TestCase):
 
         # check values
         self.assertEqual(Parser._convert_to_atom('"string"').value, 'string')
-        self.assertEqual(Parser._convert_to_atom('1').value, np.int(1))
+        self.assertEqual(Parser._convert_to_atom('1').value, int(1))
         self.assertEqual(Parser._convert_to_atom('2.3').value, np.float32(2.3))
         self.assertEqual(Parser._convert_to_atom('symbol').value, 'SYMBOL')
 
