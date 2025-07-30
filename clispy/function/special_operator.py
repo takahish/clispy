@@ -534,8 +534,11 @@ class ReturnFromSpecialOperator(SpecialOperator):
         # Sets return value.
         retval = Evaluator.eval(body, var_env, func_env, macro_env)
 
-        # name is param of lambda and have throw function as value in call/cc.
-        return var_env.find(block_name)[block_name](retval)
+        # During BlockSpecialOperator.__call__, the block is executed with a continuation created by CallCC.
+        # This continuation is passed to the block as a PyObject wrapper in call/cc:
+        #     self.args = Cons(PyObject(Invoke(self)), Null())
+        # See BlockSpecialOperator.__call__ and clispy.callcc.CallCC for more details.
+        return var_env.find(block_name)[block_name].value(retval)  # Unwrap PyObject and execute Invoke object.
 
 
 class SetqSpecialOperator(SpecialOperator):
