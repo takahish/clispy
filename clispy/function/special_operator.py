@@ -535,7 +535,10 @@ class ReturnFromSpecialOperator(SpecialOperator):
         retval = Evaluator.eval(body, var_env, func_env, macro_env)
 
         # name is param of lambda and have throw function as value in call/cc.
-        return var_env.find(block_name)[block_name](retval)
+        target = var_env.find(block_name)[block_name]
+        if hasattr(target, 'value'):  # unwrap PyObject
+            target = target.value
+        return target(retval)
 
 
 class SetqSpecialOperator(SpecialOperator):
