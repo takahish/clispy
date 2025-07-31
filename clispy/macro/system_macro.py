@@ -70,7 +70,7 @@ class BlockSystemMacro(SystemMacro):
 
 class FletSystemMacro(SystemMacro):
     """flet, labels, and macrolet define local functions and macros, and execute
-    forms using the local definitions. forms are executed in order of occurence.
+    forms using the local definitions. forms are executed in order of occurrence.
 
     The body forms (but not the lambda list) of each function created by flet
     and labels and each macro created by macrolet are enclosed in an implicit
@@ -133,7 +133,7 @@ class IfSystemMacro(SystemMacro):
 
 class LabelsSystemMacro(SystemMacro):
     """flet, labels, and macrolet define local functions and macros, and execute
-    forms using the local definitions. forms are executed in order of occurence.
+    forms using the local definitions. forms are executed in order of occurrence.
 
     The body forms (but not the lambda list) of each function created by flet
     and labels and each macro created by macrolet are enclosed in an implicit
@@ -151,7 +151,7 @@ class LabelsSystemMacro(SystemMacro):
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of LablesSystemMacro.
+        """Behavior of LabelsSystemMacro.
         """
         from clispy.expander import Expander
 
@@ -199,7 +199,7 @@ class LetAsterSystemMacro(SystemMacro):
     them sequentially.
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates LetAsterSytemMacro.
+        """Instantiates LetAsterSystemMacro.
         """
         cls.__name__ = 'LET*'
         return object.__new__(cls)
@@ -230,7 +230,7 @@ class QuoteSystemMacro(SystemMacro):
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of QuoteSystemMacro.
         """
-        # Retruns itself.
+        # Returns itself.
         return Cons(Symbol('QUOTE'), forms)
 
 

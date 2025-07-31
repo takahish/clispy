@@ -1,4 +1,4 @@
-# Copyright 2018 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -132,12 +132,12 @@ class Integer(Rational):
         return BuiltInClass.get_instance(cls, 'INTEGER', *args)
 
     def __init__(self, value):
-        """Initializes Integer. A value is converted into np.int.
+        """Initializes Integer. A value is converted into int.
 
         Args:
-            value: Int. It could be converted into np.int.
+            value: Int. It could be converted into int.
         """
-        self.value = np.int(value)
+        self.value = int(value)
 
     def __repr__(self):
         """The official string representation.
@@ -170,7 +170,7 @@ class Integer(Rational):
     def __int__(self):
         """Hook of int(self).
         """
-        return np.int(self.value)
+        return int(self.value)
 
     def __float__(self):
         """Hook of float(self).
@@ -218,12 +218,12 @@ class Bignum(Integer):
         return BuiltInClass.get_instance(cls, 'BIGNUM', *args)
 
     def __init__(self, value):
-        """Initializes Bignum. A value is converted into np.int.
+        """Initializes Bignum. A value is converted into int.
 
         Args:
-            value: Int. It could be converted into np.int.
+            value: Int. It could be converted into int.
         """
-        self.value = np.int(value)
+        self.value = int(value)
 
 
 class Ratio(Rational):
@@ -286,12 +286,12 @@ class Ratio(Rational):
     def __int__(self):
         """Hook of int(self).
         """
-        return np.int(self.value)
+        return int(self.value)
 
     def __float__(self):
         """Hook of float(self).
         """
-        return np.float(self.value)
+        return float(self.value)
 
     @staticmethod
     def __calculate(operator, self, other):
@@ -316,12 +316,12 @@ class Float(Real):
         return BuiltInClass.get_instance(cls, 'FLOAT', *args)
 
     def __init__(self, value):
-        """Initializes Float. A value is converted into np.float.
+        """Initializes Float. A value is converted into float.
 
         Args:
             value: Float.
         """
-        self.value = np.float(value)
+        self.value = float(value)
 
     def __repr__(self):
         """The official string representation.
@@ -351,12 +351,12 @@ class Float(Real):
     def __int__(self):
         """Hook of int(self).
         """
-        return np.int(self.value)
+        return int(self.value)
 
     def __float__(self):
         """Hook of float(self).
         """
-        return np.float(self.value)
+        return float(self.value)
 
     @staticmethod
     def __calculate(operator, self, other):

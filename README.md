@@ -4,17 +4,16 @@
 Common Lisp interpreter written in Python (CLisPy) inspired from [Peter Norvig](http://norvig.com/), [lispy](http://norvig.com/lispy.html) and [lispy.py](http://norvig.com/lispy2.html). This interpreter will be implemented to satisfy　ANSI Common Lisp (Syntax, Macro System, CLOS etc).
 
 ## Motivation
-Comon lisp s-expression have good compatibility with some deep learning frameworks to stack layers. And to build the machine learning model by using scikit-learn, the s-expression also have compatibility for data and model pipline.
+Common Lisp s-expression have good compatibility with some deep learning frameworks to stack layers. And to build the machine learning model by using scikit-learn, the s-expression also have compatibility for data and model pipeline.
 
 ## Required libraries
-- Python 3.x
-- numpy 1.14+
+- Python 3.10.13
+- numpy 2.2.5
 
 ## Examples
 ```
 $ python
-Python 3.7.1 (default, Dec 14 2018, 19:28:38) 
-[GCC 7.3.0] :: Anaconda, Inc. on linux
+Python 3.10.13 (main, Sep 11 2023, 08:39:02) [Clang 14.0.6 ] on darwin
 Type "help", "copyright", "credits" or "license" for more information.
 >>> import clispy; clispy.repl()
 CL-USER=> (setq pi 3.14)

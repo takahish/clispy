@@ -12,3 +12,70 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+import unittest
+from clispy.function.special_operator import (
+    LetSpecialOperator,
+    BlockSpecialOperator,
+)
+from clispy.package import PackageManager
+from clispy.parser import Parser
+from clispy.type import Integer
+
+
+class LetSpecialOperatorUnitTestCase(unittest.TestCase):
+    def testLetSpecialOperator(self):
+        let_op = LetSpecialOperator()
+
+        # Checks official representation.
+        self.assertRegex(str(let_op), r"#<SPECIAL-OPERATOR LET \{[0-9A-Z]+\}>")
+
+    def testLetSpecialOperator_call(self):
+        let_op = LetSpecialOperator()
+
+        # Evaluates a LET form
+        forms = Parser.parse('(((x 1) (y 2)) (+ x y))')
+        retval = let_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(3))
+
+
+class BlockSpecialOperatorUnitTestCase(unittest.TestCase):
+    def testBlockSpecialOperator(self):
+        block_op = BlockSpecialOperator()
+
+        # Checks official representation.
+        self.assertRegex(str(block_op), r"#<SPECIAL-OPERATOR BLOCK \{[0-9A-Z]+\}>")
+
+    def testBlockSpecialOperator_call(self):
+        block_op = BlockSpecialOperator()
+
+        # Evaluates a BLOCK form without return-from
+        forms = Parser.parse('(TEST (+ 1 2))')
+        retval = block_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(3))
+
+    def testBlockSpecialOperator_return_from(self):
+        block_op = BlockSpecialOperator()
+
+        # Evaluates a BLOCK form that exits via RETURN-FROM
+        forms = Parser.parse('(TEST (RETURN-FROM TEST 5) 1)')
+        retval = block_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(5))

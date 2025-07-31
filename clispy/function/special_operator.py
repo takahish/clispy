@@ -27,7 +27,7 @@ from clispy.type import BuiltInClass, Symbol, Null, Cons, String
 
 class SpecialOperator(Function):
     """A special forms is a form with special syntax, special evaluation rules
-    or both, possibley manipulating the evaluation environment, control flow,
+    or both, possibly manipulating the evaluation environment, control flow,
     or both.
 
     The set of special operator names is fixed in common lisp; no way is provided
@@ -62,8 +62,8 @@ class SpecialOperator(Function):
 # Defines special operator classes.
 #
 #     Block       Let*                ReturnFrom
-#     Catch       LoadIimeValue       Setq
-#     EvalWhen    Locally             SymbolMcrolet
+#     Catch       LoadTimeValue       Setq
+#     EvalWhen    Locally             SymbolMacrolet
 #     Flet        Macrolet            Tagbody
 #     Function_   MultipleValueCall   The
 #     Go          MultipleValueProg1  Throw
@@ -131,7 +131,7 @@ class EvalWhenSpecialOperator(SpecialOperator):
 
 class FletSpecialOperator(SpecialOperator):
     """flet, labels, and macrolet define local functions and macros, and execute
-    forms using the local definitions. forms are executed in order of occurence.
+    forms using the local definitions. forms are executed in order of occurrence.
 
     The body forms (but not the lambda list) of each function created by flet
     and labels and each macro created by macrolet are enclosed in an implicit
@@ -165,7 +165,7 @@ class FletSpecialOperator(SpecialOperator):
             funcs.append(func.value)
             exp = Cons(Symbol('LAMBDA'), exp)
 
-            # The scope of the name bindings dose not encompasse the function definitions.
+            # The scope of the name bindings does not encompass the function definitions.
             exps.append(Evaluator.eval(exp, var_env, func_env, macro_env))
 
             bindings = bindings.cdr
@@ -249,7 +249,7 @@ class IfSpecialOperator(SpecialOperator):
 
 class LabelsSpecialOperator(SpecialOperator):
     """flet, labels, and macrolet define local functions and macros, and execute
-    forms using the local definitions. forms are executed in order of occurence.
+    forms using the local definitions. forms are executed in order of occurrence.
 
     The body forms (but not the lambda list) of each function created by flet
     and labels and each macro created by macrolet are enclosed in an implicit
@@ -406,7 +406,7 @@ class LocallySpecialOperator(SpecialOperator):
 
 class MacroletSpecialOperator(SpecialOperator):
     """flet, labels, and macrolet define local functions and macros, and execute
-    forms using the local definitions. forms are executed in order of occurence.
+    forms using the local definitions. forms are executed in order of occurrence.
 
     The body forms (but not the lambda list) of each function created by flet
     and labels and each macro created by macrolet are enclosed in an implicit
@@ -534,8 +534,11 @@ class ReturnFromSpecialOperator(SpecialOperator):
         # Sets return value.
         retval = Evaluator.eval(body, var_env, func_env, macro_env)
 
-        # name is param of lambda and have throw function as value in call/cc.
-        return var_env.find(block_name)[block_name](retval)
+        # During BlockSpecialOperator.__call__, the block is executed with a continuation created by CallCC.
+        # This continuation is passed to the block as a PyObject wrapper in call/cc:
+        #     self.args = Cons(PyObject(Invoke(self)), Null())
+        # See BlockSpecialOperator.__call__ and clispy.callcc.CallCC for more details.
+        return var_env.find(block_name)[block_name].value(retval)  # Unwrap PyObject and execute Invoke object.
 
 
 class SetqSpecialOperator(SpecialOperator):
