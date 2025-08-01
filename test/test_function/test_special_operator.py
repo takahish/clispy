@@ -17,10 +17,11 @@ import unittest
 from clispy.function.special_operator import (
     LetSpecialOperator,
     BlockSpecialOperator,
+    TagbodySpecialOperator,
 )
 from clispy.package import PackageManager
 from clispy.parser import Parser
-from clispy.type import Integer
+from clispy.type import Integer, Null
 
 
 class LetSpecialOperatorUnitTestCase(unittest.TestCase):
@@ -79,3 +80,25 @@ class BlockSpecialOperatorUnitTestCase(unittest.TestCase):
         )
 
         self.assertEqual(retval, Integer(5))
+
+
+class TagbodySpecialOperatorUnitTestCase(unittest.TestCase):
+    def testTagbodySpecialOperator_go(self):
+        tagbody_op = TagbodySpecialOperator()
+
+        # Execute a TAGBODY form containing GO statements
+        forms = Parser.parse('(1 (GO 2) (SETQ X 1) 2 (SETQ X 2))')
+
+        retval = tagbody_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(
+            PackageManager.current_package.env['VARIABLE'].find('X')['X'],
+            Integer(2),
+        )
+        # Tagbody returns NIL
+        self.assertTrue(retval is Null())

@@ -216,8 +216,22 @@ class GoSpecialOperator(SpecialOperator):
 
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of GoSpecialOperator.
+
+        A ``go`` form causes a non-local transfer of control within the
+        dynamically enclosing :class:`TagbodySpecialOperator`.  The tag name is
+        passed to the continuation supplied by ``tagbody`` which then resumes
+        execution starting at the referenced label.
         """
-        return forms  # TODO: To implement the behavior.
+
+        tag = forms.car
+        if isinstance(tag, Symbol):
+            label = tag.value
+        else:
+            label = str(getattr(tag, "value", tag))
+
+        # The continuation bound by TagbodySpecialOperator is stored under the
+        # special name ``__GO__`` in the variable environment.
+        return var_env.find("__GO__")["__GO__"].value(label)
 
 
 class IfSpecialOperator(SpecialOperator):
@@ -606,8 +620,65 @@ class TagbodySpecialOperator(SpecialOperator):
 
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of TagbodySpecialOperator.
+
+        The forms contained in the tagbody are executed sequentially.  Tags may
+        be symbols or integers.  ``go`` statements signal a jump by invoking the
+        continuation bound by this operator.  The jump target is resolved here,
+        and evaluation then continues from the referenced label.  The primary
+        value of ``tagbody`` is always ``nil``.
         """
-        return forms  # TODO: To implement the behavior.
+
+        from clispy.evaluator import Evaluator
+
+        # Map labels to the cons cell following the tag so that we know where to
+        # resume execution when a GO occurs.
+        label_map = {}
+        tmp = forms
+        while tmp is not Null():
+            form = tmp.car
+            if isinstance(form, Symbol):
+                label_map[form.value] = tmp.cdr
+            elif hasattr(form, "value") and not isinstance(form, Cons):
+                label_map[str(form.value)] = tmp.cdr
+            tmp = tmp.cdr
+
+        local_var_env = var_env.extend()
+        current = forms
+
+        def strip_tags(seq):
+            head = Null()
+            tail = None
+            while seq is not Null():
+                form = seq.car
+                seq = seq.cdr
+                if isinstance(form, Symbol) or (
+                    hasattr(form, "value") and not isinstance(form, Cons)
+                ):
+                    continue
+                cell = Cons(form, Null())
+                if tail is None:
+                    head = tail = cell
+                else:
+                    tail.cdr = cell
+                    tail = cell
+            return head
+
+        while True:
+            lambda_forms = Cons(Cons(Symbol("__GO__"), Null()), strip_tags(current))
+            cont = CallCC(Lambda(lambda_forms, local_var_env, func_env, macro_env))
+            retval = cont(local_var_env, func_env, macro_env)
+
+            # If a GO occurred, the continuation returns the tag name.  Resolve
+            # the target and continue evaluation.
+            if isinstance(retval, str):
+                target = label_map.get(retval)
+                if target is None:
+                    raise LookupError(retval)
+                current = target
+                continue
+
+            # Otherwise we are done executing the tagbody.
+            return Null()
 
 
 class TheSpecialOperator(SpecialOperator):
