@@ -58,6 +58,12 @@ class SpecialOperator(Function):
         return "#<SPECIAL-OPERATOR {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))
 
 
+class _GoSignal(RuntimeWarning):
+    def __init__(self, tag):
+        super().__init__(tag)
+        self.tag = tag
+
+
 # ==============================================================================
 # Defines special operator classes.
 #
@@ -229,9 +235,7 @@ class GoSpecialOperator(SpecialOperator):
         else:
             label = str(getattr(tag, "value", tag))
 
-        # The continuation bound by TagbodySpecialOperator is stored under the
-        # special name ``__GO__`` in the variable environment.
-        return var_env.find("__GO__")["__GO__"].value(label)
+        raise _GoSignal(label)
 
 
 class IfSpecialOperator(SpecialOperator):
@@ -610,76 +614,77 @@ class SymbolMacroletSpecialOperator(SpecialOperator):
 
 class TagbodySpecialOperator(SpecialOperator):
     """Executes zero or more statements in a lexical environment that provides
-    for control transfers to labels indicated by the tags.
-    """
+    for control transfers to labels indicated by the tags."""
     def __new__(cls, *args, **kwargs):
-        """Instantiates TagbodySpecialOperator.
-        """
+        """Instantiates TagbodySpecialOperator."""
         cls.__name__ = 'TAGBODY'
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of TagbodySpecialOperator.
 
-        The forms contained in the tagbody are executed sequentially.  Tags may
-        be symbols or integers.  ``go`` statements signal a jump by invoking the
-        continuation bound by this operator.  The jump target is resolved here,
-        and evaluation then continues from the referenced label.  The primary
-        value of ``tagbody`` is always ``nil``.
+        The body is executed sequentially while permitting non-local jumps
+        signaled by :class:`GoSpecialOperator`. Each tag is paired with a
+        continuation constructed from ``CallCC`` and ``Lambda`` so that
+        evaluation can resume from the referenced label. Once execution
+        completes without further jumps, ``tagbody`` returns ``nil``.
         """
 
-        from clispy.evaluator import Evaluator
-
-        # Map labels to the cons cell following the tag so that we know where to
-        # resume execution when a GO occurs.
-        label_map = {}
-        tmp = forms
-        while tmp is not Null():
-            form = tmp.car
-            if isinstance(form, Symbol):
-                label_map[form.value] = tmp.cdr
-            elif hasattr(form, "value") and not isinstance(form, Cons):
-                label_map[str(form.value)] = tmp.cdr
-            tmp = tmp.cdr
+        def strip_tags(seq):
+            if seq is Null():
+                return Null()
+            form = seq.car
+            rest = seq.cdr
+            if isinstance(form, Symbol) or (
+                hasattr(form, "value") and not isinstance(form, Cons)
+            ):
+                return strip_tags(rest)
+            return Cons(form, strip_tags(rest))
 
         local_var_env = var_env.extend()
-        current = forms
+        label_map = {}
 
-        def strip_tags(seq):
-            head = Null()
-            tail = None
-            while seq is not Null():
-                form = seq.car
-                seq = seq.cdr
-                if isinstance(form, Symbol) or (
-                    hasattr(form, "value") and not isinstance(form, Cons)
-                ):
-                    continue
-                cell = Cons(form, Null())
-                if tail is None:
-                    head = tail = cell
+        def build_map(seq):
+            if seq is Null():
+                return
+            form = seq.car
+            rest = seq.cdr
+            if isinstance(form, Symbol) or (
+                hasattr(form, "value") and not isinstance(form, Cons)
+            ):
+                if isinstance(form, Symbol):
+                    label = form.value
                 else:
-                    tail.cdr = cell
-                    tail = cell
-            return head
+                    label = str(form.value)
+                lambda_forms = Cons(
+                    Cons(Symbol("__GO__"), Null()), strip_tags(rest)
+                )
+                label_map[label] = CallCC(
+                    Lambda(lambda_forms, local_var_env, func_env, macro_env)
+                )
+            build_map(rest)
+
+        build_map(forms)
+
+        current = CallCC(
+            Lambda(
+                Cons(Cons(Symbol("__GO__"), Null()), strip_tags(forms)),
+                local_var_env,
+                func_env,
+                macro_env,
+            )
+        )
 
         while True:
-            lambda_forms = Cons(Cons(Symbol("__GO__"), Null()), strip_tags(current))
-            cont = CallCC(Lambda(lambda_forms, local_var_env, func_env, macro_env))
-            retval = cont(local_var_env, func_env, macro_env)
-
-            # If a GO occurred, the continuation returns the tag name.  Resolve
-            # the target and continue evaluation.
-            if isinstance(retval, str):
-                target = label_map.get(retval)
-                if target is None:
-                    raise LookupError(retval)
-                current = target
-                continue
-
-            # Otherwise we are done executing the tagbody.
-            return Null()
-
+            try:
+                current(local_var_env, func_env, macro_env)
+                return Null()
+            except _GoSignal as signal:
+                target = signal.tag
+                cont = label_map.get(target)
+                if cont is None:
+                    raise LookupError(target)
+                current = cont
 
 class TheSpecialOperator(SpecialOperator):
     """the specifies that the values[1a] returned by form are of the types
