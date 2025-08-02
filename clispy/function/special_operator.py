@@ -620,6 +620,37 @@ class TagbodySpecialOperator(SpecialOperator):
         cls.__name__ = 'TAGBODY'
         return object.__new__(cls)
 
+    @staticmethod
+    def strip_tags(seq):
+        if seq is Null():
+            return Null()
+        form = seq.car
+        rest = seq.cdr
+        if isinstance(form, Symbol) or (hasattr(form, "value") and not isinstance(form, Cons)):
+            return TagbodySpecialOperator.strip_tags(rest)
+        return Cons(form, TagbodySpecialOperator.strip_tags(rest))
+
+    @staticmethod
+    def build_map(seq, label_map, local_var_env, func_env, macro_env):
+        if seq is Null():
+            return
+        form = seq.car
+        rest = seq.cdr
+        if isinstance(form, Symbol) or (hasattr(form, "value") and not isinstance(form, Cons)):
+            if isinstance(form, Symbol):
+                label = form.value
+            else:
+                label = str(form.value)
+            body_forms = TagbodySpecialOperator.strip_tags(rest)
+            lambda_forms = Cons(
+                Cons(Symbol("__GO__"), Null()),
+                body_forms,
+            )
+            label_map[label] = CallCC(
+                Lambda(lambda_forms, local_var_env, func_env, macro_env)
+            )
+        TagbodySpecialOperator.build_map(rest, label_map, local_var_env, func_env, macro_env)
+
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of TagbodySpecialOperator.
 
@@ -630,45 +661,14 @@ class TagbodySpecialOperator(SpecialOperator):
         completes without further jumps, ``tagbody`` returns ``nil``.
         """
 
-        def strip_tags(seq):
-            if seq is Null():
-                return Null()
-            form = seq.car
-            rest = seq.cdr
-            if isinstance(form, Symbol) or (
-                hasattr(form, "value") and not isinstance(form, Cons)
-            ):
-                return strip_tags(rest)
-            return Cons(form, strip_tags(rest))
-
         local_var_env = var_env.extend()
         label_map = {}
 
-        def build_map(seq):
-            if seq is Null():
-                return
-            form = seq.car
-            rest = seq.cdr
-            if isinstance(form, Symbol) or (
-                hasattr(form, "value") and not isinstance(form, Cons)
-            ):
-                if isinstance(form, Symbol):
-                    label = form.value
-                else:
-                    label = str(form.value)
-                body_forms = strip_tags(rest)
-                lambda_forms = Cons(
-                    Cons(Symbol("__GO__"), Null()),
-                    body_forms,
-                )
-                label_map[label] = CallCC(
-                    Lambda(lambda_forms, local_var_env, func_env, macro_env)
-                )
-            build_map(rest)
+        TagbodySpecialOperator.build_map(
+            forms, label_map, local_var_env, func_env, macro_env
+        )
 
-        build_map(forms)
-
-        current_body = strip_tags(forms)
+        current_body = TagbodySpecialOperator.strip_tags(forms)
         current = CallCC(
             Lambda(
                 Cons(Cons(Symbol("__GO__"), Null()), current_body),
