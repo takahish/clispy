@@ -1,4 +1,4 @@
-# Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@ import unittest
 from clispy.function.special_operator import (
     LetSpecialOperator,
     BlockSpecialOperator,
+    TagbodySpecialOperator,
 )
 from clispy.package import PackageManager
 from clispy.parser import Parser
-from clispy.type import Integer
+from clispy.type import Integer, Null
 
 
 class LetSpecialOperatorUnitTestCase(unittest.TestCase):
@@ -79,3 +80,25 @@ class BlockSpecialOperatorUnitTestCase(unittest.TestCase):
         )
 
         self.assertEqual(retval, Integer(5))
+
+
+class TagbodySpecialOperatorUnitTestCase(unittest.TestCase):
+    def testTagbodySpecialOperator_go(self):
+        tagbody_op = TagbodySpecialOperator()
+
+        # Execute a TAGBODY form containing GO statements
+        forms = Parser.parse('(1 (SETQ X 100) (GO 3) 2 (SETQ X 200) 3 (SETQ X 300))')
+
+        retval = tagbody_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(
+            PackageManager.current_package.env['VARIABLE'].find('X')['X'],
+            Integer(300),
+        )
+        # Tagbody returns NIL
+        self.assertTrue(retval is Null())

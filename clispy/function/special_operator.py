@@ -1,4 +1,4 @@
-# Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,6 +56,12 @@ class SpecialOperator(Function):
         """The official string representation.
         """
         return "#<SPECIAL-OPERATOR {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))
+
+
+class _GoSignal(RuntimeWarning):
+    def __init__(self, tag):
+        super().__init__(tag)
+        self.tag = tag
 
 
 # ==============================================================================
@@ -216,8 +222,20 @@ class GoSpecialOperator(SpecialOperator):
 
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of GoSpecialOperator.
+
+        A ``go`` form causes a non-local transfer of control within the
+        dynamically enclosing :class:`TagbodySpecialOperator`.  The tag name is
+        passed to the continuation supplied by ``tagbody`` which then resumes
+        execution starting at the referenced label.
         """
-        return forms  # TODO: To implement the behavior.
+
+        tag = forms.car
+        if isinstance(tag, Symbol):
+            label = tag.value
+        else:
+            label = str(getattr(tag, "value", tag))
+
+        raise _GoSignal(label)
 
 
 class IfSpecialOperator(SpecialOperator):
@@ -596,19 +614,88 @@ class SymbolMacroletSpecialOperator(SpecialOperator):
 
 class TagbodySpecialOperator(SpecialOperator):
     """Executes zero or more statements in a lexical environment that provides
-    for control transfers to labels indicated by the tags.
-    """
+    for control transfers to labels indicated by the tags."""
     def __new__(cls, *args, **kwargs):
-        """Instantiates TagbodySpecialOperator.
-        """
+        """Instantiates TagbodySpecialOperator."""
         cls.__name__ = 'TAGBODY'
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of TagbodySpecialOperator.
-        """
-        return forms  # TODO: To implement the behavior.
 
+        The body is executed sequentially while permitting non-local jumps
+        signaled by :class:`GoSpecialOperator`. Each tag is paired with a
+        continuation constructed from ``CallCC`` and ``Lambda`` so that
+        evaluation can resume from the referenced label. Once execution
+        completes without further jumps, ``tagbody`` returns ``nil``.
+        """
+
+        local_var_env = var_env.extend()
+        label_map = {}
+
+        TagbodySpecialOperator.__build_map(
+            forms, label_map, local_var_env, func_env, macro_env
+        )
+
+        current_body = TagbodySpecialOperator.__strip_tags(forms)
+        current = CallCC(
+            Lambda(
+                Cons(Cons(Symbol("__GO__"), Null()), current_body),
+                local_var_env,
+                func_env,
+                macro_env,
+            )
+        )
+
+        while True:
+            try:
+                current(local_var_env, func_env, macro_env)
+                return Null()
+            except _GoSignal as signal:
+                target = signal.tag
+                cont = label_map.get(target)
+                if cont is None:
+                    raise LookupError(target)
+                current = cont
+
+    @staticmethod
+    def __strip_tags(seq):
+        """__strip_tags separates tags and forms. The function is recursive, that is,
+        1) if the form is empty, return Nil(). 2) If a car of the form is  Symbol,
+        return a cdr applied by the function. 3) If a car of the form is Cons, return
+        Cons of the car and a cdr applied by the function.
+        """
+        if seq is Null():
+            return Null()
+        form = seq.car
+        rest = seq.cdr
+        if isinstance(form, Symbol) or (hasattr(form, "value") and not isinstance(form, Cons)):
+            return TagbodySpecialOperator.__strip_tags(rest)
+        return Cons(form, TagbodySpecialOperator.__strip_tags(rest))
+
+    @staticmethod
+    def __build_map(seq, label_map, local_var_env, func_env, macro_env):
+        """__build_map assigns the map of tags and forms. When it sets the map object,
+        forms are wrapped by a CallCC and a Lambda class.
+        """
+        if seq is Null():
+            return
+        form = seq.car
+        rest = seq.cdr
+        if isinstance(form, Symbol) or (hasattr(form, "value") and not isinstance(form, Cons)):
+            if isinstance(form, Symbol):
+                label = form.value
+            else:
+                label = str(form.value)
+            body_forms = TagbodySpecialOperator.__strip_tags(rest)
+            lambda_forms = Cons(
+                Cons(Symbol("__GO__"), Null()),
+                body_forms,
+            )
+            label_map[label] = CallCC(
+                Lambda(lambda_forms, local_var_env, func_env, macro_env)
+            )
+        TagbodySpecialOperator.__build_map(rest, label_map, local_var_env, func_env, macro_env)
 
 class TheSpecialOperator(SpecialOperator):
     """the specifies that the values[1a] returned by form are of the types

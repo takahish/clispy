@@ -1,4 +1,4 @@
-# Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ class LambdaUnitTestCase(unittest.TestCase):
         self.assertEqual(lambda_func.params, ['X'])
 
         # Checks lambda_func.forms.
-        self.assertEqual(str(lambda_func.forms), '(* X X X)')
+        self.assertEqual(str(lambda_func.forms), '((* X X X))')
 
         # Checks lambda_func lexical scope.
         self.assertTrue(lambda_func.var_env is PackageManager.current_package.env['VARIABLE'])
@@ -98,6 +98,30 @@ class LambdaUnitTestCase(unittest.TestCase):
 
         # Checks return value.
         self.assertTrue(retval, Integer(8))
+
+    def testLambda_implicit_progn(self):
+        """Multiple body forms are evaluated sequentially, returning the last."""
+
+        lambda_forms = Parser.parse('(() (setq x 1) (setq x 3))')
+        lambda_func = Lambda(
+            lambda_forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        retval = lambda_func(
+            Parser.parse('()'),
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(
+            PackageManager.current_package.env['VARIABLE'].find('X')['X'],
+            Integer(3),
+        )
+        self.assertTrue(retval is Integer(3))
 
     def testLambda_call_evaluate_argument(self):
         """Arguments are evaluated before the call method is executed.

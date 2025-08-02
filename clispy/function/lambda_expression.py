@@ -1,4 +1,4 @@
-# Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class Lambda(Function):
         from clispy.evaluator import Evaluator
         from clispy.expander import Expander
 
-        params, body = forms.car, forms.cdr.car
+        params, body = forms.car, forms.cdr
 
         # Binds params and args.
         self.params = []
@@ -184,8 +184,13 @@ class Lambda(Function):
         local_func_env = self.func_env.extend()
         local_macro_env = self.macro_env.extend()
 
-        # Expands and evaluates lambda expression.
-        exp = Expander.expand(self.forms, local_var_env, local_func_env, local_macro_env)
-        retval = Evaluator.eval(exp, local_var_env, local_func_env, local_macro_env)
+        # Expands and evaluates each form sequentially, returning the last
+        # value or NIL when no body forms are supplied.
+        retval = Null()
+        body = self.forms
+        while body is not Null():
+            exp = Expander.expand(body.car, local_var_env, local_func_env, local_macro_env)
+            retval = Evaluator.eval(exp, local_var_env, local_func_env, local_macro_env)
+            body = body.cdr
 
         return retval
