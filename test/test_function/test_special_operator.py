@@ -87,7 +87,7 @@ class TagbodySpecialOperatorUnitTestCase(unittest.TestCase):
         tagbody_op = TagbodySpecialOperator()
 
         # Execute a TAGBODY form containing GO statements
-        forms = Parser.parse('(1 (GO 2) (SETQ X 1) 2 (SETQ X 2))')
+        forms = Parser.parse('(1 (SETQ X 100) (GO 3) 2 (SETQ X 200) 3 (SETQ X 300))')
 
         retval = tagbody_op(
             forms,
@@ -98,7 +98,7 @@ class TagbodySpecialOperatorUnitTestCase(unittest.TestCase):
 
         self.assertEqual(
             PackageManager.current_package.env['VARIABLE'].find('X')['X'],
-            Integer(2),
+            Integer(300),
         )
         # Tagbody returns NIL
         self.assertTrue(retval is Null())

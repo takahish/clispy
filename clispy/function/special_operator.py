@@ -656,8 +656,13 @@ class TagbodySpecialOperator(SpecialOperator):
                     label = form.value
                 else:
                     label = str(form.value)
+                body_forms = Cons(
+                    Cons(Symbol("PROGN"), strip_tags(rest)),
+                    Null(),
+                )
                 lambda_forms = Cons(
-                    Cons(Symbol("__GO__"), Null()), strip_tags(rest)
+                    Cons(Symbol("__GO__"), Null()),
+                    body_forms,
                 )
                 label_map[label] = CallCC(
                     Lambda(lambda_forms, local_var_env, func_env, macro_env)
@@ -666,9 +671,13 @@ class TagbodySpecialOperator(SpecialOperator):
 
         build_map(forms)
 
+        current_body = Cons(
+            Cons(Symbol("PROGN"), strip_tags(forms)),
+            Null(),
+        )
         current = CallCC(
             Lambda(
-                Cons(Cons(Symbol("__GO__"), Null()), strip_tags(forms)),
+                Cons(Cons(Symbol("__GO__"), Null()), current_body),
                 local_var_env,
                 func_env,
                 macro_env,
