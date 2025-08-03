@@ -775,7 +775,19 @@ class UnwindProtectSpecialOperator(SpecialOperator):
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of UnwindProtectSpecialOperator.
         """
-        return forms  # TODO: To implement the behavior.
+        from clispy.evaluator import Evaluator
+
+        protected = forms.car
+        cleanup = forms.cdr
+
+        try:
+            result = Evaluator.eval(protected, var_env, func_env, macro_env)
+        finally:
+            while cleanup is not Null():
+                Evaluator.eval(cleanup.car, var_env, func_env, macro_env)
+                cleanup = cleanup.cdr
+
+        return result
 
 
 # ==============================================================================
