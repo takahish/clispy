@@ -59,14 +59,16 @@ class SpecialOperator(Function):
 
 
 class _GoSignal(RuntimeWarning):
+    """Internal exception used to implement ``tagbody``/``go`` control flow.
+    """
     def __init__(self, tag):
         super().__init__(tag)
         self.tag = tag
 
 
 class _ThrowSignal(RuntimeWarning):
-    """Internal exception used to implement ``catch``/``throw`` control flow."""
-
+    """Internal exception used to implement ``catch``/``throw`` control flow.
+    """
     def __init__(self, tag, value):
         super().__init__(tag)
         self.tag = tag
