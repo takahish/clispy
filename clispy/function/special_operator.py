@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-from clispy.callcc import CallCC
 from clispy.function import Function, Lambda
 from clispy.package import Environment, PackageManager, assign_helper, use_package_helper
 from clispy.type import BuiltInClass, Symbol, Null, Cons, String
@@ -75,6 +74,15 @@ class _ThrowSignal(RuntimeWarning):
         self.value = value
 
 
+class _BlockReturnSignal(RuntimeWarning):
+    """Internal exception used to implement ``block``/``return-from`` control flow."""
+
+    def __init__(self, tag, value):
+        super().__init__(tag)
+        self.tag = tag
+        self.value = value
+
+
 # ==============================================================================
 # Defines special operator classes.
 #
@@ -104,13 +112,19 @@ class BlockSpecialOperator(SpecialOperator):
         """
         from clispy.evaluator import Evaluator
 
-        # throw is a param of lambda in call/cc.
-        lambda_forms = Cons(Cons(forms.car, Null()), forms.cdr)
+        block_name = forms.car.value
+        body = forms.cdr
 
-        # call/cc is used to control.
-        callcc = CallCC(Lambda(lambda_forms, var_env, func_env, macro_env))
-
-        return callcc(var_env, func_env, macro_env)
+        try:
+            retval = Null()
+            while body is not Null():
+                retval = Evaluator.eval(body.car, var_env, func_env, macro_env)
+                body = body.cdr
+            return retval
+        except _BlockReturnSignal as signal:
+            if signal.tag == block_name:
+                return signal.value
+            raise
 
 
 class CatchSpecialOperator(SpecialOperator):
@@ -250,8 +264,8 @@ class GoSpecialOperator(SpecialOperator):
 
         A ``go`` form causes a non-local transfer of control within the
         dynamically enclosing :class:`TagbodySpecialOperator`.  The tag name is
-        passed to the continuation supplied by ``tagbody`` which then resumes
-        execution starting at the referenced label.
+        caught by ``tagbody``, which then resumes execution starting at the
+        referenced label.
         """
 
         tag = forms.car
@@ -572,16 +586,14 @@ class ReturnFromSpecialOperator(SpecialOperator):
         """
         from clispy.evaluator import Evaluator
 
-        block_name, body = forms.car.value, forms.cdr.car
+        block_name = forms.car.value
+        if forms.cdr is Null():
+            retval = Null()
+        else:
+            body = forms.cdr.car
+            retval = Evaluator.eval(body, var_env, func_env, macro_env)
 
-        # Sets return value.
-        retval = Evaluator.eval(body, var_env, func_env, macro_env)
-
-        # During BlockSpecialOperator.__call__, the block is executed with a continuation created by CallCC.
-        # This continuation is passed to the block as a PyObject wrapper in call/cc:
-        #     self.args = Cons(PyObject(Invoke(self)), Null())
-        # See BlockSpecialOperator.__call__ and clispy.callcc.CallCC for more details.
-        return var_env.find(block_name)[block_name].value(retval)  # Unwrap PyObject and execute Invoke object.
+        raise _BlockReturnSignal(block_name, retval)
 
 
 class SetqSpecialOperator(SpecialOperator):
@@ -649,60 +661,37 @@ class TagbodySpecialOperator(SpecialOperator):
         """Behavior of TagbodySpecialOperator.
 
         The body is executed sequentially while permitting non-local jumps
-        signaled by :class:`GoSpecialOperator`. Each tag is paired with a
-        continuation constructed from ``CallCC`` and ``Lambda`` so that
-        evaluation can resume from the referenced label. Once execution
+        signaled by :class:`GoSpecialOperator`. Each tag is mapped to the
+        remainder of the form sequence, and a :class:`_GoSignal` raised by
+        ``go`` transfers control to the associated position. Once execution
         completes without further jumps, ``tagbody`` returns ``nil``.
         """
 
+        from clispy.evaluator import Evaluator
+
         local_var_env = var_env.extend()
         label_map = {}
+        TagbodySpecialOperator.__build_map(forms, label_map)
 
-        TagbodySpecialOperator.__build_map(
-            forms, label_map, local_var_env, func_env, macro_env
-        )
-
-        current_body = TagbodySpecialOperator.__strip_tags(forms)
-        current = CallCC(
-            Lambda(
-                Cons(Cons(Symbol("__GO__"), Null()), current_body),
-                local_var_env,
-                func_env,
-                macro_env,
-            )
-        )
-
+        current = forms
         while True:
             try:
-                current(local_var_env, func_env, macro_env)
+                while current is not Null():
+                    form = current.car
+                    current = current.cdr
+                    if isinstance(form, Symbol) or (hasattr(form, "value") and not isinstance(form, Cons)):
+                        continue
+                    Evaluator.eval(form, local_var_env, func_env, macro_env)
                 return Null()
             except _GoSignal as signal:
-                target = signal.tag
-                cont = label_map.get(target)
+                cont = label_map.get(signal.tag)
                 if cont is None:
-                    raise LookupError(target)
+                    raise LookupError(signal.tag)
                 current = cont
 
     @staticmethod
-    def __strip_tags(seq):
-        """__strip_tags separates tags and forms. The function is recursive, that is,
-        1) if the form is empty, return Nil(). 2) If a car of the form is  Symbol,
-        return a cdr applied by the function. 3) If a car of the form is Cons, return
-        Cons of the car and a cdr applied by the function.
-        """
-        if seq is Null():
-            return Null()
-        form = seq.car
-        rest = seq.cdr
-        if isinstance(form, Symbol) or (hasattr(form, "value") and not isinstance(form, Cons)):
-            return TagbodySpecialOperator.__strip_tags(rest)
-        return Cons(form, TagbodySpecialOperator.__strip_tags(rest))
-
-    @staticmethod
-    def __build_map(seq, label_map, local_var_env, func_env, macro_env):
-        """__build_map assigns the map of tags and forms. When it sets the map object,
-        forms are wrapped by a CallCC and a Lambda class.
-        """
+    def __build_map(seq, label_map):
+        """Build mapping of tags to the remainder of the form sequence."""
         if seq is Null():
             return
         form = seq.car
@@ -711,16 +700,9 @@ class TagbodySpecialOperator(SpecialOperator):
             if isinstance(form, Symbol):
                 label = form.value
             else:
-                label = str(form.value)
-            body_forms = TagbodySpecialOperator.__strip_tags(rest)
-            lambda_forms = Cons(
-                Cons(Symbol("__GO__"), Null()),
-                body_forms,
-            )
-            label_map[label] = CallCC(
-                Lambda(lambda_forms, local_var_env, func_env, macro_env)
-            )
-        TagbodySpecialOperator.__build_map(rest, label_map, local_var_env, func_env, macro_env)
+                label = str(getattr(form, "value", form))
+            label_map[label] = rest
+        TagbodySpecialOperator.__build_map(rest, label_map)
 
 class TheSpecialOperator(SpecialOperator):
     """the specifies that the values[1a] returned by form are of the types
