@@ -1,4 +1,4 @@
-# Copyright 2018, 2019 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -86,17 +86,17 @@ class Interpreter(object):
 
                 # Print return value.
                 if out is not None:
-                    print(retval, end="\n\n", file=out, flush=True)
+                    print(retval, end="\n", file=out, flush=True)
 
             except Interrupt:
                 if zen:
                     # Print the zen of python at random.
-                    print(random.choices(cls.the_zen_of_python)[0], end="\n\n", file=out, flush=True)
+                    print(random.choices(cls.the_zen_of_python)[0], end="\n", file=out, flush=True)
                 return
 
             except Exception as e:
                 print("------------------------------------------------------------")
-                print("{}: {}".format(type(e).__name__, e), end="\n\n", file=out, flush=True)
+                print("{}: {}".format(type(e).__name__, e), end="\n", file=out, flush=True)
 
 
 class Interrupt(Exception):
