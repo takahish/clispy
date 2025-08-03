@@ -64,6 +64,15 @@ class _GoSignal(RuntimeWarning):
         self.tag = tag
 
 
+class _ThrowSignal(RuntimeWarning):
+    """Internal exception used to implement ``catch``/``throw`` control flow."""
+
+    def __init__(self, tag, value):
+        super().__init__(tag)
+        self.tag = tag
+        self.value = value
+
+
 # ==============================================================================
 # Defines special operator classes.
 #
@@ -116,7 +125,21 @@ class CatchSpecialOperator(SpecialOperator):
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of CatchSpecialOperator.
         """
-        return forms  # TODO: To implement the behavior.
+        from clispy.evaluator import Evaluator
+
+        tag = Evaluator.eval(forms.car, var_env, func_env, macro_env)
+        body = forms.cdr
+
+        try:
+            retval = Null()
+            while body is not Null():
+                retval = Evaluator.eval(body.car, var_env, func_env, macro_env)
+                body = body.cdr
+            return retval
+        except _ThrowSignal as signal:
+            if signal.tag == tag:
+                return signal.value
+            raise
 
 
 class EvalWhenSpecialOperator(SpecialOperator):
@@ -726,7 +749,12 @@ class ThrowSpecialOperator(SpecialOperator):
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of ThrowSpecialOperator.
         """
-        return forms  # TODO: To implement the behavior.
+        from clispy.evaluator import Evaluator
+
+        tag = Evaluator.eval(forms.car, var_env, func_env, macro_env)
+        result_form = forms.cdr.car if forms.cdr is not Null() else Null()
+        value = Evaluator.eval(result_form, var_env, func_env, macro_env)
+        raise _ThrowSignal(tag, value)
 
 
 class UnwindProtectSpecialOperator(SpecialOperator):

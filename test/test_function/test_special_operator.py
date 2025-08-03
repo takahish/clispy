@@ -18,10 +18,13 @@ from clispy.function.special_operator import (
     LetSpecialOperator,
     BlockSpecialOperator,
     TagbodySpecialOperator,
+    CatchSpecialOperator,
+    ThrowSpecialOperator,
 )
 from clispy.package import PackageManager
 from clispy.parser import Parser
-from clispy.type import Integer, Null
+from clispy.type import Integer, Null, T
+from clispy.function.system_function import DefunSystemFunction
 
 
 class LetSpecialOperatorUnitTestCase(unittest.TestCase):
@@ -102,3 +105,74 @@ class TagbodySpecialOperatorUnitTestCase(unittest.TestCase):
         )
         # Tagbody returns NIL
         self.assertTrue(retval is Null())
+
+
+class CatchThrowSpecialOperatorUnitTestCase(unittest.TestCase):
+    def test_catch_throw_representation(self):
+        catch_op = CatchSpecialOperator()
+        throw_op = ThrowSpecialOperator()
+        self.assertRegex(str(catch_op), r"#<SPECIAL-OPERATOR CATCH \{[0-9A-Z]+\}>")
+        self.assertRegex(str(throw_op), r"#<SPECIAL-OPERATOR THROW \{[0-9A-Z]+\}>")
+
+    def test_catch_throw(self):
+        catch_op = CatchSpecialOperator()
+
+        forms = Parser.parse("('dummy-tag 1 2 (throw 'dummy-tag 3) 4)")
+        retval = catch_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(3))
+
+    def test_catch_without_throw(self):
+        catch_op = CatchSpecialOperator()
+
+        forms = Parser.parse("('dummy-tag 1 2 3 4)")
+        retval = catch_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(4))
+
+    def test_catch_with_throw_back(self):
+        catch_op = CatchSpecialOperator()
+
+        defun = DefunSystemFunction()
+        defun_forms = Parser.parse('(THROW-BACK (TAG) (THROW TAG T))')
+        defun(
+            defun_forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        forms = Parser.parse("('dummy-tag (THROW-BACK 'dummy-tag) 2)")
+        retval = catch_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertTrue(retval is T())
+
+    def test_nested_catch(self):
+        catch_op = CatchSpecialOperator()
+
+        forms = Parser.parse(
+            "('c (FLET ((C1 () (THROW 'c 1))) (PROGN (CATCH 'c (C1) (PRINT 'unreachable)) 2)))"
+        )
+        retval = catch_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(2))
