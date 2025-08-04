@@ -20,6 +20,7 @@ from clispy.function.special_operator import (
     TagbodySpecialOperator,
     CatchSpecialOperator,
     ThrowSpecialOperator,
+    UnwindProtectSpecialOperator,
 )
 from clispy.package import PackageManager
 from clispy.parser import Parser
@@ -176,3 +177,54 @@ class CatchThrowSpecialOperatorUnitTestCase(unittest.TestCase):
         )
 
         self.assertEqual(retval, Integer(2))
+
+
+class UnwindProtectSpecialOperatorUnitTestCase(unittest.TestCase):
+    def test_unwind_protect_representation(self):
+        unwind_op = UnwindProtectSpecialOperator()
+        self.assertRegex(
+            str(unwind_op), r"#<SPECIAL-OPERATOR UNWIND-PROTECT \{[0-9A-Z]+\}>"
+        )
+
+    def test_unwind_protect_with_return_from(self):
+        block_op = BlockSpecialOperator()
+        forms = Parser.parse(
+            "(NIL (UNWIND-PROTECT (RETURN-FROM NIL 1) (RETURN-FROM NIL 2)))"
+        )
+        retval = block_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(2))
+
+    def test_unwind_protect_with_throw(self):
+        catch_op = CatchSpecialOperator()
+        forms = Parser.parse("(NIL (UNWIND-PROTECT (THROW NIL 1) (THROW NIL 2)))")
+        retval = catch_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(2))
+
+    def test_unwind_protect_with_go(self):
+        tagbody_op = TagbodySpecialOperator()
+        forms = Parser.parse(
+            "((SETQ X 3) (SETQ Y 0) (UNWIND-PROTECT (GO OUT) (SETQ Y X)) (SETQ Y 99) OUT (SETQ Z Y))"
+        )
+        tagbody_op(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(
+            PackageManager.current_package.env['VARIABLE'].find('Y')['Y'],
+            Integer(3),
+        )
