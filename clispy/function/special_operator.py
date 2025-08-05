@@ -57,6 +57,15 @@ class SpecialOperator(Function):
         return "#<SPECIAL-OPERATOR {0} {{{1:X}}}>".format(self.__class__.__name__, id(self))
 
 
+class _ReturnFromSignal(RuntimeWarning):
+    """Internal exception used to implement ``block``/``return-from`` control flow.
+    """
+    def __init__(self, tag, value):
+        super().__init__(tag)
+        self.tag = tag
+        self.value = value
+
+
 class _GoSignal(RuntimeWarning):
     """Internal exception used to implement ``tagbody``/``go`` control flow.
     """
@@ -68,15 +77,6 @@ class _GoSignal(RuntimeWarning):
 class _ThrowSignal(RuntimeWarning):
     """Internal exception used to implement ``catch``/``throw`` control flow.
     """
-    def __init__(self, tag, value):
-        super().__init__(tag)
-        self.tag = tag
-        self.value = value
-
-
-class _BlockReturnSignal(RuntimeWarning):
-    """Internal exception used to implement ``block``/``return-from`` control flow."""
-
     def __init__(self, tag, value):
         super().__init__(tag)
         self.tag = tag
@@ -121,7 +121,7 @@ class BlockSpecialOperator(SpecialOperator):
                 retval = Evaluator.eval(body.car, var_env, func_env, macro_env)
                 body = body.cdr
             return retval
-        except _BlockReturnSignal as signal:
+        except _ReturnFromSignal as signal:
             if signal.tag == block_name:
                 return signal.value
             raise
@@ -593,7 +593,7 @@ class ReturnFromSpecialOperator(SpecialOperator):
             body = forms.cdr.car
             retval = Evaluator.eval(body, var_env, func_env, macro_env)
 
-        raise _BlockReturnSignal(block_name, retval)
+        raise _ReturnFromSignal(block_name, retval)
 
 
 class SetqSpecialOperator(SpecialOperator):
