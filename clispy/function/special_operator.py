@@ -679,8 +679,11 @@ class TagbodySpecialOperator(SpecialOperator):
                 while current is not Null():
                     form = current.car
                     current = current.cdr
+
+                    # Skip the tag in the form because it is only expected on the tagbody control flow.
                     if isinstance(form, Symbol) or (hasattr(form, "value") and not isinstance(form, Cons)):
                         continue
+
                     Evaluator.eval(form, local_var_env, func_env, macro_env)
                 return Null()
             except _GoSignal as signal:
