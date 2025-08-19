@@ -191,3 +191,39 @@ class Symbol(T, metaclass=BuiltInClass):
         """The official string representation.
         """
         return self.value
+
+
+class MultipleValues(T, metaclass=BuiltInClass):
+    """Represents multiple return values.
+
+    When asked for its type, the type of the first value is reported,
+    matching the behavior of CL's TYPE-OF on VALUES."""
+
+    def __new__(cls, *values):
+        """Instantiates MultipleValues without interning."""
+        cls.__name__ = 'MULTIPLE-VALUES'
+        return object.__new__(cls)
+
+    def __init__(self, *values):
+        """Initializes MultipleValues."""
+        self.values = tuple(values)
+        self.value = self.values
+
+    def __repr__(self):
+        """The official string representation."""
+        return '(' + ' '.join(str(v) for v in self.values) + ')'
+
+    def type_of(self):
+        """Returns the type of the first value, or NULL if empty."""
+        if self.values:
+            return self.values[0].type_of()
+        else:
+            return Symbol('NULL')
+
+    def class_of(self):
+        """Returns the class of the first value, or the class of NIL if empty."""
+        if self.values:
+            return self.values[0].class_of()
+        else:
+            from clispy.type.sequence import Null
+            return Null().class_of()
