@@ -1,4 +1,4 @@
-# Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 from clispy.function import Function, Lambda
 from clispy.package import PackageManager, assign_helper, use_package_helper
-from clispy.type import Cons, Integer, List, Null, Ratio, Real, Sequence, String, T, Vector
+from clispy.type import Cons, Integer, List, Null, Ratio, Real, Sequence, String, Symbol, T, Vector, MultipleValues
 from clispy.type import Float, ShortFloat, SingleFloat, DoubleFloat, LongFloat
 
 
@@ -95,10 +95,17 @@ class DefunSystemFunction(SystemFunction):
         func_symbol = forms.car
         func_name = func_symbol.value
 
-        lambda_forms = forms
+        params = forms.cdr.car
+        body = forms.cdr.cdr
+
+        # Construct a lambda form with an implicit block around the body.
+        lambda_forms = Cons(
+            params,
+            Cons(Cons(Symbol('BLOCK'), Cons(func_symbol, body)), Null()),
+        )
 
         # Lambda function.
-        func = Lambda(lambda_forms.cdr, var_env, func_env, macro_env)
+        func = Lambda(lambda_forms, var_env, func_env, macro_env)
 
         # Interns symbol that represents function name into current package.
         PackageManager.intern(String(func_name))
@@ -130,10 +137,17 @@ class DefmacroSystemFunction(SystemFunction):
         macro_symbol = forms.car
         macro_name = macro_symbol.value
 
-        lambda_forms = forms
+        params = forms.cdr.car
+        body = forms.cdr.cdr
+
+        # Construct a lambda form with an implicit block around the body.
+        lambda_forms = Cons(
+            params,
+            Cons(Cons(Symbol('BLOCK'), Cons(macro_symbol, body)), Null()),
+        )
 
         # Lambda function.
-        macro = Lambda(lambda_forms.cdr, var_env, func_env, macro_env)
+        macro = Lambda(lambda_forms, var_env, func_env, macro_env)
 
         # Interns symbol that represents macro name into current package.
         PackageManager.intern(String(macro_name))
@@ -913,6 +927,31 @@ class ClassOfSystemFunction(SystemFunction):
         return object_.class_of()
 
 
+class ValuesSystemFunction(SystemFunction):
+    """Returns all of its arguments as multiple values.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        """Instantiates ValuesSystemFunction.
+        """
+        cls.__name__ = 'VALUES'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ValuesSystemFunction.
+        """
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        values = []
+        while args is not Null():
+            values.append(args.car)
+            args = args.cdr
+        if len(values) == 1:
+            return values[0]
+        else:
+            return MultipleValues(*values)
+
+
 # ==============================================================================
 # Defines some exception classes
 # ==============================================================================
@@ -938,6 +977,7 @@ assign_helper(symbol_name='CONS', value=ConsSystemFunction(), package_name='COMM
 assign_helper(symbol_name='CAR', value=CarSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='CDR', value=CdrSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='APPEND', value=AppendSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='VALUES', value=ValuesSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='LIST', value=ListSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='FIND-SYMBOL', value=FindSymbolSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='INTERN', value=InternSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')

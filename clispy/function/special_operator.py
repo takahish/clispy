@@ -83,6 +83,17 @@ class _ThrowSignal(RuntimeWarning):
         self.value = value
 
 
+def _implicit_progn(forms, var_env, func_env, macro_env):
+    """Evaluate ``forms`` sequentially using :class:`PrognSpecialOperator`.
+
+    Many special operators evaluate their bodies as an implicit ``progn``. This
+    helper delegates the iteration to :class:`PrognSpecialOperator` so that the
+    core implementation resides in one place.
+    """
+
+    return PrognSpecialOperator()(forms, var_env, func_env, macro_env)
+
+
 # ==============================================================================
 # Defines special operator classes.
 #
@@ -90,7 +101,7 @@ class _ThrowSignal(RuntimeWarning):
 #     Catch       LoadTimeValue       Setq
 #     EvalWhen    Locally             SymbolMacrolet
 #     Flet        Macrolet            Tagbody
-#     Function_   MultipleValueCall   The
+#     Function    MultipleValueCall   The
 #     Go          MultipleValueProg1  Throw
 #     If          Progn               UnwindProtect
 #     Labels      Progv
@@ -110,17 +121,12 @@ class BlockSpecialOperator(SpecialOperator):
     def __call__(self, forms, var_env, func_env, macro_env):
         """Behavior of BlockSpecialOperator.
         """
-        from clispy.evaluator import Evaluator
 
         block_name = forms.car.value
         body = forms.cdr
 
         try:
-            retval = Null()
-            while body is not Null():
-                retval = Evaluator.eval(body.car, var_env, func_env, macro_env)
-                body = body.cdr
-            return retval
+            return _implicit_progn(body, var_env, func_env, macro_env)
         except _ReturnFromSignal as signal:
             if signal.tag == block_name:
                 return signal.value
@@ -147,11 +153,7 @@ class CatchSpecialOperator(SpecialOperator):
         body = forms.cdr
 
         try:
-            retval = Null()
-            while body is not Null():
-                retval = Evaluator.eval(body.car, var_env, func_env, macro_env)
-                body = body.cdr
-            return retval
+            return _implicit_progn(body, var_env, func_env, macro_env)
         except _ThrowSignal as signal:
             if signal.tag == tag:
                 return signal.value
@@ -197,7 +199,8 @@ class FletSpecialOperator(SpecialOperator):
         """
         from clispy.evaluator import Evaluator
 
-        bindings, body = forms.car, forms.cdr.car
+        bindings = forms.car
+        body = forms.cdr
 
         funcs = []
         exps = []
@@ -216,9 +219,9 @@ class FletSpecialOperator(SpecialOperator):
             bindings = bindings.cdr
 
         # The bindings are in parallel.
-        func_env = func_env.extend(params=funcs, args=exps)
+        local_func_env = func_env.extend(params=funcs, args=exps)
 
-        return Evaluator.eval(body, var_env, func_env, macro_env)
+        return _implicit_progn(body, var_env, local_func_env, macro_env)
 
 
 class FunctionSpecialOperator(SpecialOperator):
@@ -324,11 +327,12 @@ class LabelsSpecialOperator(SpecialOperator):
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of FletSpecialOperator.
+        """Behavior of LabelsSpecialOperator.
         """
         from clispy.evaluator import Evaluator
 
-        bindings, body = forms.car, forms.cdr.car
+        bindings = forms.car
+        body = forms.cdr
 
         funcs = []
         exps = []
@@ -355,7 +359,7 @@ class LabelsSpecialOperator(SpecialOperator):
         # The bindings are in parallel.
         local_func_env.update(zip(funcs, exps))
 
-        return Evaluator.eval(body, var_env, local_func_env, macro_env)
+        return _implicit_progn(body, var_env, local_func_env, macro_env)
 
 
 class LetSpecialOperator(SpecialOperator):
@@ -374,13 +378,14 @@ class LetSpecialOperator(SpecialOperator):
         """
         from clispy.evaluator import Evaluator
 
-        bindings, body = forms.car, forms.cdr.car
+        bindings = forms.car
+        body = forms.cdr
 
         vars, vals = [], []
         while bindings is not Null():
             var, val = bindings.car.car, bindings.car.cdr.car
 
-            # Interns symbol that represents function name into current package.
+            # Interns symbol that represents variable name into current package.
             PackageManager.intern(String(var.value))
 
             vars.append(var.value)
@@ -389,9 +394,9 @@ class LetSpecialOperator(SpecialOperator):
             bindings = bindings.cdr
 
         # The bindings are in parallel.
-        var_env = var_env.extend(params=vars, args=vals)
+        local_var_env = var_env.extend(params=vars, args=vals)
 
-        return Evaluator.eval(body, var_env, func_env, macro_env)
+        return _implicit_progn(body, local_var_env, func_env, macro_env)
 
 
 class LetAsterSpecialOperator(SpecialOperator):
@@ -410,23 +415,26 @@ class LetAsterSpecialOperator(SpecialOperator):
         """
         from clispy.evaluator import Evaluator
 
-        bindings, body = forms.car, forms.cdr.car
+        bindings = forms.car
+        body = forms.cdr
+
+        local_var_env = var_env
 
         while bindings is not Null():
             var, val = bindings.car.car, bindings.car.cdr.car
 
-            # Interns symbol that represents function name into current package.
+            # Interns symbol that represents variable name into current package.
             PackageManager.intern(String(var.value))
 
             var = var.value
-            val = Evaluator.eval(val, var_env, func_env, macro_env)
+            val = Evaluator.eval(val, local_var_env, func_env, macro_env)
 
             # The bindings are in sequence.
-            var_env = var_env.extend(params=[var], args=[val])
+            local_var_env = local_var_env.extend(params=[var], args=[val])
 
             bindings = bindings.cdr
 
-        return Evaluator.eval(body, var_env, func_env, macro_env)
+        return _implicit_progn(body, local_var_env, func_env, macro_env)
 
 
 class LoadTimeValueSpecialOperator(SpecialOperator):
@@ -533,7 +541,8 @@ class PrognSpecialOperator(SpecialOperator):
         """
         from clispy.evaluator import Evaluator
 
-        # The values of eatch form but the last are discarded.
+        # The values of each form but the last are discarded.
+        last = Null()
         while forms is not Null():
             last = Evaluator.eval(forms.car, var_env, func_env, macro_env)
             forms = forms.cdr

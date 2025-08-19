@@ -21,11 +21,13 @@ from clispy.function.special_operator import (
     CatchSpecialOperator,
     ThrowSpecialOperator,
     UnwindProtectSpecialOperator,
+    PrognSpecialOperator,
 )
 from clispy.package import PackageManager
 from clispy.parser import Parser
-from clispy.type import Integer, Null, T
+from clispy.type import Integer, Null, Symbol, T, MultipleValues
 from clispy.function.system_function import DefunSystemFunction
+from clispy.evaluator import Evaluator
 
 
 class LetSpecialOperatorUnitTestCase(unittest.TestCase):
@@ -167,7 +169,7 @@ class CatchThrowSpecialOperatorUnitTestCase(unittest.TestCase):
         catch_op = CatchSpecialOperator()
 
         forms = Parser.parse(
-            "('c (FLET ((C1 () (THROW 'c 1))) (PROGN (CATCH 'c (C1) (PRINT 'unreachable)) 2)))"
+            "('c (FLET ((C1 () (THROW 'c 1))) (CATCH 'c (C1) (PRINT 'unreachable)) 2))"
         )
         retval = catch_op(
             forms,
@@ -228,3 +230,63 @@ class UnwindProtectSpecialOperatorUnitTestCase(unittest.TestCase):
             PackageManager.current_package.env['VARIABLE'].find('Y')['Y'],
             Integer(3),
         )
+
+
+class PrognSpecialOperatorUnitTestCase(unittest.TestCase):
+    def test_progn_with_no_forms_returns_nil(self):
+        progn = PrognSpecialOperator()
+
+        forms = Null()
+        retval = progn(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertTrue(retval is Null())
+
+    def test_progn_returns_last_form_value(self):
+        progn = PrognSpecialOperator()
+
+        forms = Parser.parse('(1 2 3)')
+        retval = progn(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(3))
+
+    def test_progn_propagates_multiple_values(self):
+        progn = PrognSpecialOperator()
+
+        forms = Parser.parse('((values 1 2 3))')
+        retval = progn(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+        self.assertIsInstance(retval, MultipleValues)
+        self.assertEqual(retval.values, (Integer(1), Integer(2), Integer(3)))
+
+    def test_progn_in_if_updates_variable(self):
+        retval = Evaluator.eval(
+            Parser.parse('(setq a 1)'),
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+        self.assertEqual(retval, Integer(1))
+
+        retval = Evaluator.eval(
+            Parser.parse("(if a (progn (setq a nil) 'here) (progn (setq a t) 'there))"),
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+        self.assertEqual(retval, Symbol('HERE'))
+        a_value = PackageManager.current_package.env['VARIABLE'].find('A')['A']
+        self.assertTrue(a_value is Null())

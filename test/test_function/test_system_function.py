@@ -18,7 +18,7 @@ from clispy.function.system_function import *
 from clispy.interpreter import Interrupt
 from clispy.package import PackageManager
 from clispy.parser import Parser
-from clispy.type import Cons, Integer, Keyword, Null, Ratio, String, Symbol
+from clispy.type import Cons, Integer, Keyword, Null, Ratio, String, Symbol, MultipleValues
 
 
 class SystemFunctionUnitTestCase(unittest.TestCase):
@@ -897,6 +897,74 @@ class GreaterThanEqualSystemFunctionUnitTestCase(unittest.TestCase):
 
         # Checks return value.
         self.assertEqual(retval, Null())
+
+
+class ValuesSystemFunctionUnitTestCase(unittest.TestCase):
+    def testValuesSystemFunction(self):
+        values = ValuesSystemFunction()
+        self.assertRegex(str(values), r"#<SYSTEM-FUNCTION VALUES \{[0-9A-Z]+\}>")
+
+    def testValuesSystemFunction_call_multiple(self):
+        values = ValuesSystemFunction()
+        forms = Parser.parse('(1 2 3)')
+        retval = values(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertIsInstance(retval, MultipleValues)
+        self.assertEqual(retval.values, (Integer(1), Integer(2), Integer(3)))
+
+    def testValuesSystemFunction_call_none(self):
+        values = ValuesSystemFunction()
+        forms = Parser.parse('()')
+        retval = values(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertIsInstance(retval, MultipleValues)
+        self.assertEqual(retval.values, tuple())
+
+    def testTypeOfValues_returns_first_type(self):
+        type_of = TypeOfSystemFunction()
+        forms = Parser.parse('((values 1 2 3))')
+        retval = type_of(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Symbol('INTEGER'))
+
+    def testClassOfValues_returns_first_class(self):
+        class_of = ClassOfSystemFunction()
+        forms = Parser.parse('((values 1 2 3))')
+        retval = class_of(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Integer(1).class_of())
+
+    def testClassOfValues_returns_symbol_class(self):
+        class_of = ClassOfSystemFunction()
+        forms = Parser.parse("((values 'takahiro 'hiro 'ishikawa))")
+        retval = class_of(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+
+        self.assertEqual(retval, Symbol('A').class_of())
 
 
 class QuitSystemFunctionUnitTestCase(unittest.TestCase):
