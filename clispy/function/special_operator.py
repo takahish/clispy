@@ -94,7 +94,6 @@ def _implicit_progn(forms, var_env, func_env, macro_env):
     return PrognSpecialOperator()(forms, var_env, func_env, macro_env)
 
 
-
 # ==============================================================================
 # Defines special operator classes.
 #
@@ -102,7 +101,7 @@ def _implicit_progn(forms, var_env, func_env, macro_env):
 #     Catch       LoadTimeValue       Setq
 #     EvalWhen    Locally             SymbolMacrolet
 #     Flet        Macrolet            Tagbody
-#     Function_   MultipleValueCall   The
+#     Function    MultipleValueCall   The
 #     Go          MultipleValueProg1  Throw
 #     If          Progn               UnwindProtect
 #     Labels      Progv
@@ -120,7 +119,8 @@ class BlockSpecialOperator(SpecialOperator):
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of BlockSpecialOperator."""
+        """Behavior of BlockSpecialOperator.
+        """
 
         block_name = forms.car.value
         body = forms.cdr
@@ -145,7 +145,8 @@ class CatchSpecialOperator(SpecialOperator):
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of CatchSpecialOperator."""
+        """Behavior of CatchSpecialOperator.
+        """
         from clispy.evaluator import Evaluator
 
         tag = Evaluator.eval(forms.car, var_env, func_env, macro_env)
@@ -194,7 +195,8 @@ class FletSpecialOperator(SpecialOperator):
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of FletSpecialOperator."""
+        """Behavior of FletSpecialOperator.
+        """
         from clispy.evaluator import Evaluator
 
         bindings = forms.car
@@ -325,7 +327,8 @@ class LabelsSpecialOperator(SpecialOperator):
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of FletSpecialOperator."""
+        """Behavior of LabelsSpecialOperator.
+        """
         from clispy.evaluator import Evaluator
 
         bindings = forms.car
@@ -371,7 +374,8 @@ class LetSpecialOperator(SpecialOperator):
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of LetSpecialOperator."""
+        """Behavior of LetSpecialOperator.
+        """
         from clispy.evaluator import Evaluator
 
         bindings = forms.car
@@ -407,7 +411,8 @@ class LetAsterSpecialOperator(SpecialOperator):
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of LetAsterSpecialOperator."""
+        """Behavior of LetAsterSpecialOperator.
+        """
         from clispy.evaluator import Evaluator
 
         bindings = forms.car
@@ -431,17 +436,20 @@ class LetAsterSpecialOperator(SpecialOperator):
 
         return _implicit_progn(body, local_var_env, func_env, macro_env)
 
+
 class LoadTimeValueSpecialOperator(SpecialOperator):
     """Load-time-value provides a mechanism for delaying evaluation of forms until
     the expression is in the run-time environment
     """
     def __new__(cls, *args, **kwargs):
-        """Instantiates LoadTimeValueSpecialOperator."""
+        """Instantiates LoadTimeValueSpecialOperator.
+        """
         cls.__name__ = 'LOAD-TIME-VALUE'
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of LoadTimeValueSpecialOperator."""
+        """Behavior of LoadTimeValueSpecialOperator.
+        """
         return forms  # TODO: To implement the behavior.
 
 

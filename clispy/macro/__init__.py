@@ -14,4 +14,4 @@ from clispy.macro.macro import *
 from clispy.macro.reader_macro import *
 # Only import backquote macro; special-operator macros have been inlined
 # into the special operator implementations.
-from clispy.macro.backquote_macro import *
+from clispy.macro.system_macro import *

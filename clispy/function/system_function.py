@@ -1,4 +1,4 @@
-# Copyright 2019 Takahiro Ishikawa. All Rights Reserved.
+# Copyright 2025 Takahiro Ishikawa. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -928,15 +928,18 @@ class ClassOfSystemFunction(SystemFunction):
 
 
 class ValuesSystemFunction(SystemFunction):
-    """Returns all of its arguments as multiple values."""
+    """Returns all of its arguments as multiple values.
+    """
 
     def __new__(cls, *args, **kwargs):
-        """Instantiates ValuesSystemFunction."""
+        """Instantiates ValuesSystemFunction.
+        """
         cls.__name__ = 'VALUES'
         return object.__new__(cls)
 
     def __call__(self, forms, var_env, func_env, macro_env):
-        """Behavior of ValuesSystemFunction."""
+        """Behavior of ValuesSystemFunction.
+        """
         args = self.eval_forms(forms, var_env, func_env, macro_env)
 
         values = []
