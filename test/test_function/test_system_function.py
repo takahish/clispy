@@ -322,6 +322,67 @@ class AppendSystemFunctionUnitTestCase(unittest.TestCase):
         self.assertEqual(str(retval), '(1 2 . 3)')
 
 
+class ApplySystemFunctionUnitTestCase(unittest.TestCase):
+    def testApplySystemFunction(self):
+        apply_ = ApplySystemFunction()
+        self.assertRegex(str(apply_), r"#<SYSTEM-FUNCTION APPLY \{[0-9A-Z]+\}>")
+
+    def testApplySystemFunction_call_symbol(self):
+        apply_ = ApplySystemFunction()
+        forms = Parser.parse("((quote +) (quote (1 2)))")
+        retval = apply_(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+        self.assertEqual(retval, Integer(3))
+
+    def testApplySystemFunction_call_function_object(self):
+        apply_ = ApplySystemFunction()
+        forms = Parser.parse("((function -) (quote (1 2)))")
+        retval = apply_(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+        self.assertEqual(retval, Integer(-1))
+
+    def testApplySystemFunction_spread(self):
+        apply_ = ApplySystemFunction()
+        forms = Parser.parse("((function +) 3 5 (quote (2 7 3)))")
+        retval = apply_(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+        self.assertEqual(retval, Integer(20))
+
+    def testApplySystemFunction_cons(self):
+        apply_ = ApplySystemFunction()
+        forms = Parser.parse("((quote cons) (quote ((+ 2 3) 4)))")
+        retval = apply_(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+        self.assertEqual(str(retval), '((+ 2 3) . 4)')
+
+    def testApplySystemFunction_empty(self):
+        apply_ = ApplySystemFunction()
+        forms = Parser.parse("((function +) (quote ()))")
+        retval = apply_(
+            forms,
+            PackageManager.current_package.env['VARIABLE'],
+            PackageManager.current_package.env['FUNCTION'],
+            PackageManager.current_package.env['MACRO'],
+        )
+        self.assertEqual(retval, Integer(0))
+
+
 class ListSystemFunctionUnitTestCase(unittest.TestCase):
     def testListSystemFunction(self):
         # Makes an instance of ListSystemFunction.

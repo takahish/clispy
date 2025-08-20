@@ -276,6 +276,63 @@ class AppendSystemFunction(SystemFunction):
         return last
 
 
+class ApplySystemFunction(SystemFunction):
+    """Applies the function to the args."""
+
+    def __new__(cls, *args, **kwargs):
+        """Instantiates ApplySystemFunction."""
+        cls.__name__ = 'APPLY'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Behavior of ApplySystemFunction."""
+        args = self.eval_forms(forms, var_env, func_env, macro_env)
+
+        # Retrieves the function from the first argument.
+        func_designator = args.car
+        if isinstance(func_designator, Symbol):
+            func_name, package_name, status_check = PackageManager.split_symbol_name(func_designator.value)
+            try:
+                func = func_env.find(func_name)[func_name]
+            except LookupError:
+                func = PackageManager.find(func_name, package_name, status_check, env='FUNCTION')[func_name]
+        else:
+            func = func_designator
+
+        # Collects all arguments excluding the function designator.
+        tmp_args = []
+        rest = args.cdr
+        if rest is not Null():
+            while rest.cdr is not Null():
+                tmp_args.append(rest.car)
+                rest = rest.cdr
+            last = rest.car
+
+            # The last argument must be a spreadable list.
+            if isinstance(last, Null):
+                pass
+            elif isinstance(last, Cons):
+                while last is not Null():
+                    tmp_args.append(last.car)
+                    last = last.cdr
+            elif isinstance(last, Sequence):
+                seq = last.value.tolist() if hasattr(last.value, 'tolist') else list(last.value)
+                for x in seq:
+                    tmp_args.append(x)
+            else:
+                raise SimpleTypeError('The last argument to APPLY is not a list.')
+
+        # Converts evaluated arguments to forms that the function can evaluate.
+        form_args = []
+        for arg in tmp_args:
+            if isinstance(arg, (Symbol, Cons)):
+                form_args.append(Cons(Symbol('QUOTE'), Cons(arg, Null())))
+            else:
+                form_args.append(arg)
+
+        return func(Cons.tocons(form_args), var_env, func_env, macro_env)
+
+
 class ListSystemFunction(SystemFunction):
     """list returns a list containing the supplied objects.
     """
@@ -977,6 +1034,7 @@ assign_helper(symbol_name='CONS', value=ConsSystemFunction(), package_name='COMM
 assign_helper(symbol_name='CAR', value=CarSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='CDR', value=CdrSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='APPEND', value=AppendSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
+assign_helper(symbol_name='APPLY', value=ApplySystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='VALUES', value=ValuesSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='LIST', value=ListSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
 assign_helper(symbol_name='FIND-SYMBOL', value=FindSymbolSystemFunction(), package_name='COMMON-LISP', env='FUNCTION', status=':EXTERNAL')
