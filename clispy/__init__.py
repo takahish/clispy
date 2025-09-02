@@ -15,6 +15,8 @@
 
 from clispy.interpreter import Interpreter
 from clispy.loader import Loader
+# Ensure runtime built-ins such as DOCUMENTATION are registered
+from clispy import runtime  # noqa: F401
 
 def repl():
     Loader.load("lisp")

@@ -96,12 +96,40 @@ class BackquoteSystemMacro(SystemMacro):
             )
 
 
+class SetfSystemMacro(SystemMacro):
+    """A minimal SETF macro supporting documentation updates."""
+
+    def __new__(cls, *args, **kwargs):
+        cls.__name__ = 'SETF'
+        return object.__new__(cls)
+
+    def __call__(self, forms, var_env, func_env, macro_env):
+        """Expand (setf (documentation ...) value) into a function call.
+
+        For unsupported places this falls back to ``setq`` semantics.
+        """
+
+        place = forms.car
+        value_form = forms.cdr.car
+
+        if isinstance(place, Cons) and place.car is Symbol('DOCUMENTATION'):
+            # (setf (documentation obj type) value) =>
+            #   (SETF-DOCUMENTATION value obj type)
+            # TODO: Once CLOS is implemented, dispatch to the generic
+            # (SETF DOCUMENTATION) instead of this helper.
+            return Cons(Symbol('SETF-DOCUMENTATION'), Cons(value_form, place.cdr))
+
+        # Default: behave like SETQ for simple variables
+        return Cons(Symbol('SETQ'), Cons(place, Cons(value_form, Null())))
+
+
 # ==============================================================================
 # Set macro for special operators and system functions.
 # ==============================================================================
 
 # For special operators
 assign_helper(symbol_name='QUOTE', value=QuoteSystemMacro(), package_name='COMMON-LISP', env='MACRO', status='EXTERNAL')
+assign_helper(symbol_name='SETF', value=SetfSystemMacro(), package_name='COMMON-LISP', env='MACRO', status='EXTERNAL')
 
 # For system functions
 assign_helper(symbol_name='BACKQUOTE', value=BackquoteSystemMacro(), package_name='COMMON-LISP', env='MACRO', status=':EXTERNAL')
